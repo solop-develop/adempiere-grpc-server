@@ -61,7 +61,7 @@ import org.spin.grpc.service.field.order.OrderInfoService;
 import org.spin.grpc.service.field.product.ProductInfoService;
 import org.spin.grpc.service.form.ExpressMovement;
 import org.spin.grpc.service.form.ExpressReceipt;
-import org.spin.grpc.service.form.ExpressShipment;
+import org.spin.grpc.service.form.ExpressShipmentService;
 import org.spin.grpc.service.form.bank_statement_match.BankStatementMatchService;
 import org.spin.grpc.service.form.import_file_loader.ImportFileLoaderService;
 import org.spin.grpc.service.form.issue_management.IssueManagementService;
@@ -204,8 +204,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new ExpressReceipt());
 		logger.info("Service " + ExpressReceipt.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Express Shipment
-		serverBuilder.addService(new ExpressShipment());
-		logger.info("Service " + ExpressShipment.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new ExpressShipmentService());
+		logger.info("Service " + ExpressShipmentService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Field Management
 		serverBuilder.addService(new FieldManagementService());
 		logger.info("Service " + FieldManagementService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

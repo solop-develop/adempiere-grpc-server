@@ -69,7 +69,7 @@ import org.spin.backend.grpc.form.express_shipment.SalesOrder;
 import org.spin.backend.grpc.form.express_shipment.Shipment;
 import org.spin.backend.grpc.form.express_shipment.ShipmentLine;
 import org.spin.backend.grpc.form.express_shipment.UpdateShipmentLineRequest;
-import org.spin.backend.grpc.form.express_shipment.ExpressShipmentGrpc.ExpressShipmentImplBase;
+import org.spin.backend.grpc.form.express_shipment.ExpressShipmentServiceGrpc.ExpressShipmentServiceImplBase;
 import org.spin.base.util.DocumentUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -86,10 +86,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for backend of Express Shipment
  */
-public class ExpressShipment extends ExpressShipmentImplBase {
+public class ExpressShipmentService extends ExpressShipmentServiceImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(ExpressShipment.class);
-	
+	private CLogger log = CLogger.getCLogger(ExpressShipmentService.class);
+
 	public static String TABLE_NAME = I_M_InOut.Table_Name;
 
 
@@ -188,6 +188,11 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		builder.setId(
 				businessPartner.getC_BPartner_ID()
+			)
+			.setUuid(
+				TextManager.getValidString(
+					businessPartner.getUUID()
+				)
 			)
 			.setValue(
 				TextManager.getValidString(
@@ -600,6 +605,16 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		builder.setId(
 				product.getM_Product_ID()
 			)
+			.setUuid(
+				TextManager.getValidString(
+					product.getUUID()
+				)
+			)
+			.setValue(
+				TextManager.getValidString(
+					product.getValue()
+				)
+			)
 			.setUpc(
 				TextManager.getValidString(
 					product.getUPC()
@@ -610,14 +625,14 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 					product.getSKU()
 				)
 			)
-			.setValue(
-				TextManager.getValidString(
-					product.getValue()
-				)
-			)
 			.setName(
 				TextManager.getValidString(
 					product.getName()
+				)
+			)
+			.setDescription(
+				TextManager.getValidString(
+					product.getDescription()
 				)
 			)
 		;
@@ -635,6 +650,11 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 
 		builder.setId(
 				shipment.getM_InOut_ID()
+			)
+			.setUuid(
+				TextManager.getValidString(
+					shipment.getUUID()
+				)
 			)
 			.setDocumentNo(
 				TextManager.getValidString(
@@ -654,12 +674,15 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			.setIsCompleted(
 				DocumentUtil.isCompleted(shipment)
 			)
+			.setDescription(
+				TextManager.getValidString(
+					shipment.getDescription()
+				)
+			)
+			.setOrderId(
+				shipment.getC_Order_ID()
+			)
 		;
-		MOrderLine salesOrderLine = new MOrderLine(Env.getCtx(), shipment.getC_Order_ID(), null);
-		if (salesOrderLine != null && salesOrderLine.getC_OrderLine_ID() > 0) {
-			builder.setOrderId(salesOrderLine.getC_OrderLine_ID())
-			;
-		}
 
 		return builder;
 	}
@@ -689,13 +712,15 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 	}
 
 	private Shipment.Builder createShipment(CreateShipmentRequest request) {
-		int orderId = request.getOrderId();
+		final int orderId = request.getOrderId();
 		if (orderId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Order_ID@");
 		}
-		int projectId = request.getProjectId();
-		int activityId = request.getActivityId();
 
+		final int projectId = request.getProjectId();
+		final int activityId = request.getActivityId();
+		final int outBoundOrderId = request.getOutBoundOrderId();
+		
 		AtomicReference<MInOut> maybeShipment = new AtomicReference<MInOut>();
 		Trx.run(transactionName -> {
 			MOrder salesOrder = new MOrder(Env.getCtx(), orderId, transactionName);
@@ -719,7 +744,7 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			}
 
 			final String whereClause = "IsSOTrx='Y' "
-				+ "AND MovementType IN ('V-') "
+				+ "AND MovementType IN ('C-') " // Customer Shipment
 				+ "AND DocStatus = 'DR' "
 				+ "AND C_Order_ID = ? "
 			;
@@ -732,7 +757,8 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			)
 				.setParameters(salesOrder.getC_Order_ID())
 				.setClient_ID()
-				.first();
+				.first()
+			;
 
 			// Validate
 			if (shipment == null) {
@@ -768,10 +794,12 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 						.filter(shipmentLineTofind -> {
 							return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
 						})
-						.findFirst();
+						.findFirst()
+					;
 
+					MInOutLine shipmentLine = null;
 					if (maybeShipmentLine.isPresent()) {
-						MInOutLine shipmentLine = maybeShipmentLine.get();
+						shipmentLine = maybeShipmentLine.get();
 
 						BigDecimal quantity = salesOrderLine.getQtyEntered();
 						if (quantity == null) {
@@ -786,12 +814,30 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 						shipmentLine.setQty(quantity);
 						shipmentLine.saveEx();
 					} else {
-						MInOutLine shipmentLine = new MInOutLine(maybeShipment.get());
+						shipmentLine = new MInOutLine(maybeShipment.get());
 
 						BigDecimal quantity = salesOrderLine.getQtyReserved();
 						shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
-						shipmentLine.saveEx(transactionName);
 					}
+
+					// Link to OutBound Line if provided
+					if (outBoundOrderId > 0) {
+						MWMInOutBoundLine outBoundLine = new Query(
+							Env.getCtx(),
+							I_WM_InOutBoundLine.Table_Name,
+							"C_OrderLine_ID = ? AND WM_InOutBound_ID = ?",
+							transactionName
+						)
+							.setParameters(salesOrderLine.getC_OrderLine_ID(), outBoundOrderId)
+							.setClient_ID()
+							.first()
+						;
+						if (outBoundLine != null && outBoundLine.getWM_InOutBoundLine_ID() > 0) {
+							shipmentLine.setWM_InOutBoundLine_ID(outBoundLine.getWM_InOutBoundLine_ID());
+						}
+					}
+
+					shipmentLine.saveEx(transactionName);
 				});
 			}
 		});
@@ -928,6 +974,9 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		if (productId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_Product_ID@");
 		}
+
+		final int projectId = request.getProjectId();
+		final int activityId = request.getActivityId();
 		final int outBoundOrderId = request.getOutBoundOrderId();
 
 		AtomicReference<MInOutLine> shipmentLineReference = new AtomicReference<MInOutLine>();
@@ -979,9 +1028,6 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 			if (orderQuantityDelivered.compareTo(quantity) < 0) {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
-
-			final int projectId = request.getProjectId();
-			final int activityId = request.getActivityId();
 
 			Optional<MInOutLine> maybeShipmentLine = Arrays.asList(shipment.getLines(true))
 				.parallelStream()
@@ -1193,14 +1239,17 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 		builder.setId(
 				shipmentLine.getM_InOutLine_ID()
 			)
+			.setUuid(
+				TextManager.getValidString(
+					shipmentLine.getUUID()
+				)
+			)
+			.setLine(
+				shipmentLine.getLine()
+			)
 			.setProduct(
 				convertProduct(
 					shipmentLine.getM_Product_ID()
-				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					shipmentLine.getDescription()
 				)
 			)
 			.setQuantity(
@@ -1208,16 +1257,18 @@ public class ExpressShipment extends ExpressShipmentImplBase {
 					shipmentLine.getQtyEntered()
 				)
 			)
-			.setLine(
-				shipmentLine.getLine()
+			.setDescription(
+				TextManager.getValidString(
+					shipmentLine.getDescription()
+				)
+			)
+			.setOrderLineId(
+				shipmentLine.getC_OrderLine_ID()
+			)
+			.setOutBoundOrderLineId(
+				shipmentLine.getWM_InOutBoundLine_ID()
 			)
 		;
-		MOrderLine orderLine = new MOrderLine(Env.getCtx(), shipmentLine.getC_OrderLine_ID(), null);
-		if (orderLine != null && orderLine.getC_OrderLine_ID() > 0) {
-			builder.setOrderLineId(
-				orderLine.getC_OrderLine_ID()
-			);
-		}
 
 		return builder;
 	}

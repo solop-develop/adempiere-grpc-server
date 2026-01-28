@@ -65,7 +65,6 @@ static_resources:
                 - enrollment.Register
                 - express_movement.ExpressMovement
                 - express_receipt.ExpressReceipt
-                - express_shipment.ExpressShipment
                 - field.FieldManagementService
                 - field.business_partner.BusinessPartnerInfoService
                 - field.in_out.InOutInfoService
@@ -74,6 +73,7 @@ static_resources:
                 - field.payment.PaymentInfoService
                 - field.product.ProductInfoService
                 - file_management.FileManagement
+                - form.express_shipment.ExpressShipmentService
                 - form.out_bound_order.OutBoundOrderService
                 - form.payment_allocation.PaymentAllocation
                 - form.trial_balance_drillable.TrialBalanceDrillable
