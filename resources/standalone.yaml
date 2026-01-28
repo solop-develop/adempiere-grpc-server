@@ -1,24 +1,10 @@
 server:
     port: 50059
-    log_level: CONFIG
+    log_level: WARNING
 database:
     host: localhost
-    # port: 5432
-    port: 5415
-    # name: "agency-dev"
-    # name: "dyd-1517"
-    # name: "dyd-test"
-    # name: "dyd-3-2-2-qa"
-    # name: "dyd-qa"
-    name: "dyd-dev"
-    # name: "dentsu-seed-qa"
-    # name: movimagen-1910
-    # name: "movimagen-qa"
-    # name: "ivy-947"
-    # name: "jo-test"
-    # name: "jo-dev"
-    # name: "retail"
-    # name: "adempiere"
+    port: 5432
+    name: "adempiere"
     user: adempiere
     password: adempiere
     type: PostgreSQL
