@@ -29,10 +29,26 @@ package express_shipment;
 
 service ExpressShipment {
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (ListBusinessPartnersResponse) {
-		option (google.api.http) = { get: "/express-shipment/business-partners" };
+		option (google.api.http) = {
+			get: "/express-shipment/business-partners"
+		};
+	}
+	rpc ListOutBoundOrders(ListOutBoundOrdersRequest) returns (ListOutBoundOrdersResponse) {
+		option (google.api.http) = {
+			get: "/express-shipment/out-bound-orders"
+		};
 	}
 	rpc ListSalesOrders(ListSalesOrdersRequest) returns (ListSalesOrdersResponse) {
-		option (google.api.http) = { get: "/express-shipment/orders" };
+		option (google.api.http) = {
+			get: "/express-shipment/sales-orders"
+			additional_bindings: {
+				get: "/express-shipment/out-bound-orders/{out_bound_order_id}/sales-orders"
+			}
+			// TODO: Deprecated end-point
+			additional_bindings: {
+				get: "/express-shipment/orders"
+			}
+		};
 	}
 	rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
 		option (google.api.http) = { get: "/express-shipment/orders/{order_id}/products" };
@@ -45,7 +61,9 @@ service ExpressShipment {
 		};
 	}
 	rpc DeleteShipment(DeleteShipmentRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/express-shipment/shipments/{id}" };
+		option (google.api.http) = {
+			delete: "/express-shipment/shipments/{id}"
+		};
 	}
 	rpc ProcessShipment(ProcessShipmentRequest) returns (Shipment) {
 		option (google.api.http) = { 
@@ -61,7 +79,9 @@ service ExpressShipment {
 		};
 	}
 	rpc DeleteShipmentLine(DeleteShipmentLineRequest) returns (google.protobuf.Empty) {
-		option (google.api.http) = { delete: "/express-shipment/shipments/{shipment_id}/lines/{id}" };
+		option (google.api.http) = {
+			delete: "/express-shipment/shipments/{shipment_id}/lines/{id}"
+		};
 	}
 	rpc UpdateShipmentLine(UpdateShipmentLineRequest) returns (ShipmentLine) {
 		option (google.api.http) = { 
@@ -70,7 +90,9 @@ service ExpressShipment {
 		};
 	}
 	rpc ListShipmentLines(ListShipmentLinesRequest) returns (ListShipmentLinesResponse) {
-		option (google.api.http) = { get: "/express-shipment/shipments/{shipment_id}/lines" };
+		option (google.api.http) = {
+			get: "/express-shipment/shipments/{shipment_id}/lines"
+		};
 	}
 }
 
@@ -83,7 +105,6 @@ message BusinessPartner {
 	string name = 4;
 	string description = 5;
 }
-
 message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -93,7 +114,6 @@ message ListBusinessPartnersRequest {
 	string page_token = 6;
 	string search_value = 7;
 }
-
 message ListBusinessPartnersResponse {
 	int64 record_count = 1;
 	repeated BusinessPartner records = 2;
@@ -101,7 +121,34 @@ message ListBusinessPartnersResponse {
 }
 
 
-// Orders
+// Out Bound Orders
+message ListOutBoundOrdersRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 business_partner_id = 8;
+	int32 out_bound_order_id = 9;
+}
+message OutBoundOrder {
+	int32 id = 1;
+	string uuid = 2;
+	string document_no = 3;
+	google.protobuf.Timestamp pick_date = 4;
+	google.protobuf.Timestamp ship_date = 5;
+	string description = 6;
+}
+message ListOutBoundOrdersResponse {
+	int64 record_count = 1;
+	repeated OutBoundOrder records = 2;
+	string next_page_token = 3;
+}
+
+
+// Sales Orders
 message ListSalesOrdersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -111,14 +158,15 @@ message ListSalesOrdersRequest {
 	string page_token = 6;
 	string search_value = 7;
 	int32 business_partner_id = 8;
+	int32 out_bound_order_id = 9;
 }
-
 message SalesOrder {
 	int32 id = 1;
-	string document_no = 2;
-	google.protobuf.Timestamp date_ordered = 3;
+	string uuid = 2;
+	string document_no = 3;
+	google.protobuf.Timestamp date_ordered = 4;
+	string description = 5;
 }
-
 message ListSalesOrdersResponse {
 	int64 record_count = 1;
 	repeated SalesOrder records = 2;
@@ -137,7 +185,6 @@ message ListProductsRequest {
 	string search_value = 7;
 	int32 order_id = 8;
 }
-
 message Product {
 	int32 id = 1;
 	string upc = 2;
@@ -146,7 +193,6 @@ message Product {
 	string name = 5;
 	string description = 6;
 }
-
 message ListProductsResponse {
 	int64 record_count = 1;
 	repeated Product records = 2;
@@ -160,8 +206,8 @@ message CreateShipmentRequest {
 	bool is_create_lines_from_order = 2;
 	int32 project_id = 3;
 	int32 activity_id = 4;
+	int32 out_bound_order_id = 5;
 }
-
 message Shipment {
 	int32 id = 1;
 	string document_no = 2;
@@ -169,12 +215,12 @@ message Shipment {
 	google.protobuf.Timestamp movement_date = 4;
 	int32 order_id = 5;
 	bool is_completed = 6;
+	string description = 7;
 }
 
 message DeleteShipmentRequest {
 	int32 id = 1;
 }
-
 message ProcessShipmentRequest {
 	int32 id = 1;
 	string description = 2;
@@ -190,8 +236,8 @@ message CreateShipmentLineRequest {
 	bool is_quantity_from_order_line = 5;
 	int32 project_id = 6;
 	int32 activity_id = 7;
+	int32 out_bound_order_id = 8;
 }
-
 message ShipmentLine {
 	int32 id = 1;
 	int32 order_line_id = 2;
@@ -200,7 +246,6 @@ message ShipmentLine {
 	string quantity = 5;
 	int32 line = 6;
 }
-
 message ListShipmentLinesRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -211,18 +256,15 @@ message ListShipmentLinesRequest {
 	string search_value = 7;
 	int32 shipment_id = 8;
 }
-
 message ListShipmentLinesResponse {
 	int64 record_count = 1;
 	repeated ShipmentLine records = 2;
 	string next_page_token = 3;
 }
-
 message DeleteShipmentLineRequest {
 	int32 shipment_id = 1;
 	int32 id = 2;
 }
-
 message UpdateShipmentLineRequest {
 	int32 id = 1;
 	string description = 2;
