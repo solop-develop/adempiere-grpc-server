@@ -1,12 +1,14 @@
-package com.solop.sp013.luy.support.documents;
+package com.solop.sp013.luy.support.documents.v2;
 
 import com.solop.sp013.core.documents.IFiscalDocument;
 import com.solop.sp013.core.documents.IFiscalDocumentLine;
 import com.solop.sp013.core.documents.ReversalDocument;
-import com.solop.sp013.luy.cfe.dto.invoicy.CFEInvoiCyType;
 import com.solop.sp013.luy.cfe.dto.invoicy.RetPerc;
+import com.solop.sp013.luy.cfe.dto.invoicy.v2.CFEInvoiCyType;
+import com.solop.sp013.luy.support.documents.DocumentBuilder;
 import com.solop.sp013.luy.util.StringUtil;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -22,21 +24,24 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
- * Implementation for e-Ticket:
- * <li>Invoice</li>
- * <li>Credit Memo</li>
- * <li>Debit Memo</li>
- * <li>VxCA</li>
- * <li>NC-VxCA</li>
- * <li>NC-VxCA</li>
- * @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
+ * Version 2 Implementation for e-Withholding (e-Resguardo)
+ * Uses CFEInvoiCyType for the new provider API structure.
+ *
+ * @author Gabriel Escalona
  */
-public class E_Withholding implements ICFEDocument {
+public class E_Withholding_v2 implements ICFEDocument_v2 {
+
     protected IFiscalDocument document;
     protected final CFEInvoiCyType ficalConvertedDocument;
     protected static final int CONVERSION_RATE_SCALE = 3;
 
-    public E_Withholding() {
+    protected static final String RUT = "RUT";
+    protected static final String CI = "CI";
+    protected static final String OTHERS = "OTROS";
+    protected static final String PASSPORT = "PASSPORT";
+    protected static final String DNI = "DNI";
+
+    public E_Withholding_v2() {
         ficalConvertedDocument = new CFEInvoiCyType();
     }
 
@@ -45,18 +50,17 @@ public class E_Withholding implements ICFEDocument {
         invoicyIdDoc.setCFETipoCFE(new BigInteger(document.getTransactionType()));
         invoicyIdDoc.setCFEFchEmis(convertTimestampToGregorianCalendar(document.getDocumentDate()));
         invoicyIdDoc.setCFEIdCompra(document.getPoReferenceNo());
-        if(document.getFiscalDocumentNo() != null) {
+        if (document.getFiscalDocumentNo() != null) {
             invoicyIdDoc.setCFESerie(getPrefix(document.getFiscalDocumentNo()));
             invoicyIdDoc.setCFENro(getDocumentNo(document.getFiscalDocumentNo()));
         }
-        if(document.isTaxIncluded()) {
+        if (document.isTaxIncluded()) {
             invoicyIdDoc.setCFEMntBruto(BigInteger.valueOf(1));
         } else {
             invoicyIdDoc.setCFEMntBruto(BigInteger.valueOf(0));
         }
-        if(document.getPaymentRule().equals(IFiscalDocument.PaymentRule.CREDIT)) {
+        if (document.getPaymentRule().equals(IFiscalDocument.PaymentRule.CREDIT)) {
             invoicyIdDoc.setCFEFmaPago(BigInteger.valueOf(2));
-            //  Due Date
             invoicyIdDoc.setCFEFchVenc(convertTimestampToGregorianCalendar(document.getDueDate()));
         } else {
             invoicyIdDoc.setCFEFmaPago(BigInteger.valueOf(1));
@@ -67,15 +71,15 @@ public class E_Withholding implements ICFEDocument {
     protected CFEInvoiCyType.Emisor convertEmisor() {
         CFEInvoiCyType.Emisor invoicyEmisor = new CFEInvoiCyType.Emisor();
         invoicyEmisor.setEmiRznSoc(document.getOrganizationName());
-        if(document.getOrganizationPhone() != null) {
+        if (document.getOrganizationPhone() != null) {
             invoicyEmisor.setEmiTelefono(document.getOrganizationPhone());
         }
-        if(document.getOrganizationEmail() != null) {
+        if (document.getOrganizationEmail() != null) {
             invoicyEmisor.setEmiCorreoEmisor(document.getOrganizationEmail());
         }
         invoicyEmisor.setEmiSucursal(StringUtil.cutString(document.getOrganizationName(), 20));
         invoicyEmisor.setEmiDomFiscal(document.getOrganizationAddress1());
-        if(Util.isEmpty(document.getOrganizationCityName(), true)) {
+        if (Util.isEmpty(document.getOrganizationCityName(), true)) {
             throw new AdempiereException("@SP013.OrgCityMandatory@");
         }
         invoicyEmisor.setEmiCiudad(document.getOrganizationCityName());
@@ -85,7 +89,7 @@ public class E_Withholding implements ICFEDocument {
 
     protected int getTaxPayerTypeId(String taxPayerType) {
         int taxPayerTypeId = 0;
-        if(taxPayerType == null) {
+        if (taxPayerType == null) {
             return taxPayerTypeId;
         }
         switch (taxPayerType) {
@@ -110,20 +114,18 @@ public class E_Withholding implements ICFEDocument {
 
     protected CFEInvoiCyType.Receptor convertReceipt() {
         CFEInvoiCyType.Receptor invoicyReceptor = new CFEInvoiCyType.Receptor();
-        //  Tax Group
         invoicyReceptor.setRcpTipoDocRecep(getTaxPayerTypeId(document.getBusinessPartnerTaxType()));
-        if(document.getBusinessPartnerTaxType() != null) {
-            if(document.getBusinessPartnerTaxType().equalsIgnoreCase(RUT) || document.getBusinessPartnerTaxType().equalsIgnoreCase(CI)) {
+        if (document.getBusinessPartnerTaxType() != null) {
+            if (document.getBusinessPartnerTaxType().equalsIgnoreCase(RUT) || document.getBusinessPartnerTaxType().equalsIgnoreCase(CI)) {
                 invoicyReceptor.setRcpDocRecep(document.getBusinessPartnerTaxId());
-            } else  {
+            } else {
                 invoicyReceptor.setRcpDocRecep(document.getBusinessPartnerValue());
-                if(document.getCountryCode() == null) {
+                if (document.getCountryCode() == null) {
                     throw new AdempiereException("@SP013.MandatoryCountryForBP@");
                 }
             }
         }
         invoicyReceptor.setRcpCodPaisRecep(document.getCountryCode());
-        //  TODO: Validate UI Limit
         invoicyReceptor.setRcpRznSocRecep(document.getBusinessPartnerName());
         invoicyReceptor.setRcpDirRecep(document.getAddress1());
         invoicyReceptor.setRcpCiudadRecep(document.getCityName());
@@ -168,63 +170,56 @@ public class E_Withholding implements ICFEDocument {
         List<CFEInvoiCyType.Detalle.Item> invoicyItems = detail.getItem();
         document.getFiscalDocumentLines()
                 .forEach(documentLine -> {
-            CFEInvoiCyType.Detalle.Item invoicyItem = new CFEInvoiCyType.Detalle.Item();
-            if(documentLine.getLineTotalAmount().compareTo(Env.ZERO) < 0) {
-                invoicyItem.setIteIndFact(9);
-            }
-            CFEInvoiCyType.Detalle.Item.RetencPercep withholdingItem = new CFEInvoiCyType.Detalle.Item.RetencPercep();
-            CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem withholdingItemDetail = getRetencPercepItem(documentLine);
-            withholdingItem.getRetencPercepItem().add(withholdingItemDetail);
-            invoicyItem.setRetencPercep(withholdingItem);
-            invoicyItems.add(invoicyItem);
-        });
+                    CFEInvoiCyType.Detalle.Item invoicyItem = new CFEInvoiCyType.Detalle.Item();
+                    if (documentLine.getLineTotalAmount().compareTo(Env.ZERO) < 0) {
+                        invoicyItem.setIteIndFact(9);
+                    }
+                    CFEInvoiCyType.Detalle.Item.RetencPercep withholdingItem = new CFEInvoiCyType.Detalle.Item.RetencPercep();
+                    CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem withholdingItemDetail = getRetencPercepItem(documentLine);
+                    withholdingItem.getRetencPercepItem().add(withholdingItemDetail);
+                    invoicyItem.setRetencPercep(withholdingItem);
+                    invoicyItems.add(invoicyItem);
+                });
         return detail;
     }
 
-    private static CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem getRetencPercepItem(IFiscalDocumentLine documentLine) {
+    protected static CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem getRetencPercepItem(IFiscalDocumentLine documentLine) {
         CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem withholdingItemDetail = new CFEInvoiCyType.Detalle.Item.RetencPercep.RetencPercepItem();
         withholdingItemDetail.setIteRetPercCodRet(documentLine.getWithholdingCode());
         withholdingItemDetail.setIteRetPercTasa(documentLine.getWithholdingRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
-//            withholdingItemDetail.setIteRetPercMntSujetoaRet(retPercResg.getMntSujetoaRet());
         withholdingItemDetail.setIteRetPercValRetPerc(documentLine.getLineTotalAmount().setScale(2, RoundingMode.HALF_UP).abs());
         withholdingItemDetail.setIteRetPerc(RetPerc.R);
         return withholdingItemDetail;
     }
 
     protected CFEInvoiCyType.SubTotInfo convertSubtotalInfo() {
-        CFEInvoiCyType.SubTotInfo subTotalInfo = new CFEInvoiCyType.SubTotInfo();
-
-        return subTotalInfo;
+        return new CFEInvoiCyType.SubTotInfo();
     }
 
     protected CFEInvoiCyType.DscRcgGlobal convertDescuentoGlobal() {
-        CFEInvoiCyType.DscRcgGlobal descuentoGlobal = new CFEInvoiCyType.DscRcgGlobal();
-
-        return descuentoGlobal;
+        return new CFEInvoiCyType.DscRcgGlobal();
     }
 
     protected CFEInvoiCyType.MediosPago convertMediosDePago() {
-        CFEInvoiCyType.MediosPago mediosDePago = new CFEInvoiCyType.MediosPago();
-
-        return mediosDePago;
+        return new CFEInvoiCyType.MediosPago();
     }
 
     protected CFEInvoiCyType.Referencia convertReferencia() {
         CFEInvoiCyType.Referencia reference = new CFEInvoiCyType.Referencia();
         List<CFEInvoiCyType.Referencia.ReferenciaItem> references = reference.getReferenciaItem();
-        //  For References
-        //  Credit and Debit Memo
-        if(document.hasReversalDocument()) {
+        if (document.hasReversalDocument()) {
             CFEInvoiCyType.Referencia.ReferenciaItem referenceItem = new CFEInvoiCyType.Referencia.ReferenciaItem();
             referenceItem.setRefNroLinRef(1);
             ReversalDocument reversalDocument = document.getFirstReversalDocument();
             String prefix = getPrefix(reversalDocument.getDocumentNo());
-            if(!Util.isEmpty(prefix)) {
+            if (!Util.isEmpty(prefix)) {
                 referenceItem.setRefSerie(prefix);
             }
             referenceItem.setRefNroCFERef(getDocumentNo(reversalDocument.getDocumentNo()));
             referenceItem.setRefTpoDocRef(new BigInteger(reversalDocument.getTransactionType()));
             referenceItem.setRefFechaCFEref(convertTimestampToGregorianCalendar(reversalDocument.getDocumentDate()));
+            referenceItem.setRefTpoMonedaRef(reversalDocument.getCurrencyCode());
+            referenceItem.setRefTipCambioRef(reversalDocument.getConversionRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
 
             references.add(referenceItem);
         }
@@ -243,20 +238,17 @@ public class E_Withholding implements ICFEDocument {
 
     protected String getFiscalComment() {
         StringBuilder documentNote = new StringBuilder();
-        if(!Util.isEmpty(document.getDocumentNote(), true)) {
+        if (!Util.isEmpty(document.getDocumentNote(), true)) {
             documentNote.append(document.getDocumentNote());
         }
-        if(!Util.isEmpty(document.getFiscalComment(), true)) {
+        if (!Util.isEmpty(document.getFiscalComment(), true)) {
             documentNote.append(Env.NL).append(document.getFiscalComment());
-
         }
         return documentNote.toString();
     }
 
     protected CFEInvoiCyType.Mandante convertMandante() {
-        CFEInvoiCyType.Mandante mandante = new CFEInvoiCyType.Mandante();
-
-        return mandante;
+        return new CFEInvoiCyType.Mandante();
     }
 
     protected void convertDocument() {
@@ -270,7 +262,7 @@ public class E_Withholding implements ICFEDocument {
         ficalConvertedDocument.setMediosPago(convertMediosDePago());
         ficalConvertedDocument.setReferencia(convertReferencia());
         String fiscalComment = getFiscalComment();
-        if(!fiscalComment.isEmpty()) {
+        if (!fiscalComment.isEmpty()) {
             ficalConvertedDocument.getIdDoc().setCFEAdenda(fiscalComment);
         }
         ficalConvertedDocument.setMandante(convertMandante());
@@ -283,7 +275,13 @@ public class E_Withholding implements ICFEDocument {
     }
 
     @Override
-    public CFEInvoiCyType getConvertedDocument() {
+    public com.solop.sp013.luy.cfe.dto.invoicy.CFEInvoiCyType getConvertedDocument() {
+        // Return null for v1 type - use getConvertedDocument_v2() instead
+        return null;
+    }
+
+    @Override
+    public CFEInvoiCyType getConvertedDocument_v2() {
         return ficalConvertedDocument;
     }
 
@@ -296,9 +294,12 @@ public class E_Withholding implements ICFEDocument {
         try {
             GregorianCalendar cal = (GregorianCalendar) GregorianCalendar.getInstance();
             cal.setTime(timestamp);
-            XMLGregorianCalendar xgcal;
-            xgcal = DatatypeFactory.newInstance().newXMLGregorianCalendarDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH)+1, cal.get(Calendar.DAY_OF_MONTH), DatatypeConstants.FIELD_UNDEFINED);
-            return xgcal;
+            return DatatypeFactory.newInstance().newXMLGregorianCalendarDate(
+                    cal.get(Calendar.YEAR),
+                    cal.get(Calendar.MONTH) + 1,
+                    cal.get(Calendar.DAY_OF_MONTH),
+                    DatatypeConstants.FIELD_UNDEFINED
+            );
         } catch (DatatypeConfigurationException e) {
             throw new AdempiereException(e);
         }

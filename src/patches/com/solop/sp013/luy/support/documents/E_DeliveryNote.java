@@ -1,7 +1,6 @@
 package com.solop.sp013.luy.support.documents;
 
 import com.solop.sp013.core.documents.IFiscalDocument;
-import com.solop.sp013.core.util.ElectronicInvoicingChanges;
 import com.solop.sp013.luy.cfe.dto.invoicy.CFEInvoiCyType;
 import com.solop.sp013.luy.util.StringUtil;
 import org.adempiere.exceptions.AdempiereException;
@@ -32,12 +31,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <li>NC-VxCA</li>
  * @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
  */
-public class E_InvoiceDocument implements ICFEDocument {
+public class E_DeliveryNote implements ICFEDocument {
     protected IFiscalDocument document;
     protected final CFEInvoiCyType ficalConvertedDocument;
-    protected final int CONVERSION_RATE_SCALE = 3;
 
-    public E_InvoiceDocument() {
+
+    public E_DeliveryNote() {
         ficalConvertedDocument = new CFEInvoiCyType();
     }
 
@@ -45,7 +44,6 @@ public class E_InvoiceDocument implements ICFEDocument {
         CFEInvoiCyType.IdDoc invoicyIdDoc = new CFEInvoiCyType.IdDoc();
         invoicyIdDoc.setCFETipoCFE(new BigInteger(document.getTransactionType()));
         invoicyIdDoc.setCFEFchEmis(convertTimestampToGregorianCalendar(document.getDocumentDate()));
-        invoicyIdDoc.setCFEIdCompra(document.getPoReferenceNo());
         if(document.getFiscalDocumentNo() != null) {
             invoicyIdDoc.setCFESerie(getPrefix(document.getFiscalDocumentNo()));
             invoicyIdDoc.setCFENro(getDocumentNo(document.getFiscalDocumentNo()));
@@ -62,6 +60,7 @@ public class E_InvoiceDocument implements ICFEDocument {
         } else {
             invoicyIdDoc.setCFEFmaPago(BigInteger.valueOf(1));
         }
+        invoicyIdDoc.setCFETipoTraslado(BigInteger.ONE);
         //  TODO: Add it from Document Type
         //  Print Format
         //  0- No especificado
@@ -154,7 +153,7 @@ public class E_InvoiceDocument implements ICFEDocument {
     protected CFEInvoiCyType.Totales convertTotals() {
         CFEInvoiCyType.Totales totals = new CFEInvoiCyType.Totales();
         totals.setTotTpoMoneda(com.solop.sp013.luy.cfe.dto.invoicy.TipMonType.valueOf(document.getCurrencyCode()));
-        totals.setTotTpoCambio(document.getCurrencyRate().setScale(CONVERSION_RATE_SCALE, RoundingMode.HALF_UP));
+        totals.setTotTpoCambio(document.getCurrencyRate().setScale(3, RoundingMode.HALF_UP));
         totals.setTotMntNoGrv(Env.ZERO);
         totals.setTotMntExpoyAsim(Env.ZERO);
         totals.setTotMntImpuestoPerc(Env.ZERO);
@@ -183,8 +182,6 @@ public class E_InvoiceDocument implements ICFEDocument {
                 totals.setTotMntIVAOtra(totals.getTotMntIVAOtra().add(tax.getTaxAmount()));
             }
         });
-        totals.setTotMntTotal(document.getGrandTotal());
-        totals.setTotMntPagar(document.getGrandTotal());
         return totals;
     }
 
@@ -197,11 +194,7 @@ public class E_InvoiceDocument implements ICFEDocument {
             CFEInvoiCyType.Detalle.Item.CodItem codItem = new CFEInvoiCyType.Detalle.Item.CodItem();
             CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem codItemItem = new CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem();
             codItemItem.setIteCodiTpoCod("INT1");
-            String productValue = documentLine.getProductValue();
-            if (Util.isEmpty(productValue, true)) {
-                productValue = "INT1";
-            }
-            codItemItem.setIteCodiCod(productValue);
+            codItemItem.setIteCodiCod(documentLine.getProductValue());
             codItem.getCodItemItem().add(codItemItem);
             if(documentLine.getProductBarCode() != null) {
                 CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem codItemItemBarcode = new CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem();
@@ -209,7 +202,9 @@ public class E_InvoiceDocument implements ICFEDocument {
                 codItemItemBarcode.setIteCodiCod(documentLine.getProductBarCode());
                 codItem.getCodItemItem().add(codItemItemBarcode);
             }
-            invoicyItem.setIteIndFact(new BigInteger(documentLine.getTaxIndicator()).intValue());
+            if (documentLine.getQuantity().signum() < 0) {
+                invoicyItem.setIteIndFact(8);
+            }
             invoicyItem.setIteNomItem(documentLine.getProductName());
             invoicyItem.setIteDscItem(documentLine.getLineDescription());
             BigDecimal quantity = documentLine.getQuantity();
@@ -271,30 +266,23 @@ public class E_InvoiceDocument implements ICFEDocument {
         CFEInvoiCyType.Referencia reference = new CFEInvoiCyType.Referencia();
         List<CFEInvoiCyType.Referencia.ReferenciaItem> references = reference.getReferenciaItem();
         //  For References
-        //  Credit and Debit Memo
-        if(document.getDocumentType().equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Credit_Note) || document.getDocumentType().equals(ElectronicInvoicingChanges.SP013_FiscalDocumentType_Debit_Note)) {
-            if(document.hasReversalDocument()) {
-                AtomicInteger referenceNoItem = new AtomicInteger(1);
-                document.getFiscalReversalDocuments().forEach(reversalDocument -> {
-                    CFEInvoiCyType.Referencia.ReferenciaItem referenceItem = new CFEInvoiCyType.Referencia.ReferenciaItem();
-                    referenceItem.setRefNroLinRef(referenceNoItem.getAndIncrement());
-                    String prefix = getPrefix(reversalDocument.getDocumentNo());
-                    if(!Util.isEmpty(prefix)) {
-                        referenceItem.setRefSerie(prefix);
-                    }
-                    referenceItem.setRefNroCFERef(getDocumentNo(reversalDocument.getDocumentNo()));
-                    referenceItem.setRefTpoDocRef(new BigInteger(reversalDocument.getTransactionType()));
-                    referenceItem.setRefFechaCFEref(convertTimestampToGregorianCalendar(reversalDocument.getDocumentDate()));
-                    references.add(referenceItem);
-                });
-            } else {
+
+        if(document.hasReversalDocument()) {
+            AtomicInteger referenceNoItem = new AtomicInteger(1);
+            document.getFiscalReversalDocuments().forEach(reversalDocument -> {
                 CFEInvoiCyType.Referencia.ReferenciaItem referenceItem = new CFEInvoiCyType.Referencia.ReferenciaItem();
-                referenceItem.setRefNroLinRef(1);
-                referenceItem.setRefIndGlobal(BigInteger.valueOf(1));
-                referenceItem.setRefRazonRef(document.getDescription());
+                referenceItem.setRefNroLinRef(referenceNoItem.getAndIncrement());
+                String prefix = getPrefix(reversalDocument.getDocumentNo());
+                if(!Util.isEmpty(prefix)) {
+                    referenceItem.setRefSerie(prefix);
+                }
+                referenceItem.setRefNroCFERef(getDocumentNo(reversalDocument.getDocumentNo()));
+                referenceItem.setRefTpoDocRef(new BigInteger(reversalDocument.getTransactionType()));
+                referenceItem.setRefFechaCFEref(convertTimestampToGregorianCalendar(reversalDocument.getDocumentDate()));
                 references.add(referenceItem);
-            }
+            });
         }
+
         return reference;
     }
 
