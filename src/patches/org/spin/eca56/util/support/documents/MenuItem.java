@@ -65,9 +65,6 @@ public class MenuItem extends DictionaryDocument {
 		detail.put("is_summary", menu.isSummary());
 		detail.put("action", menu.getAction());
 		//	
-		if (menu.getAD_Menu_ID() == 129) {
-			System.out.println(menu.getName() + " - " + menu.getAD_Menu_ID());
-		}
 		if(!Util.isEmpty(menu.getAction())) {
 			if(menu.getAction().equals(MMenu.ACTION_Form)) {
 				if(menu.getAD_Form_ID() > 0) {
