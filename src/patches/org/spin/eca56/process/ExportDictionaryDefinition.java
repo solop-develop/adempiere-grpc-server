@@ -310,9 +310,6 @@ public class ExportDictionaryDefinition extends ExportDictionaryDefinitionAbstra
 			.getIDsAsList()
 			.forEach(menuId -> {
 				MMenu menu = new MMenu(getCtx(), menuId, get_TrxName());
-				if (menuId == 129) {
-					System.out.println(menu.getName() + " - " + menu.getAD_Menu_ID());
-				}
 				QueueLoader.getInstance()
 					.getQueueManager(ApplicationDictionary.CODE)
 					.withEntity(menu)
