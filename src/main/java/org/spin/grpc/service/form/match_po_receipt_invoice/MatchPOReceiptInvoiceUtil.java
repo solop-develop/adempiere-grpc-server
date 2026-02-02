@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
@@ -34,7 +35,6 @@ import org.compiere.model.MMatchPO;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MRole;
-// import org.compiere.model.MStorage;
 import org.compiere.model.MSysConfig;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
@@ -219,11 +219,11 @@ public class MatchPOReceiptInvoiceUtil {
 				+ " FULL JOIN M_MatchPO mo ON (lin.C_OrderLine_ID = mo.C_OrderLine_ID) "
 				+ " WHERE "
 			;
-			
+
 			if (isMatched) {
 				sql += " mo." + lineType + " IS NOT NULL ";
 			} else {
- 				sql += " ( mo." + lineType + " IS NULL OR "
+				sql += " ( mo." + lineType + " IS NULL OR "
 					+ " (lin.QtyOrdered <> (SELECT sum(mo1.Qty) AS Qty"
 					+ " FROM m_matchpo mo1 WHERE "
 					+ " mo1.C_ORDERLINE_ID = lin.C_ORDERLINE_ID AND "
@@ -426,7 +426,7 @@ public class MatchPOReceiptInvoiceUtil {
 					log.warning("PO(Inv) Match not created: " + matchPO);
 				}
 				if (MClient.isClientAccountingImmediate()) {
-					// String mesageError = 
+					// String mesageError =
 					DocumentEngine.postImmediate(
 						matchPO.getCtx(),
 						matchPO.getAD_Client_ID(),
@@ -463,7 +463,7 @@ public class MatchPOReceiptInvoiceUtil {
 					success = true;
 					//	Correct Ordered Qty for Stocked Products (see MOrder.reserveStock / MInOut.processIt)
 					if (shipmentLine.getProduct() != null && shipmentLine.getProduct().isStocked()) {
-						/*
+						 /*
 						success = MStorage.add(
 							Env.getCtx(),
 							shipmentLine.getM_Warehouse_ID(),
@@ -476,14 +476,14 @@ public class MatchPOReceiptInvoiceUtil {
 							quantity.negate(),
 							transactionName
 						);
-						*/
-						// /*
+						 */
+
 						ReservationBuilder.newInstance(Env.getCtx(), transactionName)
 							.withInOutLine(shipmentLine)
 							.withQuantity(quantity)
 							.build()
 						;
-						// */
+
 					}
 				}
 			}
@@ -493,5 +493,4 @@ public class MatchPOReceiptInvoiceUtil {
 		}
 		return success;
 	} // createMatchRecord
-
 }
