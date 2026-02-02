@@ -34,13 +34,13 @@ import org.compiere.model.MMatchPO;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MRole;
-import org.compiere.model.MStorage;
+// import org.compiere.model.MStorage;
 import org.compiere.model.MSysConfig;
 import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-// import org.solop.util.ReservationBuilder;
+import org.solop.util.ReservationBuilder;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.MatchType;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
@@ -463,7 +463,7 @@ public class MatchPOReceiptInvoiceUtil {
 					success = true;
 					//	Correct Ordered Qty for Stocked Products (see MOrder.reserveStock / MInOut.processIt)
 					if (shipmentLine.getProduct() != null && shipmentLine.getProduct().isStocked()) {
-						// /*
+						/*
 						success = MStorage.add(
 							Env.getCtx(),
 							shipmentLine.getM_Warehouse_ID(),
@@ -476,14 +476,14 @@ public class MatchPOReceiptInvoiceUtil {
 							quantity.negate(),
 							transactionName
 						);
-						// */
-						/*
+						*/
+						// /*
 						ReservationBuilder.newInstance(Env.getCtx(), transactionName)
 							.withInOutLine(shipmentLine)
 							.withQuantity(quantity)
 							.build()
 						;
-						*/
+						// */
 					}
 				}
 			}
