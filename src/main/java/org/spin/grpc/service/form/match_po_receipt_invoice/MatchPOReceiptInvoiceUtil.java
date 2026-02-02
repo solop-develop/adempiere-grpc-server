@@ -46,7 +46,7 @@ import org.spin.backend.grpc.form.match_po_receipt_invoice.Matched;
 import org.spin.backend.grpc.form.match_po_receipt_invoice.Vendor;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class MatchPOReceiptInvoiceUtil {
 	/**	Logger			*/
@@ -110,7 +110,7 @@ public class MatchPOReceiptInvoiceUtil {
 						resultSet.getInt("Header_ID")
 				)
 				.setDate(
-						ValueManager.getProtoTimestampFromTimestamp(
+						TimeManager.getProtoTimestampFromTimestamp(
 								resultSet.getTimestamp(5) // Date
 						)
 				)
@@ -404,7 +404,7 @@ public class MatchPOReceiptInvoiceUtil {
 					success = true;
 				}
 				else {
-					log.log(Level.SEVERE, "Inv Match not created: " + match);
+					log.warning("Inv Match not created: " + match);
 				}
 				String invoiceDocumentStatus = match.getC_InvoiceLine().getC_Invoice().getDocStatus();
 				String inOutDocumentStatus = match.getM_InOutLine().getM_InOut().getDocStatus();
@@ -423,7 +423,7 @@ public class MatchPOReceiptInvoiceUtil {
 				MMatchPO matchPO = new MMatchPO(invoiceLine, invoiceLine.getParent().getDateAcct() , quantity);
 				matchPO.setC_InvoiceLine_ID(invoiceLine);
 				if (!matchPO.save()) {
-					log.log(Level.SEVERE, "PO(Inv) Match not created: " + matchPO);
+					log.warning("PO(Inv) Match not created: " + matchPO);
 				}
 				if (MClient.isClientAccountingImmediate()) {
 					// String mesageError =
@@ -457,7 +457,7 @@ public class MatchPOReceiptInvoiceUtil {
 			if (shipmentLine.getM_Product_ID() != 0) {
 				MMatchPO match = new MMatchPO(shipmentLine, null, quantity);
 				if (!match.save()) {
-					log.log(Level.SEVERE, "PO Match not created: " + match);
+					log.warning("PO Match not created: " + match);
 				}
 				else {
 					success = true;
