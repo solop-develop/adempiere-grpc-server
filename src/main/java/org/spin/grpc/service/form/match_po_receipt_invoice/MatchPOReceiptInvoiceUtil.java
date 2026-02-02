@@ -267,7 +267,7 @@ public class MatchPOReceiptInvoiceUtil {
 				+ "HAVING "
 				+ (isMatched ? "0" : "lin.QtyInvoiced")
 				+ "<>SUM(COALESCE(mi.Qty,0))"
-				;
+			;
 		}
 		else if (matchType == MatchType.PURCHASE_ORDER_VALUE) {
 			return " GROUP BY hdr.C_Order_ID,hdr.DocumentNo,hdr.DateOrdered,bp.Name,hdr.C_BPartner_ID,"
@@ -282,7 +282,7 @@ public class MatchPOReceiptInvoiceUtil {
 			+ "HAVING "
 			+ (isMatched ? "0" : "lin.MovementQty")
 			+ "<>SUM(COALESCE(m.Qty,0))"
-			;
+		;
 	}
 
 
@@ -341,15 +341,15 @@ public class MatchPOReceiptInvoiceUtil {
 	 * @return true if created
 	 */
 	public static boolean createMatchRecord(
-			boolean isInvoice, int inOutLineId, int lineId,
-			BigDecimal quantity, String transactionName
+		boolean isInvoice, int inOutLineId, int lineId,
+		BigDecimal quantity, String transactionName
 	) {
 		if (quantity.compareTo(Env.ZERO) == 0) {
 			return true;
 		}
 		log.fine("IsInvoice=" + isInvoice
-				+ ", M_InOutLine_ID=" + inOutLineId + ", Line_ID=" + lineId
-				+ ", Qty=" + quantity);
+			+ ", M_InOutLine_ID=" + inOutLineId + ", Line_ID=" + lineId
+			+ ", Qty=" + quantity);
 		//
 		boolean success = false;
 		MInOutLine shipmentLine = new MInOutLine (Env.getCtx(), inOutLineId, transactionName);
@@ -465,16 +465,16 @@ public class MatchPOReceiptInvoiceUtil {
 					if (shipmentLine.getProduct() != null && shipmentLine.getProduct().isStocked()) {
 						 /*
 						success = MStorage.add(
-								Env.getCtx(),
-								shipmentLine.getM_Warehouse_ID(),
-								shipmentLine.getM_Locator_ID(),
-								shipmentLine.getM_Product_ID(),
-								shipmentLine.getM_AttributeSetInstance_ID(),
-								orderLine.getM_AttributeSetInstance_ID(),
-								null,
-								null,
-								quantity.negate(),
-								transactionName
+							Env.getCtx(),
+							shipmentLine.getM_Warehouse_ID(),
+							shipmentLine.getM_Locator_ID(),
+							shipmentLine.getM_Product_ID(),
+							shipmentLine.getM_AttributeSetInstance_ID(),
+							orderLine.getM_AttributeSetInstance_ID(),
+							null,
+							null,
+							quantity.negate(),
+							transactionName
 						);
 						 */
 
