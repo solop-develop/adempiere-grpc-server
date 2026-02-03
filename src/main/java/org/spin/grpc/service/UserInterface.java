@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_EntityType;
-import org.adempiere.core.domains.models.I_AD_Field;
+// import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
@@ -43,7 +43,7 @@ import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
-import org.compiere.model.MField;
+// import org.compiere.model.MField;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
@@ -889,18 +889,18 @@ public class UserInterface extends UserInterfaceImplBase {
 					return;
 				}
 
-				if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
-					boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
-					if (isReadOnlyColumn) {
-						log.warning(
-							Msg.parseTranslation(
-								context,
-								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
-							)
-						);
-						return;
-					}
-				}
+				// if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
+				// 	boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
+				// 	if (isReadOnlyColumn) {
+				// 		log.warning(
+				// 			Msg.parseTranslation(
+				// 				context,
+				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
+				// 			)
+				// 		);
+				// 		return;
+				// 	}
+				// }
 
 				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
 				// 	if (!isActiveRecord) {
@@ -914,27 +914,27 @@ public class UserInterface extends UserInterfaceImplBase {
 				// 	}
 				// }
 
-				MField field = new Query(
-					Env.getCtx(),
-					I_AD_Field.Table_Name,
-					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
-					null
-				)
-					.setParameters(column.getAD_Column_ID(), tab.getAD_Tab_ID())
-					.setOnlyActiveRecords(true)
-					.first()
-				;
-				if (field != null) {
-					if (field.isReadOnly()) {
-						log.warning(
-							Msg.parseTranslation(
-								context,
-								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsReadOnly@ "
-							)
-						);
-						return;
-					}
-				}
+				// MField field = new Query(
+				// 	Env.getCtx(),
+				// 	I_AD_Field.Table_Name,
+				// 	I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
+				// 	null
+				// )
+				// 	.setParameters(column.getAD_Column_ID(), tab.getAD_Tab_ID())
+				// 	.setOnlyActiveRecords(true)
+				// 	.first()
+				// ;
+				// if (field != null) {
+				// 	if (field.isReadOnly()) {
+				// 		log.warning(
+				// 			Msg.parseTranslation(
+				// 				context,
+				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsReadOnly@ "
+				// 			)
+				// 		);
+				// 		return;
+				// 	}
+				// }
 			}
 
 			Object value = null;
