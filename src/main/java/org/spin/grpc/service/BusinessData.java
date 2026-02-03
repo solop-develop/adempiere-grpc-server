@@ -18,6 +18,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_AD_PInstance;
@@ -54,7 +56,9 @@ import org.spin.backend.grpc.common.RunBusinessProcessRequest;
 import org.spin.backend.grpc.common.UpdateEntityRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.AccessUtil;
+import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
+import org.spin.base.util.LookupUtil;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
@@ -754,33 +758,149 @@ public class BusinessData extends BusinessDataImplBase {
 		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
-		
+
 		PO entity = RecordUtil.getEntity(context, table.getTableName(), request.getId(), null);
-		if(entity != null
-				&& entity.get_ID() >= 0) {
-			Map<String, Value> attributes = request.getAttributes().getFieldsMap();
-			attributes.keySet().forEach(key -> {
-				Value attribute = attributes.get(key);
-				int referenceId = DictionaryUtil.getReferenceId(entity.get_Table_ID(), key);
-				Object value = null;
-				if(referenceId > 0) {
+		if (entity == null) {
+			throw new AdempiereException("@Error@ @PO@ @NotFound@");
+		}
+		PO currentEntity = entity;
+		POAdapter adapter = new POAdapter(currentEntity);
+
+		//	Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextFromPO(
+			windowNo, context, entity, false
+		);
+
+		final String[] keyColumns = table.getKeyColumns();
+		Entity.Builder builder = ConvertUtil.convertEntity(entity);
+
+		if (table.isView()) {
+			log.warning("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@ ");
+			return builder;
+		}
+
+		final int sessionClientId = Env.getAD_Client_ID(context);
+		if (sessionClientId != currentEntity.getAD_Client_ID()) {
+			log.warning("@Ignored@ : Record is other client");
+			return builder;
+		}
+
+		// final boolean isActiveRecord = currentEntity.isActive();
+		final boolean isProcessedRecord = currentEntity.get_ValueAsBoolean("Processed");
+		final boolean isProcessingRecord = currentEntity.get_ValueAsBoolean("Processing");
+
+		Map<String, Value> attributes = request.getAttributes().getFieldsMap();
+		attributes.entrySet().forEach(attribute -> {
+			final String columnName = attribute.getKey();
+			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
+				return;
+			}
+			MColumn column = table.getColumn(columnName);
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				return;
+			}
+			final int displayTypeId = column.getAD_Reference_ID();
+
+			String displayValue = ValueManager.getDisplayedValueFromReference(
+				context,
+				attribute.getValue(),
+				columnName,
+				displayTypeId,
+				column.getAD_Reference_Value_ID()
+			);
+
+			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
+				// prevent warning `PO.set_Value: Column not updateable`
+				log.warning(
+					Msg.parseTranslation(
+						context,
+						"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsKey@ "
+					)
+				);
+				return;
+			}
+
+			if (!column.isAlwaysUpdateable()) {
+				if (!column.isUpdateable()) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsUpdateable@ @NotValid@"
+						)
+					);
+					return;
+				}
+
+				if (isProcessedRecord) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processed@ "
+						)
+					);
+					return;
+				}
+				if (isProcessingRecord) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processing@ "
+						)
+					);
+					return;
+				}
+
+				if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
+					boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
+					if (isReadOnlyColumn) {
+						log.warning(
+							Msg.parseTranslation(
+								context,
+								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
+							)
+						);
+						return;
+					}
+				}
+
+				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
+				// 	if (!isActiveRecord) {
+				// 		log.warning(
+				// 			Msg.parseTranslation(
+				// 				context,
+				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotActive@ "
+				// 			)
+				// 		);
+				// 		return;
+				// 	}
+				// }
+			}
+
+			Object value = null;
+			if (!attribute.getValue().hasNullValue()) {
+				if (displayTypeId > 0) {
 					value = ValueManager.getObjectFromProtoValue(
-						attribute,
-						referenceId
+						attribute.getValue(),
+						displayTypeId
 					);
 				} 
-				if(value == null) {
+				if (value == null) {
 					value = ValueManager.getObjectFromProtoValue(
-						attribute
+						attribute.getValue()
 					);
 				}
-				entity.set_ValueOfColumn(key, value);
-			});
-			//	Save entity
-			entity.saveEx();
-		}
-		//	Return
-		return ConvertUtil.convertEntity(entity);
+			}
+			adapter.set_ValueNoCheck(columnName, value);
+		});
+		//	Save entity
+		currentEntity.saveEx();
+
+
+		// Reload entity
+		builder = ConvertUtil.convertEntity(currentEntity);
+		return builder;
 	}
 
 

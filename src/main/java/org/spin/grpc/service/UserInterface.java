@@ -31,16 +31,19 @@ import java.util.logging.Level;
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
 import org.adempiere.core.domains.models.I_AD_Element;
 import org.adempiere.core.domains.models.I_AD_EntityType;
+import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Language;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.I_CM_Chat;
 import org.adempiere.core.domains.models.I_R_MailText;
+import org.adempiere.core.domains.models.X_AD_Window;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MChangeLog;
 import org.compiere.model.MChat;
 import org.compiere.model.MChatEntry;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
+import org.compiere.model.MField;
 import org.compiere.model.MMailText;
 import org.compiere.model.MMenu;
 import org.compiere.model.MMessage;
@@ -48,6 +51,7 @@ import org.compiere.model.MQuery;
 import org.compiere.model.MRole;
 import org.compiere.model.MTab;
 import org.compiere.model.MTable;
+import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
@@ -55,6 +59,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Evaluator;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -742,11 +747,16 @@ public class UserInterface extends UserInterfaceImplBase {
 
 		MTab tab = MTab.get(Env.getCtx(), request.getTabId());
 		if (tab == null || tab.getAD_Tab_ID() <= 0) {
-			throw new AdempiereException("@AD_Tab_ID@ @NotFound@");
+			throw new AdempiereException("@AD_Tab_ID@ (" + request.getTabId() + ") @NotFound@");
+		}
+
+		MWindow window = MWindow.get(Env.getCtx(), tab.getAD_Window_ID());
+		if (window == null || window.getAD_Window_ID() <= 0) {
+			throw new AdempiereException("@AD_Window_ID@ (" + tab.getAD_Window_ID() + ") @NotFound@");
 		}
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
-		String[] keyColumns = table.getKeyColumns();
+		final String[] keyColumns = table.getKeyColumns();
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		ArrayList<Object> parametersList = new ArrayList<Object>();
 		PO entity = null;
@@ -772,13 +782,55 @@ public class UserInterface extends UserInterfaceImplBase {
 		PO currentEntity = entity;
 		POAdapter adapter = new POAdapter(currentEntity);
 
+		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
+			.setTabId(request.getTabId())
+			.setId(entity.get_ID())
+		;
+		Entity.Builder builder = getTabEntity(
+			getEntityBuilder.build(),
+			parametersList
+		);
+
+		Properties context = Env.getCtx();
+		//	Fill context
+		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
+		ContextManager.setContextFromPO(
+			windowNo, context, entity, false
+		);
+
+		if (window.getWindowType().equals(X_AD_Window.WINDOWTYPE_QueryOnly)) {
+			log.warning("@Ignored@ @AD_Window_ID@ (" + window.getName() + ") : @WindowType@ " + X_AD_Window.WINDOWTYPE_QueryOnly);
+			return builder;
+		}
+		if (table.isView()) {
+			log.warning("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@ ");
+			return builder;
+		}
+		if (tab.isReadOnly()) {
+			log.warning("@Ignored@ @AD_Tab_ID@ (" + tab.getName() + ") : @IsReadOnly@ ");
+			return builder;
+		}
+		if (!Util.isEmpty(tab.getReadOnlyLogic(), true)) {
+			boolean isReadOnlyTab = Evaluator.evaluateLogic(currentEntity, tab.getReadOnlyLogic());
+			if (isReadOnlyTab) {
+				log.warning("@Ignored@ @AD_Tab_ID@ (" + tab.getName() + ") : @ReadOnlyLogic@ ");
+				return builder;
+			}
+		}
+
+		final int sessionClientId = Env.getAD_Client_ID(context);
+		if (sessionClientId != currentEntity.getAD_Client_ID()) {
+			log.warning("@Ignored@ : Record is other client");
+			return builder;
+		}
+
+		// final boolean isActiveRecord = currentEntity.isActive();
+		final boolean isProcessedRecord = currentEntity.get_ValueAsBoolean("Processed");
+		final boolean isProcessingRecord = currentEntity.get_ValueAsBoolean("Processing");
+
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
 			if (Util.isEmpty(columnName, true) || columnName.startsWith(LookupUtil.DISPLAY_COLUMN_KEY) || columnName.endsWith("_" + LookupUtil.UUID_COLUMN_KEY)) {
-				return;
-			}
-			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
-				// prevent warning `PO.set_Value: Column not updateable`
 				return;
 			}
 			MColumn column = table.getColumn(columnName);
@@ -786,13 +838,111 @@ public class UserInterface extends UserInterfaceImplBase {
 				// checks if the column exists in the database
 				return;
 			}
-			int referenceId = column.getAD_Reference_ID();
+			final int displayTypeId = column.getAD_Reference_ID();
+
+			String displayValue = ValueManager.getDisplayedValueFromReference(
+				context,
+				attribute.getValue(),
+				columnName,
+				displayTypeId,
+				column.getAD_Reference_Value_ID()
+			);
+
+			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
+				// prevent warning `PO.set_Value: Column not updateable`
+				log.warning(
+					Msg.parseTranslation(
+						context,
+						"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsKey@ "
+					)
+				);
+				return;
+			}
+
+			if (!column.isAlwaysUpdateable()) {
+				if (!column.isUpdateable()) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsUpdateable@ @NotValid@"
+						)
+					);
+					return;
+				}
+
+				if (isProcessedRecord) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processed@ "
+						)
+					);
+					return;
+				}
+				if (isProcessingRecord) {
+					log.warning(
+						Msg.parseTranslation(
+							context,
+							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processing@ "
+						)
+					);
+					return;
+				}
+
+				if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
+					boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
+					if (isReadOnlyColumn) {
+						log.warning(
+							Msg.parseTranslation(
+								context,
+								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
+							)
+						);
+						return;
+					}
+				}
+
+				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
+				// 	if (!isActiveRecord) {
+				// 		log.warning(
+				// 			Msg.parseTranslation(
+				// 				context,
+				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotActive@ "
+				// 			)
+				// 		);
+				// 		return;
+				// 	}
+				// }
+
+				MField field = new Query(
+					Env.getCtx(),
+					I_AD_Field.Table_Name,
+					I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
+					null
+				)
+					.setParameters(column.getAD_Column_ID(), tab.getAD_Tab_ID())
+					.setOnlyActiveRecords(true)
+					.first()
+				;
+				if (field != null) {
+					if (field.isReadOnly()) {
+						log.warning(
+							Msg.parseTranslation(
+								context,
+								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsReadOnly@ "
+							)
+						);
+						return;
+					}
+				}
+			}
+
 			Object value = null;
 			if (!attribute.getValue().hasNullValue()) {
-				if (referenceId > 0) {
+				if (displayTypeId > 0) {
 					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue(),
-						referenceId
+						displayTypeId
 					);
 				} 
 				if (value == null) {
@@ -806,12 +956,8 @@ public class UserInterface extends UserInterfaceImplBase {
 		//	Save entity
 		currentEntity.saveEx();
 
-		GetTabEntityRequest.Builder getEntityBuilder = GetTabEntityRequest.newBuilder()
-			.setTabId(request.getTabId())
-			.setId(entity.get_ID())
-		;
-
-		Entity.Builder builder = getTabEntity(
+		// Reload entity
+		builder = getTabEntity(
 			getEntityBuilder.build(),
 			parametersList
 		);
