@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.compiere.model.MCountry;
+import org.compiere.model.PO;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -240,6 +241,33 @@ public class ContextManager {
 			.forEach(attribute -> {
 				setWindowContextByObject(context, windowNo, attribute.getKey(), attribute.getValue());
 			});
+
+		return context;
+	}
+
+	/**
+	 * Set context with PO record
+	 * @param windowNo
+	 * @param context
+	 * @param record
+	 * @param isClearWindow
+	 * @return {Properties} context with new values
+	 */
+	public static Properties setContextFromPO(int windowNo, Properties context, PO record, boolean isClearWindow) {
+		if (isClearWindow) {
+			Env.clearWinContext(windowNo);
+		}
+		if (record == null) {
+			return context;
+		}
+
+		//	Fill context
+		int columnsSize = record.get_ColumnCount();
+		for (int index = 0; index < columnsSize; index++) {
+			String columnName = record.get_ColumnName(index);
+			Object value = record.get_Value(columnName);
+			setWindowContextByObject(context, windowNo, columnName, value);
+		}
 
 		return context;
 	}
