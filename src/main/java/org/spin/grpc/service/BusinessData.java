@@ -852,18 +852,18 @@ public class BusinessData extends BusinessDataImplBase {
 					return;
 				}
 
-				if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
-					boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
-					if (isReadOnlyColumn) {
-						log.warning(
-							Msg.parseTranslation(
-								context,
-								"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
-							)
-						);
-						return;
-					}
-				}
+				// if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
+				// 	boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
+				// 	if (isReadOnlyColumn) {
+				// 		log.warning(
+				// 			Msg.parseTranslation(
+				// 				context,
+				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
+				// 			)
+				// 		);
+				// 		return;
+				// 	}
+				// }
 
 				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
 				// 	if (!isActiveRecord) {
