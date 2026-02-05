@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MInOut;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
@@ -194,7 +195,7 @@ public class ReturnSalesOrder {
 	 * @return
 	 */
 	public static MOrder processRMA(int rmaId, int posId, String documentAction, String description, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
-		POS.validateAndGetPOS(posId, true);
+		MPOS pos = POS.validateAndGetPOS(posId, true);
 
 		if(rmaId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @M_RMA_ID@");
@@ -250,7 +251,12 @@ public class ReturnSalesOrder {
 			//	Generate Return
 			RMAUtil.generateReturnFromRMA(returnOrder, transactionName);
 			//	Generate Credit Memo
-			RMAUtil.generateCreditMemoFromRMA(returnOrder, transactionName);
+			MInvoice creditMemo = RMAUtil.generateCreditMemoFromRMA(returnOrder, transactionName);
+			if (creditMemo != null) {
+				OrderManagement.createPaymentInZeroForCreditMemo(creditMemo, returnOrder.get_ID(), pos, transactionName);
+				OrderManagement.processPayments(returnOrder, pos, true, transactionName);
+			}
+
 			if(!returnOrder.processIt(MOrder.DOCACTION_Close)) {
 				throw new AdempiereException("@ProcessFailed@ :" + returnOrder.getProcessMsg());
 			}
