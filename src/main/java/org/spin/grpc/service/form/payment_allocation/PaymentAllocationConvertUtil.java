@@ -14,11 +14,17 @@
  ************************************************************************************/
 package org.spin.grpc.service.form.payment_allocation;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_C_BPartner;
 import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_DocType;
+import org.adempiere.core.domains.models.I_C_Invoice;
+import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.compiere.model.MCharge;
 import org.compiere.model.MConversionRate;
@@ -36,10 +42,14 @@ import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
 import org.spin.backend.grpc.form.payment_allocation.DocumentType;
+import org.spin.backend.grpc.form.payment_allocation.Invoice;
 import org.spin.backend.grpc.form.payment_allocation.Organization;
+import org.spin.backend.grpc.form.payment_allocation.Payment;
 import org.spin.backend.grpc.form.payment_allocation.TransactionType;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class PaymentAllocationConvertUtil {
 
@@ -291,6 +301,11 @@ public class PaymentAllocationConvertUtil {
 					documentType.get_Translation(I_C_DocType.COLUMNNAME_Description)
 				)
 			)
+			.setBaseType(
+				TextManager.getValidString(
+					documentType.getDocBaseType()
+				)
+			)
 		;
 
 		return builder;
@@ -379,6 +394,157 @@ public class PaymentAllocationConvertUtil {
 		;
 
 		return builder;
+	}
+
+
+
+	public static Payment.Builder convertPaymentAllocation(ResultSet resultSet) throws SQLException {
+		DocumentType.Builder documentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
+			resultSet.getInt(I_C_Payment.COLUMNNAME_C_DocType_ID)
+		);
+		Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
+			resultSet.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
+		);
+
+		Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
+			resultSet.getString(I_C_Currency.COLUMNNAME_ISO_Code)
+		);
+
+		boolean isReceipt = BooleanManager.getBooleanFromString(
+			resultSet.getString("IsReceipt")
+		);
+		TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
+			isReceipt ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
+		);
+
+		int paymentId = resultSet.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
+		Payment.Builder paymentBuilder = Payment.newBuilder()
+			.setId(paymentId)
+			// .setUuid(
+			// 	TextManager.getValidString(
+			// 		resultSet.getString(I_C_Payment.COLUMNNAME_UUID)
+			// 	)
+			// )
+			.setDocumentNo(
+				TextManager.getValidString(
+					resultSet.getString(I_C_Payment.COLUMNNAME_DocumentNo)
+				)
+			)
+			.setDocumentType(
+				documentTypeBuilder
+			)
+			.setTransactionDate(
+				TimeManager.getProtoTimestampFromTimestamp(
+					resultSet.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
+				)
+			)
+			.setIsReceipt(isReceipt)
+			.setDescription(
+				TextManager.getValidString(
+					resultSet.getString(I_C_Payment.COLUMNNAME_Description)
+				)
+			)
+			.setPaymentAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
+				)
+			)
+			.setConvertedAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("ConvertedAmt")
+				)
+			)
+			.setOpenAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("AvailableAmt")
+				)
+			)
+			.setTransactionType(transactionTypeBuilder)
+			.setOrganization(organizationBuilder)
+			.setCurrency(currencyBuilder)
+			.setMuliplier(
+				resultSet.getInt("MultiplierAP")
+			)
+		;
+		return paymentBuilder;
+	}
+
+
+
+	public static Invoice.Builder convertInvoiceAllocation(ResultSet resultSet) throws SQLException {
+		DocumentType.Builder targetDocumentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
+			resultSet.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
+		);
+		Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
+			resultSet.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
+		);
+
+		Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
+			resultSet.getString(I_C_Currency.COLUMNNAME_ISO_Code)
+		);
+
+		boolean isSalesTransaction = BooleanManager.getBooleanFromString(
+			resultSet.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
+		);
+		TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
+			isSalesTransaction ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
+		);
+
+		int multiplier = (resultSet.getInt("MultiplierAP") * resultSet.getInt("Multiplier")) * -1;
+
+		int invoiceId = resultSet.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
+		Invoice.Builder invoiceBuilder = Invoice.newBuilder()
+			.setId(invoiceId)
+			// .setUuid(
+			// 	TextManager.getValidString(
+			// 		resultSet.getString(I_C_Invoice.COLUMNNAME_UUID)
+			// 	)
+			// )
+			.setDocumentNo(
+				TextManager.getValidString(
+					resultSet.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
+				)
+			)
+			.setTargetDocumentType(
+				targetDocumentTypeBuilder
+			)
+			.setDateInvoiced(
+				TimeManager.getProtoTimestampFromTimestamp(
+					resultSet.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
+				)
+			)
+			.setIsSalesTransaction(isSalesTransaction)
+			.setDescription(
+				TextManager.getValidString(
+					resultSet.getString(I_C_Invoice.COLUMNNAME_Description)
+				)
+			)
+			.setOriginalAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("OriginalAmt")
+				)
+			)
+			.setConvertedAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("ConvertedAmt")
+				)
+			)
+			.setOpenAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("OpenAmt")
+				)
+			)
+			.setDiscountAmount(
+				NumberManager.getBigDecimalToString(
+					resultSet.getBigDecimal("DiscountAmt")
+				)
+			)
+			.setTransactionType(transactionTypeBuilder)
+			.setOrganization(organizationBuilder)
+			.setCurrency(currencyBuilder)
+			.setMuliplier(multiplier)
+		;
+		return invoiceBuilder;
 	}
 
 }

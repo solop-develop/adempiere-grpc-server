@@ -17,6 +17,8 @@ package org.spin.grpc.service.form.payment_allocation;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceRequest;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.CreateConversionRateRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
@@ -261,6 +263,29 @@ public class PaymentAllocationService extends PaymentAllocationImplBase {
 			}
 
 			ListLookupItemsResponse.Builder builder = PaymentAllocationLogic.listTransactionOrganizations(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void calculateDifference(CalculateDifferenceRequest request, StreamObserver<CalculateDifferenceResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+
+			CalculateDifferenceResponse.Builder builder = PaymentAllocationLogic.calculateDifference(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
