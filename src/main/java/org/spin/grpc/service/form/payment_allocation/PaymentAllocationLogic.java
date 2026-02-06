@@ -34,8 +34,6 @@ import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Conversion_Rate;
 import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_DocType;
-import org.adempiere.core.domains.models.I_C_Invoice;
-import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.X_T_InvoiceGL;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAcctSchema;
@@ -70,11 +68,12 @@ import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceRequest;
+import org.spin.backend.grpc.form.payment_allocation.CalculateDifferenceResponse;
 import org.spin.backend.grpc.form.payment_allocation.ConversionRate;
 import org.spin.backend.grpc.form.payment_allocation.ConversionType;
 import org.spin.backend.grpc.form.payment_allocation.CreateConversionRateRequest;
 import org.spin.backend.grpc.form.payment_allocation.Currency;
-import org.spin.backend.grpc.form.payment_allocation.DocumentType;
 import org.spin.backend.grpc.form.payment_allocation.Invoice;
 import org.spin.backend.grpc.form.payment_allocation.InvoiceSelection;
 import org.spin.backend.grpc.form.payment_allocation.ListBusinessPartnersRequest;
@@ -90,12 +89,10 @@ import org.spin.backend.grpc.form.payment_allocation.ListPaymentsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListPaymentsResponse;
 import org.spin.backend.grpc.form.payment_allocation.ListTransactionOrganizationsRequest;
 import org.spin.backend.grpc.form.payment_allocation.ListTransactionTypesRequest;
-import org.spin.backend.grpc.form.payment_allocation.Organization;
 import org.spin.backend.grpc.form.payment_allocation.Payment;
 import org.spin.backend.grpc.form.payment_allocation.PaymentSelection;
 import org.spin.backend.grpc.form.payment_allocation.ProcessRequest;
 import org.spin.backend.grpc.form.payment_allocation.ProcessResponse;
-import org.spin.backend.grpc.form.payment_allocation.TransactionType;
 
 public class PaymentAllocationLogic {
 
@@ -136,6 +133,12 @@ public class PaymentAllocationLogic {
 	 * @return
 	 */
 	public static ListLookupItemsResponse.Builder listOrganizations(ListOrganizationsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
 		// Organization filter selection
 		int columnId = 839; // C_Period.AD_Org_ID (needed to allow org 0)
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
@@ -600,71 +603,7 @@ public class PaymentAllocationLogic {
 			int recordCount = 0;
 			while (rs.next()) {
 				recordCount++;
-
-				DocumentType.Builder documentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
-					rs.getInt(I_C_Payment.COLUMNNAME_C_DocType_ID)
-				);
-				Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
-					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
-				);
-
-				Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
-					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
-				);
-
-				boolean isReceipt = BooleanManager.getBooleanFromString(
-					rs.getString("IsReceipt")
-				);
-				TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
-					isReceipt ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
-				);
-
-				int paymentId = rs.getInt(I_C_Payment.COLUMNNAME_C_Payment_ID);
-				Payment.Builder paymentBuilder = Payment.newBuilder()
-					.setId(paymentId)
-					// .setUuid(
-					// 	TextManager.getValidString(
-					// 		rs.getString(I_C_Payment.COLUMNNAME_UUID)
-					// 	)
-					// )
-					.setDocumentNo(
-						TextManager.getValidString(
-							rs.getString(I_C_Payment.COLUMNNAME_DocumentNo)
-						)
-					)
-					.setDocumentType(
-						documentTypeBuilder
-					)
-					.setTransactionDate(
-						TimeManager.getProtoTimestampFromTimestamp(
-							rs.getTimestamp(I_C_Payment.COLUMNNAME_DateTrx)
-						)
-					)
-					.setIsReceipt(isReceipt)
-					.setDescription(
-						TextManager.getValidString(
-							rs.getString(I_C_Payment.COLUMNNAME_Description)
-						)
-					)
-					.setPaymentAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal(I_C_Payment.COLUMNNAME_PayAmt)
-						)
-					)
-					.setConvertedAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("ConvertedAmt")
-						)
-					)
-					.setOpenAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("AvailableAmt")
-						)
-					)
-					.setTransactionType(transactionTypeBuilder)
-					.setOrganization(organizationBuilder)
-					.setCurrency(currencyBuilder)
-				;
+				Payment.Builder paymentBuilder = PaymentAllocationConvertUtil.convertPaymentAllocation(rs);
 
 				builderList.addRecords(paymentBuilder);
 			}
@@ -759,6 +698,7 @@ public class PaymentAllocationLogic {
 			sql.append("i.C_ConversionType_ID, ");
 		}
 		sql.append("i.AD_Client_ID, i.AD_Org_ID) * i.Multiplier * i.MultiplierAP) AS DiscountAmt, "               //  #5, #6
+			+ "i.Multiplier, "
 			+ "i.MultiplierAP, i.IsSoTrx, i.AD_Org_ID " // 9..11
 			+ "FROM C_Invoice_v i "		//  corrected for CM/Split
 			+ "INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
@@ -830,84 +770,15 @@ public class PaymentAllocationLogic {
 			int recordCount = 0;
 			while (rs.next()) {
 				recordCount++;
-
-				DocumentType.Builder targetDocumentTypeBuilder = PaymentAllocationConvertUtil.convertDocumentType(
-					rs.getInt(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)
-				);
-				Organization.Builder organizationBuilder = PaymentAllocationConvertUtil.convertOrganization(
-					rs.getInt(I_AD_Org.COLUMNNAME_AD_Org_ID)
-				);
-
-				Currency.Builder currencyBuilder = PaymentAllocationConvertUtil.convertCurrency(
-					rs.getString(I_C_Currency.COLUMNNAME_ISO_Code)
-				);
-
-				boolean isSalesTransaction = BooleanManager.getBooleanFromString(
-					rs.getString(I_C_Invoice.COLUMNNAME_IsSOTrx)
-				);
-				TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
-					isSalesTransaction ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
-				);
-
-				int invoiceId = rs.getInt(I_C_Invoice.COLUMNNAME_C_Invoice_ID);
-				Invoice.Builder invoiceBuilder = Invoice.newBuilder()
-					.setId(invoiceId)
-					// .setUuid(
-					// 	TextManager.getValidString(
-					// 		rs.getString(I_C_Invoice.COLUMNNAME_UUID)
-					// 	)
-					// )
-					.setDocumentNo(
-						TextManager.getValidString(
-							rs.getString(I_C_Invoice.COLUMNNAME_DocumentNo)
-						)
-					)
-					.setTargetDocumentType(
-						targetDocumentTypeBuilder
-					)
-					.setDateInvoiced(
-						TimeManager.getProtoTimestampFromTimestamp(
-							rs.getTimestamp(I_C_Invoice.COLUMNNAME_DateInvoiced)
-						)
-					)
-					.setIsSalesTransaction(isSalesTransaction)
-					.setDescription(
-						TextManager.getValidString(
-							rs.getString(I_C_Invoice.COLUMNNAME_Description)
-						)
-					)
-					.setOriginalAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("OriginalAmt")
-						)
-					)
-					.setConvertedAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("ConvertedAmt")
-						)
-					)
-					.setOpenAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("OpenAmt")
-						)
-					)
-					.setDiscountAmount(
-						NumberManager.getBigDecimalToString(
-							rs.getBigDecimal("DiscountAmt")
-						)
-					)
-					.setTransactionType(transactionTypeBuilder)
-					.setOrganization(organizationBuilder)
-					.setCurrency(currencyBuilder)
-				;
-
+				Invoice.Builder invoiceBuilder = PaymentAllocationConvertUtil.convertInvoiceAllocation(rs);
 				builderList.addRecords(invoiceBuilder);
 			}
 
 			builderList.setRecordCount(recordCount);
 		}
 		catch (SQLException e) {
-			log.log(Level.SEVERE, sql.toString(), e);
+			// log.log(Level.SEVERE, sql.toString(), e);
+			log.warning(e.getLocalizedMessage());
 		}
 		finally {
 			DB.close(rs, pstmt);
@@ -922,7 +793,7 @@ public class PaymentAllocationLogic {
 
 	public static ListLookupItemsResponse.Builder listCharges(ListChargesRequest request) {
 		// Charge
-		int columnId = 61804; // C_AllocationLine.C_Charge_ID
+		final int columnId = 61804; // C_AllocationLine.C_Charge_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
@@ -946,7 +817,7 @@ public class PaymentAllocationLogic {
 
 	public static ListLookupItemsResponse.Builder listTransactionOrganizations(ListTransactionOrganizationsRequest request) {
 		// Organization to overwrite
-		int columnId = 3863; // C_Period.AD_Org_ID
+		final int columnId = 3863; // C_Period.AD_Org_ID
 		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
 			0,
 			0, 0, 0,
@@ -965,8 +836,78 @@ public class PaymentAllocationLogic {
 
 		return builderList;
 	}
+	
 
 
+
+	public static CalculateDifferenceResponse.Builder calculateDifference(CalculateDifferenceRequest request) {
+		BigDecimal totalDiff = getDifferenceAmount(
+			request.getPaymentSelectionsList(),
+			request.getInvoiceSelectionsList()
+		);
+
+		CalculateDifferenceResponse.Builder builder = CalculateDifferenceResponse.newBuilder()
+			.setDifferenceAmount(
+				NumberManager.getBigDecimalToString(totalDiff)
+			)
+		;
+		return builder;
+	}
+
+
+	/**
+	 * Calculate difference amount between payment and invoice selections
+	 * Based on org.compiere.apps.form.Allocation.calculate()
+	 * @param paymentSelection List of selected payments
+	 * @param invoiceSelection List of selected invoices
+	 * @return Difference amount (totalPay - totalInv)
+	 */
+	public static BigDecimal getDifferenceAmount(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
+		BigDecimal totalPay = BigDecimal.ZERO;
+		BigDecimal totalInv = BigDecimal.ZERO;
+
+		// Sum payment applied amounts with multiplier
+		// Receipt (AR): positive amount
+		// Payment (AP): negative amount
+		if (paymentSelection != null) {
+			for (PaymentSelection payment : paymentSelection) {
+				BigDecimal appliedAmount = NumberManager.getBigDecimalFromString(
+					payment.getAppliedAmount()
+				);
+				if (appliedAmount != null) {
+					// Apply multiplier based on isReceipt
+					// If isReceipt = true (AR): multiplier = 1
+					// If isReceipt = false (AP): multiplier = -1
+					BigDecimal multiplier = payment.getIsReceipt() ? BigDecimal.ONE : BigDecimal.ONE.negate();
+					totalPay = totalPay.add(appliedAmount.multiply(multiplier));
+				}
+			}
+		}
+
+		// Sum invoice applied amounts with multiplier
+		// Sales Transaction (AR): positive amount
+		// Purchase Transaction (AP): negative amount
+		if (invoiceSelection != null) {
+			for (InvoiceSelection invoice : invoiceSelection) {
+				BigDecimal appliedAmount = NumberManager.getBigDecimalFromString(
+					invoice.getAppliedAmount()
+				);
+				if (appliedAmount != null) {
+					// TODO: Validate ARC, APC to credit memo as return
+					// Apply multiplier based on isSalesTransaction
+					// If isSalesTransaction = true (AR): multiplier = 1
+					// If isSalesTransaction = false (AP): multiplier = -1
+					BigDecimal multiplier = invoice.getIsSalesTransaction() ? BigDecimal.ONE : BigDecimal.ONE.negate();
+					totalInv = totalInv.add(appliedAmount.multiply(multiplier));
+				}
+			}
+		}
+
+		// Calculate difference: totalPay - totalInv
+		BigDecimal differenceAmount = totalPay.subtract(totalInv);
+
+		return differenceAmount;
+	}
 
 	public static Timestamp getTransactionDate(List<PaymentSelection> paymentSelection, List<InvoiceSelection> invoiceSelection) {
 		AtomicReference<Timestamp> transactionDateReference = new AtomicReference<Timestamp>();
@@ -987,6 +928,7 @@ public class PaymentAllocationLogic {
 
 		return transactionDateReference.get();
 	}
+
 
 	public static ProcessResponse.Builder process(ProcessRequest request) {
 		// validate and get Organization
@@ -1168,7 +1110,7 @@ public class PaymentAllocationLogic {
 					aLine.setDocInfo(businessPartnerId, orderId, C_Invoice_ID);
 					aLine.setPaymentInfo(paymentId, cashLineId);
 					aLine.saveEx();
-					
+
 					// Apply Discounts and WriteOff only first time
 					DiscountAmt = Env.ZERO;
 					WriteOffAmt = Env.ZERO;
@@ -1185,7 +1127,7 @@ public class PaymentAllocationLogic {
 			// remainder will need to match against other invoices
 			else {
 				int C_Payment_ID = 0;
-				
+
 				//	Allocation Line
 				MAllocationLine aLine = new MAllocationLine(
 					alloc, AppliedAmt,
@@ -1199,7 +1141,6 @@ public class PaymentAllocationLogic {
 			}
 		} //	invoice loop
 
-		
 		// check for unapplied payment amounts (eg from payment reversals)
 		for (int i = 0; i < paymentList.size(); i++) {
 			BigDecimal payAmt = (BigDecimal) amountList.get(i);
@@ -1222,9 +1163,11 @@ public class PaymentAllocationLogic {
 
 		// check for charge amount
 		if (chargeId > 0 && unmatchedApplied.compareTo(BigDecimal.ZERO) != 0) {
+			// TODO: calculate correct  totalDiff
+			// BigDecimal totalDiff = getDifferenceAmount(paymentSelection, invoiceSelection);
 			// BigDecimal chargeAmt = totalDiff;
 			BigDecimal chargeAmt = BigDecimal.ZERO;
-		
+
 			//	Allocation Line
 			MAllocationLine aLine = new MAllocationLine(
 				alloc,
@@ -1238,9 +1181,9 @@ public class PaymentAllocationLogic {
 		}
 
 		if (unmatchedApplied.signum() != 0) {
-			log.log(Level.SEVERE, "Allocation not balanced -- out by " + unmatchedApplied);
+			log.severe("Allocation not balanced -- out by " + unmatchedApplied);
 		}
-		
+
 		//	Should start WF
 		if (alloc.get_ID() > 0) {
 			if (!alloc.processIt(DocAction.ACTION_Complete)) {
@@ -1252,7 +1195,7 @@ public class PaymentAllocationLogic {
 		//  Test/Set IsPaid for Invoice - requires that allocation is posted
 		for (InvoiceSelection invoice : invoiceSelection) {
 			//  Invoice variables
-			int C_Invoice_ID = invoice.getId();
+			final int C_Invoice_ID = invoice.getId();
 			String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
 				+ "FROM C_Invoice "
 				+ "WHERE C_Invoice_ID = ?"
@@ -1260,7 +1203,8 @@ public class PaymentAllocationLogic {
 			BigDecimal open = DB.getSQLValueBD(transactionName, sql, C_Invoice_ID);
 			if (open != null && open.signum() == 0) {
 				sql = "UPDATE C_Invoice SET IsPaid='Y' "
-					+ "WHERE C_Invoice_ID=" + C_Invoice_ID;
+					+ "WHERE C_Invoice_ID=" + C_Invoice_ID
+				;
 				int no = DB.executeUpdate(sql, transactionName);
 				log.config("Invoice #" + C_Invoice_ID + " is paid - updated=" + no);
 			}
@@ -1268,11 +1212,11 @@ public class PaymentAllocationLogic {
 				log.config("Invoice #" + C_Invoice_ID + " is not paid - " + open);
 			}
 		}
-		
+
 		//  Test/Set Payment is fully allocated
 		for (PaymentSelection payment : paymentSelection) {
 		// for (int i = 0; i < paymentList.size(); i++) {
-			int paymentId = payment.getId();
+			final int paymentId = payment.getId();
 			MPayment pay = new MPayment(
 				Env.getCtx(),
 				paymentId,

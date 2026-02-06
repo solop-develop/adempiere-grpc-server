@@ -91,6 +91,12 @@ service PaymentAllocation {
 			get: "/forms/payment-allocation/organizations/transactions"
 		};
 	}
+	rpc CalculateDifference(CalculateDifferenceRequest) returns (CalculateDifferenceResponse) {
+		option (google.api.http) = {
+			post: "/forms/payment-allocation/difference",
+			body: "*"
+		};
+	}
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = {
 			post: "/forms/payment-allocation/process",
@@ -267,6 +273,7 @@ message DocumentType {
 	string name = 3;
 	string print_name = 4;
 	string description = 5;
+	string base_type = 6;
 }
 
 
@@ -285,6 +292,7 @@ message Payment {
 	string payment_amount = 11;
 	string converted_amount = 12;
 	string open_amount = 13;
+	int32 muliplier = 14;
 }
 message ListPaymentsRequest {
 	string filters = 1;
@@ -327,6 +335,7 @@ message Invoice {
 	string converted_amount = 12;
 	string open_amount = 13;
 	string discount_amount = 14;
+	int32 muliplier = 15;
 }
 message ListInvoicesRequest {
 	string filters = 1;
@@ -401,6 +410,8 @@ message PaymentSelection {
 	int32 id = 1;
 	google.protobuf.Timestamp transaction_date = 2;
 	string applied_amount = 3;
+	bool is_receipt = 4;
+	int32 muliplier = 5;
 }
 
 message InvoiceSelection {
@@ -410,7 +421,31 @@ message InvoiceSelection {
 	string discount_amount = 4;
 	string write_off_amount = 5;
 	string open_amount = 6;
+	bool is_sales_transaction = 7;
+	int32 muliplier = 8;
 }
+
+
+message CalculateDifferenceRequest {
+	int32 business_partner_id = 1;
+	google.protobuf.Timestamp date = 2;
+	int32 transaction_organization_id = 3;
+	int32 currency_id = 4;
+	int32 charge_id = 5;
+	string description = 6;
+	string total_difference = 7;
+	repeated PaymentSelection payment_selections = 8;
+	repeated InvoiceSelection invoice_selections = 9;
+	bool is_multi_currency = 10;
+	int32 conversion_type_id = 11;
+	string table_name = 12;
+	int32 record_id = 13;
+}
+
+message CalculateDifferenceResponse {
+  string difference_amount = 1;
+}
+
 
 // Process
 message ProcessRequest {
