@@ -14,15 +14,22 @@
  ************************************************************************************/
 package org.spin.grpc.service.accounting;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Org;
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.I_AD_Reference;
@@ -35,15 +42,21 @@ import org.adempiere.core.domains.models.I_C_Currency;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_Payment;
+import org.adempiere.core.domains.models.I_Fact_Acct;
 import org.adempiere.core.domains.models.I_M_MatchInv;
 import org.adempiere.core.domains.models.I_M_MatchPO;
+import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
 import org.adempiere.core.domains.models.X_Fact_Acct;
 import org.adempiere.exceptions.AdempiereException;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.compiere.asset.model.MAssetAddition;
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MClient;
+import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
 import org.compiere.model.MConversionType;
 import org.compiere.model.MCurrency;
@@ -54,15 +67,20 @@ import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
+import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.solop.sp032.model.MSP032Conversion;
 import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
+import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.general_ledger.AccountingDocument;
@@ -71,16 +89,26 @@ import org.spin.backend.grpc.general_ledger.ConversionType;
 import org.spin.backend.grpc.general_ledger.CreateConversionRateRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentRequest;
 import org.spin.backend.grpc.general_ledger.ExistsAccountingDocumentResponse;
+import org.spin.backend.grpc.general_ledger.ExportAccountingFactsRequest;
+import org.spin.backend.grpc.general_ledger.ExportAccountingFactsResponse;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingDocumentsResponse;
+import org.spin.backend.grpc.general_ledger.ListAccountingFactsRequest;
 import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListConversionTypesRequest;
 import org.spin.backend.grpc.general_ledger.ListConversionTypesResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
+import org.spin.base.db.QueryUtil;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.ReferenceUtil;
+import org.spin.eca62.util.S3Manager;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
+import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
+import org.spin.service.grpc.util.query.Filter;
+import org.spin.service.grpc.util.query.FilterManager;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
@@ -90,6 +118,9 @@ import org.spin.service.grpc.util.value.TimeManager;
  * Service Logic for backend of General Ledger
  */
 public class GeneralLedgerServiceLogic {
+
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(GeneralLedgerService.class);
 
 	private static String TABLE_NAME = MAccount.Table_Name;
 
@@ -379,6 +410,574 @@ public class GeneralLedgerServiceLogic {
 
 		builder.setIsShowAccounting(true);
 		return builder;
+	}
+
+
+
+	public static ListEntitiesResponse.Builder listAccountingFacts(ListAccountingFactsRequest request) {
+		int acctSchemaId = request.getAccountingSchemaId();
+		if (acctSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+
+		//
+		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
+
+		List<Object> filtersList = new ArrayList<>();
+		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
+		whereClause.append(" AND ")
+			.append(I_Fact_Acct.Table_Name)
+			.append(".")
+			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
+			.append(" = ? ")
+		;
+		filtersList.add(acctSchemaId);
+
+		//	Accounting Elements
+		List<MAcctSchemaElement> acctSchemaElements = new Query(
+			Env.getCtx(),
+			MAcctSchemaElement.Table_Name,
+			" C_AcctSchema_ID = ?" ,
+			null
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(acctSchemaId)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.<MAcctSchemaElement>list()
+		;
+		List<Filter> conditionsList = FilterManager.newInstance(request.getFilters()).getConditions();
+		acctSchemaElements.forEach(acctSchemaElement -> {
+			if (acctSchemaElement.getElementType().equals(X_C_AcctSchema_Element.ELEMENTTYPE_Organization)) {
+				// Organization filter is inside the request
+				return;
+			}
+
+			String columnName = MAcctSchemaElement.getColumnName(
+				acctSchemaElement.getElementType()
+			);
+
+			Filter elementAccount = conditionsList.parallelStream()
+				.filter(condition -> {
+					return condition.getColumnName().equals(columnName);
+				})
+				.findFirst()
+				.orElse(null)
+			;
+			if (elementAccount == null) {
+				return;
+			}
+			Object value = elementAccount.getValue();
+			if (value == null) {
+				return;
+			}
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(columnName)
+				.append(" = ? ")
+			;
+			filtersList.add(value);
+		});
+
+		// Posting Type
+		if (!Util.isEmpty(request.getPostingType(), true)) {
+			final String postingType = request.getPostingType();
+			MRefList referenceList = MRefList.get(Env.getCtx(), X_Fact_Acct.POSTINGTYPE_AD_Reference_ID, postingType, null);
+			if (referenceList == null) {
+				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@: " + postingType);
+			}
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_PostingType)
+				.append(" = ? ")
+			;
+			filtersList.add(postingType);
+		}
+
+		// Date
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateFrom()
+		);
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateTo()
+		);
+		if (dateFrom != null || dateTo != null) {
+			whereClause.append(" AND ");
+			if (dateFrom != null && dateTo != null) {
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') BETWEEN ? AND ? ")
+				;
+				filtersList.add(dateFrom);
+				filtersList.add(dateTo);
+			}
+			else if (dateFrom != null) {
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') >= ? ")
+				;
+				filtersList.add(dateFrom);
+			}
+			else {
+				// DateTo != null
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') <= ? ")
+				;
+				filtersList.add(dateTo);
+			}
+		}
+
+		// Document
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
+			if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
+				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			}
+			// validate record
+			final int recordId = request.getRecordId();
+			RecordUtil.validateRecordId(recordId, documentTable.getAccessLevel());
+
+			// table
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(documentTable.getAD_Table_ID());
+
+			// record
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_Record_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(recordId);
+		}
+
+		// add where with access restriction
+		String sqlWithRescriction = sql.toString() + whereClause.toString();
+		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
+			.addAccessSQL(sqlWithRescriction,
+				I_Fact_Acct.Table_Name,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			)
+		;
+
+		//  Get page and count
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+ 
+		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
+
+		//  Count records
+		int count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
+		//  Add Row Number
+		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
+		parsedSQL += ("ORDER BY " + I_Fact_Acct.Table_Name + ".Fact_Acct_ID");
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
+		//
+		builder.setRecordCount(count);
+		//  Set page token
+		String nexPageToken = null;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		//  Set next page
+		builder.setNextPageToken(
+			TextManager.getValidString(nexPageToken)
+		);
+
+		return builder;
+	}
+
+
+
+	public static ExportAccountingFactsResponse.Builder exportAccountingFacts(ExportAccountingFactsRequest request) {
+		int acctSchemaId = request.getAccountingSchemaId();
+		if (acctSchemaId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
+		}
+
+		//
+		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
+		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
+
+		List<Object> filtersList = new ArrayList<>();
+		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
+		whereClause.append(" AND ")
+			.append(I_Fact_Acct.Table_Name)
+			.append(".")
+			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
+			.append(" = ? ")
+		;
+		filtersList.add(acctSchemaId);
+
+		//	Accounting Elements
+		List<MAcctSchemaElement> acctSchemaElements = new Query(
+			Env.getCtx(),
+			MAcctSchemaElement.Table_Name,
+			" C_AcctSchema_ID = ?" ,
+			null
+		)
+			.setOnlyActiveRecords(true)
+			.setParameters(acctSchemaId)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.<MAcctSchemaElement>list()
+		;
+		List<Filter> conditionsList = FilterManager.newInstance(request.getFilters()).getConditions();
+		acctSchemaElements.forEach(acctSchemaElement -> {
+			if (acctSchemaElement.getElementType().equals(X_C_AcctSchema_Element.ELEMENTTYPE_Organization)) {
+				// Organization filter is inside the request
+				return;
+			}
+
+			String columnName = MAcctSchemaElement.getColumnName(
+				acctSchemaElement.getElementType()
+			);
+
+			Filter elementAccount = conditionsList.parallelStream()
+				.filter(condition -> {
+					return condition.getColumnName().equals(columnName);
+				})
+				.findFirst()
+				.orElse(null)
+			;
+			if (elementAccount == null) {
+				return;
+			}
+			Object value = elementAccount.getValue();
+			if (value == null) {
+				return;
+			}
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(columnName)
+				.append(" = ? ")
+			;
+			filtersList.add(value);
+		});
+
+		// Posting Type
+		if (!Util.isEmpty(request.getPostingType(), true)) {
+			final String postingType = request.getPostingType();
+			MRefList referenceList = MRefList.get(Env.getCtx(), X_Fact_Acct.POSTINGTYPE_AD_Reference_ID, postingType, null);
+			if (referenceList == null) {
+				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@: " + postingType);
+			}
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_PostingType)
+				.append(" = ? ")
+			;
+			filtersList.add(postingType);
+		}
+
+		// Date
+		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateFrom()
+		);
+		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
+			request.getDateTo()
+		);
+		if (dateFrom != null || dateTo != null) {
+			whereClause.append(" AND ");
+			if (dateFrom != null && dateTo != null) {
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') BETWEEN ? AND ? ")
+				;
+				filtersList.add(dateFrom);
+				filtersList.add(dateTo);
+			}
+			else if (dateFrom != null) {
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') >= ? ")
+				;
+				filtersList.add(dateFrom);
+			}
+			else {
+				// DateTo != null
+				whereClause.append("TRUNC(")
+					.append(I_Fact_Acct.Table_Name)
+					.append(".DateAcct, 'DD') <= ? ")
+				;
+				filtersList.add(dateTo);
+			}
+		}
+
+		// Document
+		if (!Util.isEmpty(request.getTableName(), true)) {
+			final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
+			if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
+				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+			}
+			// validate record
+			final int recordId = request.getRecordId();
+			RecordUtil.validateRecordId(recordId, documentTable.getAccessLevel());
+
+			// table
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(documentTable.getAD_Table_ID());
+
+			// record
+			whereClause.append(" AND ")
+				.append(I_Fact_Acct.Table_Name)
+				.append(".")
+				.append(I_Fact_Acct.COLUMNNAME_Record_ID)
+				.append(" = ? ")
+			;
+			filtersList.add(recordId);
+		}
+
+		// add where with access restriction
+		String sqlWithRescriction = sql.toString() + whereClause.toString();
+		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
+			.addAccessSQL(sqlWithRescriction,
+				I_Fact_Acct.Table_Name,
+				MRole.SQL_FULLYQUALIFIED,
+				MRole.SQL_RO
+			)
+		;
+
+		// Add ORDER BY
+		parsedSQL += " ORDER BY " + I_Fact_Acct.Table_Name + ".Fact_Acct_ID";
+
+		// Determine if export all or current page
+		int recordCount = 0;
+		if (!request.getIsExportAllRecords()) {
+			// Export current page only
+			int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+			int limit = LimitUtil.getPageSize(request.getPageSize());
+			int offset = (pageNumber - 1) * limit;
+
+			// Count records for the current page
+			recordCount = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
+
+			// Apply limit
+			parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
+		} else {
+			// Export all records - count total
+			recordCount = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
+		}
+
+		// Generate Excel file
+		File excelFile = null;
+		try {
+			excelFile = generateExcelFromQuery(parsedSQL, filtersList, table);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException("@Error@ generating Excel file: " + e.getLocalizedMessage());
+		}
+
+		// Upload to S3
+		String fileName = null;
+		try {
+			fileName = S3Manager.putTemporaryFile(excelFile);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException("@Error@ uploading file to S3: " + e.getLocalizedMessage());
+		}
+
+		ExportAccountingFactsResponse.Builder builder = ExportAccountingFactsResponse.newBuilder()
+			.setRecordCount(recordCount)
+			.setFileName(
+				TextManager.getValidString(fileName)
+			)
+		;
+
+		return builder;
+	}
+
+	/**
+	 * Generate Excel file from SQL query results
+	 * This method executes the query and converts the ResultSet to Excel format
+	 *
+	 * @param sql SQL query to execute
+	 * @param parameters Query parameters
+	 * @param table MTable for metadata
+	 * @return Excel file
+	 * @throws Exception
+	 */
+	private static File generateExcelFromQuery(String sql, List<Object> parameters, MTable table) throws Exception {
+		File excelFile = File.createTempFile("AccountingFacts_" + System.currentTimeMillis(), ".xlsx");
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			DB.setParameters(pstmt, parameters);
+
+			rs = pstmt.executeQuery();
+
+			// Create Excel from ResultSet
+			// TODO: Integrate XlsxExporter from adempiere-report-engine-service
+			// Similar to: https://github.com/solop-develop/adempiere-report-engine-service/blob/feature/adempiere-base/src/main/java/org/spin/report_engine/export/XlsxExporter.java#L397
+			createExcelFromResultSet(rs, excelFile);
+
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		return excelFile;
+	}
+
+	/**
+	 * Create Excel file from ResultSet
+	 * Generates an XLSX file with data from the ResultSet
+	 * Uses MTable to get proper column translations and handles lookup DisplayColumns
+	 *
+	 * @param rs ResultSet with data
+	 * @param excelFile Output file
+	 * @throws Exception
+	 */
+	private static void createExcelFromResultSet(ResultSet rs, File excelFile) throws Exception {
+		// Get MTable to access column metadata and translations
+		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
+
+		// Get all columns from the table
+		MColumn[] columns = table.getColumns(false);
+
+		// Build list of columns to export (exclude internal system columns)
+		// TODO: Validate accounting dimensions
+		List<MColumn> exportColumns = new ArrayList<>();
+		for (MColumn column : columns) {
+			// Skip system columns that are not typically displayed
+			if (column.getColumnName().equals("Created")
+				|| column.getColumnName().equals("CreatedBy")
+				|| column.getColumnName().equals("Updated")
+				|| column.getColumnName().equals("UpdatedBy")
+				|| column.getColumnName().equals("AD_Client_ID")
+				// || column.getColumnName().equals("AD_Org_ID")
+				|| column.getColumnName().equals("IsActive")
+				|| column.getColumnName().equals("UUID")) {
+				continue;
+			}
+			exportColumns.add(column);
+		}
+
+		XSSFWorkbook workBook = new XSSFWorkbook();
+		DataFormat dataFormat = workBook.createDataFormat();
+		org.apache.poi.ss.usermodel.Sheet sheet = workBook.createSheet("Accounting Facts");
+
+		// Create header row with bold style
+		org.apache.poi.ss.usermodel.CellStyle headerStyle = workBook.createCellStyle();
+		org.apache.poi.ss.usermodel.Font headerFont = workBook.createFont();
+		headerFont.setBold(true);
+		headerStyle.setFont(headerFont);
+
+		org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+		int cellIndex = 0;
+		for (MColumn column : exportColumns) {
+			org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(cellIndex++);
+
+			// Get translated column name from M_Element
+			String headerName = column.get_Translation(I_AD_Column.COLUMNNAME_Name);
+			try {
+				M_Element element = M_Element.get(Env.getCtx(), column.getColumnName());
+				if (element != null && !Util.isEmpty(element.get_Translation(I_AD_Column.COLUMNNAME_Name), true)) {
+					headerName = element.get_Translation(I_AD_Column.COLUMNNAME_Name);
+				}
+			} catch (Exception e) {
+				// Use column name as fallback
+				log.warning("Error getting translated name for column " + column.getColumnName() + ": " + e.getMessage());
+			}
+
+			cell.setCellValue(headerName);
+			cell.setCellStyle(headerStyle);
+		}
+
+		Language language = Language.getLoginLanguage();
+		// Create data rows
+		int rowNum = 1;
+		while (rs.next()) {
+			org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowNum++);
+			cellIndex = 0;
+
+			for (MColumn column : exportColumns) {
+				org.apache.poi.ss.usermodel.Cell cell = row.createCell(cellIndex++);
+
+				try {
+					// Check if column has a display column (for lookups)
+					final String columnName = column.getColumnName();
+					final int displayTypeId = column.getAD_Reference_ID();
+					Object value = null;
+
+					// Try to get display value for lookup columns
+					if (ReferenceUtil.validateReference(displayTypeId)) {
+						// Try to get DisplayColumn value
+						String displayColumnName = "DisplayColumn_" + columnName;
+						try {
+							value = rs.getObject(displayColumnName);
+						} catch (Exception e) {
+							// DisplayColumn not available, use ID value
+							value = rs.getObject(columnName);
+						}
+					} else {
+						// Get regular column value
+						value = rs.getObject(columnName);
+					}
+
+					// Set cell value based on type
+					if (value == null) {
+						cell.setCellValue("");
+					} else {
+						if (DisplayType.isDate(displayTypeId)) {
+							org.apache.poi.ss.usermodel.CellStyle dateStyle = workBook.createCellStyle();
+							cell.setCellStyle(dateStyle);
+
+							SimpleDateFormat sdf = DisplayType.getDateFormat(DisplayType.Date, language);
+							String format = sdf.toPattern();
+							dateStyle.setDataFormat(dataFormat.getFormat(format));
+							// dateStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/mm/yyyy"));
+							cell.setCellValue((Timestamp) value);
+						} else if (DisplayType.isNumeric(displayTypeId)) {
+							if (displayTypeId == DisplayType.Integer) {
+								cell.setCellValue(((Integer) value));
+							} else {
+								cell.setCellValue(((BigDecimal) value).doubleValue());
+							}
+						} else if (displayTypeId == DisplayType.YesNo) {
+							String stringBoolean = BooleanManager.getBooleanToTranslated(value.toString());
+							cell.setCellValue(stringBoolean);
+						} else {
+							cell.setCellValue(value.toString());
+						}
+					}
+				} catch (Exception e) {
+					// If column doesn't exist in ResultSet, leave cell empty
+					cell.setCellValue("");
+					log.fine("Column " + column.getColumnName() + " not found in ResultSet: " + e.getMessage());
+				}
+			}
+		}
+
+		// Auto-size columns
+		for (int i = 0; i < exportColumns.size(); i++) {
+			sheet.autoSizeColumn(i);
+		}
+
+		// Write to file
+		try (FileOutputStream outputStream = new FileOutputStream(excelFile)) {
+			workBook.write(outputStream);
+		}
+		workBook.close();
 	}
 
 
