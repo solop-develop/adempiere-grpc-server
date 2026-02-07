@@ -115,6 +115,14 @@ service GeneralLedger {
 			}
 		};
 	}
+	rpc ExportAccountingFacts(ExportAccountingFactsRequest) returns (ExportAccountingFactsResponse) {
+		option (google.api.http) = {
+			get: "/general-ledger/accounts/facts/{accounting_schema_id}/export"
+			additional_bindings: {
+				get: "/general-ledger/accounts/facts/{accounting_schema_id}/document/{table_name}/{record_id}/export"
+			}
+		};
+	}
 	rpc StartRePost(StartRePostRequest) returns (StartRePostResponse) {
 		option (google.api.http) = {
 			post: "/general-ledger/accounts/facts/{table_name}/{record_id}",
@@ -337,6 +345,34 @@ message ListAccountingFactsRequest {
 	google.protobuf.Timestamp date_from = 12;
 	google.protobuf.Timestamp date_to = 13;
 	int32 organization_id = 14;
+}
+
+// Export Accounting Facts
+message ExportAccountingFactsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	// mandatory filters
+	int32 accounting_schema_id = 8;
+	// optional filter
+	string posting_type = 9;
+	// document filters
+	string table_name = 10;
+	int32 record_id = 11;
+	//
+	google.protobuf.Timestamp date_from = 12;
+	google.protobuf.Timestamp date_to = 13;
+	int32 organization_id = 14;
+	// export options
+	bool is_export_all_records = 15; // true: export all records, false: export current page only
+}
+message ExportAccountingFactsResponse {
+	int64 record_count = 1;
+	string file_name = 2;
 }
 
 

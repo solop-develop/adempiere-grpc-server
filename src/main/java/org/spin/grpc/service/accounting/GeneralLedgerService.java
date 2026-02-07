@@ -17,7 +17,6 @@ package org.spin.grpc.service.accounting;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,9 +30,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_C_ElementValue;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
-import org.adempiere.core.domains.models.I_Fact_Acct;
-import org.adempiere.core.domains.models.X_C_AcctSchema_Element;
-import org.adempiere.core.domains.models.X_Fact_Acct;
 import org.compiere.model.GridField;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
@@ -44,7 +40,6 @@ import org.compiere.model.MAcctSchemaElement;
 import org.compiere.model.MColumn;
 import org.compiere.model.MField;
 import org.compiere.model.MLookupInfo;
-import org.compiere.model.MRefList;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
@@ -66,11 +61,8 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
-import org.spin.service.grpc.util.query.Filter;
-import org.spin.service.grpc.util.query.FilterManager;
 import org.spin.service.grpc.util.value.CollectionManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.backend.grpc.common.Entity;
 import org.spin.backend.grpc.common.ListEntitiesResponse;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
@@ -95,6 +87,8 @@ import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
 import org.spin.backend.grpc.general_ledger.SaveAccountingCombinationRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostRequest;
 import org.spin.backend.grpc.general_ledger.StartRePostResponse;
+import org.spin.backend.grpc.general_ledger.ExportAccountingFactsRequest;
+import org.spin.backend.grpc.general_ledger.ExportAccountingFactsResponse;
 import org.spin.backend.grpc.user_interface.GetTabEntityRequest;
 
 import io.grpc.Status;
@@ -990,15 +984,13 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 	}
 
-
-
 	@Override
 	public void listAccountingFacts(ListAccountingFactsRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object Request Null");
 			}
-			ListEntitiesResponse.Builder entitiesList = listAccountingFacts(request);
+			ListEntitiesResponse.Builder entitiesList = GeneralLedgerServiceLogic.listAccountingFacts(request);
 			responseObserver.onNext(entitiesList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -1013,186 +1005,25 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 		}
 	}
 
-	ListEntitiesResponse.Builder listAccountingFacts(ListAccountingFactsRequest request) {
-		int acctSchemaId = request.getAccountingSchemaId();
-		if (acctSchemaId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_AcctSchema_ID@");
-		}
-
-		//
-		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
-		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
-
-		List<Object> filtersList = new ArrayList<>();
-		StringBuilder whereClause = new StringBuilder(" WHERE 1=1 ");
-		whereClause.append(" AND ")
-			.append(I_Fact_Acct.Table_Name)
-			.append(".")
-			.append(I_Fact_Acct.COLUMNNAME_C_AcctSchema_ID)
-			.append(" = ? ")
-		;
-		filtersList.add(acctSchemaId);
-
-		//	Accounting Elements
-		List<MAcctSchemaElement> acctSchemaElements = new Query(
-			Env.getCtx(),
-			MAcctSchemaElement.Table_Name,
-			" C_AcctSchema_ID = ?" ,
-			null
-		)
-			.setOnlyActiveRecords(true)
-			.setParameters(acctSchemaId)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-			.<MAcctSchemaElement>list()
-		;
-		List<Filter> conditionsList = FilterManager.newInstance(request.getFilters()).getConditions();
-		acctSchemaElements.forEach(acctSchemaElement -> {
-			if (acctSchemaElement.getElementType().equals(X_C_AcctSchema_Element.ELEMENTTYPE_Organization)) {
-				// Organization filter is inside the request
-				return;
+	@Override
+	public void exportAccountingFacts(ExportAccountingFactsRequest request, StreamObserver<ExportAccountingFactsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object Request Null");
 			}
-
-			String columnName = MAcctSchemaElement.getColumnName(
-				acctSchemaElement.getElementType()
+			ExportAccountingFactsResponse.Builder response = GeneralLedgerServiceLogic.exportAccountingFacts(request);
+			responseObserver.onNext(response.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
 			);
-
-			Filter elementAccount = conditionsList.parallelStream()
-				.filter(condition -> {
-					return condition.getColumnName().equals(columnName);
-				})
-				.findFirst()
-				.orElse(null)
-			;
-			if (elementAccount == null) {
-				return;
-			}
-			Object value = elementAccount.getValue();
-			if (value == null) {
-				return;
-			}
-			whereClause.append(" AND ")
-				.append(I_Fact_Acct.Table_Name)
-				.append(".")
-				.append(columnName)
-				.append(" = ? ")
-			;
-			filtersList.add(value);
-		});
-
-		// Posting Type
-		if (!Util.isEmpty(request.getPostingType(), true)) {
-			final String postingType = request.getPostingType();
-			MRefList referenceList = MRefList.get(Env.getCtx(), X_Fact_Acct.POSTINGTYPE_AD_Reference_ID, postingType, null);
-			if (referenceList == null) {
-				throw new AdempiereException("@AD_Ref_List_ID@ @Invalid@: " + postingType);
-			}
-			whereClause.append(" AND ")
-				.append(I_Fact_Acct.Table_Name)
-				.append(".")
-				.append(I_Fact_Acct.COLUMNNAME_PostingType)
-				.append(" = ? ")
-			;
-			filtersList.add(postingType);
 		}
-
-		// Date
-		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
-			request.getDateFrom()
-		);
-		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
-			request.getDateTo()
-		);
-		if (dateFrom != null || dateTo != null) {
-			whereClause.append(" AND ");
-			if (dateFrom != null && dateTo != null) {
-				whereClause.append("TRUNC(")
-					.append(I_Fact_Acct.Table_Name)
-					.append(".DateAcct, 'DD') BETWEEN ? AND ? ")
-				;
-				filtersList.add(dateFrom);
-				filtersList.add(dateTo);
-			}
-			else if (dateFrom != null) {
-				whereClause.append("TRUNC(")
-					.append(I_Fact_Acct.Table_Name)
-					.append(".DateAcct, 'DD') >= ? ")
-				;
-				filtersList.add(dateFrom);
-			}
-			else {
-				// DateTo != null
-				whereClause.append("TRUNC(")
-					.append(I_Fact_Acct.Table_Name)
-					.append(".DateAcct, 'DD') <= ? ")
-				;
-				filtersList.add(dateTo);
-			}
-		}
-
-		// Document
-		if (!Util.isEmpty(request.getTableName(), true)) {
-			final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
-			if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
-				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
-			}
-			// validate record
-			final int recordId = request.getRecordId();
-			RecordUtil.validateRecordId(recordId, documentTable.getAccessLevel());
-
-			// table
-			whereClause.append(" AND ")
-				.append(I_Fact_Acct.Table_Name)
-				.append(".")
-				.append(I_Fact_Acct.COLUMNNAME_AD_Table_ID)
-				.append(" = ? ")
-			;
-			filtersList.add(documentTable.getAD_Table_ID());
-
-			// record
-			whereClause.append(" AND ")
-				.append(I_Fact_Acct.Table_Name)
-				.append(".")
-				.append(I_Fact_Acct.COLUMNNAME_Record_ID)
-				.append(" = ? ")
-			;
-			filtersList.add(recordId);
-		}
-
-		// add where with access restriction
-		String sqlWithRescriction = sql.toString() + whereClause.toString();
-		String parsedSQL = MRole.getDefault(Env.getCtx(), false)
-			.addAccessSQL(sqlWithRescriction,
-				I_Fact_Acct.Table_Name,
-				MRole.SQL_FULLYQUALIFIED,
-				MRole.SQL_RO
-			);
-
-		//  Get page and count
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
- 
-		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
-
-		//  Count records
-		int count = CountUtil.countRecords(parsedSQL, I_Fact_Acct.Table_Name, filtersList);
-		//  Add Row Number
-		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
-		parsedSQL += ("ORDER BY " + I_Fact_Acct.Table_Name + ".Fact_Acct_ID");
-		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, filtersList);
-		//
-		builder.setRecordCount(count);
-		//  Set page token
-		String nexPageToken = null;
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-		//  Set next page
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
-
-		return builder;
 	}
 
 }
