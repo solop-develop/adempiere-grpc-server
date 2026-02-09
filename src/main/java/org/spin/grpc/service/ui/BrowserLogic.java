@@ -160,7 +160,7 @@ public class BrowserLogic {
 				maybeParameter = searchProcessParameters.stream()
 					.filter(param -> {
 						return param.getColumnName().equals(searchString);
-				})
+					})
 					.findFirst()
 				;
 				if (maybeParameter.isEmpty()) {
