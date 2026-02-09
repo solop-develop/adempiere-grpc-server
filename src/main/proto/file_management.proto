@@ -63,10 +63,21 @@ service FileManagement {
 		};
 	}
 	rpc ExistsAttachment(ExistsAttachmentRequest) returns (ExistsAttachmentResponse) {
-		option (google.api.http) = { get: "/file-management/attachments/{table_name}/{record_id}/exists" };
+		option (google.api.http) = {
+			get: "/file-management/attachments/{table_name}/{record_id}/exists"
+		};
 	}
+	// Get by Attachment Reference
 	rpc GetAttachment(GetAttachmentRequest) returns (Attachment) {
-		option (google.api.http) = { get: "/file-management/attachments/{table_name}/{record_id}" };
+		option (google.api.http) = {
+			get: "/file-management/attachments/{table_name}/{record_id}"
+		};
+	}
+	// Get by S3 directly
+	rpc ListAttachmentFiles(ListAttachmentFilesRequest) returns (ListAttachmentFilesResponse) {
+		option (google.api.http) = {
+			get: "/file-management/attachments/{table_name}/{record_id}/lists"
+		};
 	}
 
 	//	Resource Reference
@@ -258,4 +269,18 @@ message ExistsAttachmentRequest {
 
 message ExistsAttachmentResponse {
 	int32 record_count = 1;
+}
+
+// Request for list attachment files from S3
+message ListAttachmentFilesRequest {
+	string table_name = 1;
+	int32 record_id = 2;
+	string container_id = 3; // Optional: specific container ID
+	ResourceType resource_type = 4; // ATTACHMENT, IMAGE, ARCHIVE, etc
+}
+
+// Response with list of attachment file names
+message ListAttachmentFilesResponse {
+	int32 record_count = 1;
+	repeated string file_names = 2;
 }
