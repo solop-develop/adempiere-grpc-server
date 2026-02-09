@@ -18,7 +18,6 @@ package org.spin.grpc.service.ui;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -172,15 +171,14 @@ public class BrowserLogic {
 					continue;
 				}
 				//Ensure the value is Timestamp when parameter should be Date
-				if(maybeParameter.get().getAD_Reference_ID() == DisplayType.Date
-					|| maybeParameter.get().getAD_Reference_ID() == DisplayType.DateTime){
-
+				if(DisplayType.isDate(maybeParameter.get().getAD_Reference_ID())) {
 					if (value instanceof List<?>) {
-						((List<Object>) value).replaceAll(TimeManager::getTimestampFromObject);
+						List<Object> newList = new ArrayList<>((List<?>) value);
+						newList.replaceAll(TimeManager::getTimestampFromObject);
+						value = newList;
 					} else {
 						value = TimeManager.getTimestampFromObject(value);
 					}
-
 				}
 
 				parametersToAdd.put(parameterName, value);
