@@ -18,7 +18,6 @@ package org.spin.grpc.service.ui;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -158,7 +157,12 @@ public class BrowserLogic {
 				index = columnSql.lastIndexOf(".");
 				parameterName = columnSql.substring(index +1);
 				String searchString = parameterName;
-				maybeParameter = searchProcessParameters.stream().filter(param -> param.getColumnName().equals(searchString)).findFirst();
+				maybeParameter = searchProcessParameters.stream()
+					.filter(param -> {
+						return param.getColumnName().equals(searchString);
+					})
+					.findFirst()
+				;
 				if (maybeParameter.isEmpty()) {
 					continue;
 				}
@@ -171,18 +175,16 @@ public class BrowserLogic {
 				if (!isRange && !operatorName.equalsIgnoreCase(Filter.EQUAL)) {
 					continue;
 				}
-				//Ensure the value is Timestamp when parameter should be Date
-				if(maybeParameter.get().getAD_Reference_ID() == DisplayType.Date
-					|| maybeParameter.get().getAD_Reference_ID() == DisplayType.DateTime){
-
+				// Ensure the value is Timestamp when parameter should be Date
+				if(DisplayType.isDate(maybeParameter.get().getAD_Reference_ID())) {
 					if (value instanceof List<?>) {
-						((List<Object>) value).replaceAll(TimeManager::getTimestampFromObject);
+						List<Object> newList = new ArrayList<>((List<?>) value);
+						newList.replaceAll(TimeManager::getTimestampFromObject);
+						value = newList;
 					} else {
 						value = TimeManager.getTimestampFromObject(value);
 					}
-
 				}
-
 				parametersToAdd.put(parameterName, value);
 			}
 			if (isRange && parametersMap.containsKey(columnName + "_To")) {
