@@ -318,9 +318,9 @@ public class MercadoLibre implements IWebhook {
         requestBodyJson.add("attributes", gson.toJsonTree(getAttributes(entity)));
         //  Add product files (media and assets)
         Map<String, Object> productFiles = getProductFiles(entity);
-        requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("media")));
-        requestBodyJson.add("description_url", gson.toJsonTree(productFiles.get("media")));
-        requestBodyJson.add("download_url", gson.toJsonTree(productFiles.get("media")));
+        requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("image_url")));
+        requestBodyJson.add("description_url", gson.toJsonTree(productFiles.get("description_url")));
+        requestBodyJson.add("download_url", gson.toJsonTree(productFiles.get("download_url")));
         requestBodyJson.add("media", gson.toJsonTree(productFiles.get("media")));
         requestBodyJson.add("assets", gson.toJsonTree(productFiles.get("assets")));
         String json = gson.toJson(requestBodyJson);
