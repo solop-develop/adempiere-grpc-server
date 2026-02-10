@@ -125,27 +125,32 @@ public class MercadoLibre implements IWebhook {
                 .collect(Collectors.joining("_"));
     }
 
-    private List<String> getProductImageUrls(PO entity) {
-        List<String> imageUrls = new ArrayList<>();
+    private Map<String, Object> getProductFiles(PO entity) {
+        List<String> mediaUrls = new ArrayList<>();
+        List<String> assetUrls = new ArrayList<>();
+
+        Map<String, Object> files = new HashMap<>();
+        files.put("image_url", null);
+        files.put("description_url", null);
+        files.put("download_url", null);
+        files.put("media", mediaUrls);
+        files.put("assets", assetUrls);
 
         try {
             // Get M_Product_ID from the entity (SP034_Publishing)
             int productId = entity.get_ValueAsInt("M_Product_ID");
             if (productId <= 0) {
-                return imageUrls;
+                return files;
             }
 
             // Get the product
             MProduct product = MProduct.get(entity.getCtx(), productId);
             if (product == null) {
-                return imageUrls;
+                return files;
             }
-
-            // // Get attachment from the product
-            // MAttachment attachment = product.getAttachment();
-            // if (attachment == null || attachment.getAD_Attachment_ID() <= 0) {
-            //     return imageUrls;
-            // }
+            files.put("image_url", product.getImageURL());
+            files.put("description_url", product.getDescriptionURL());
+            files.put("download_url", product.getDownloadURL());
 
             // Get client UUID for building the path
             MClient client = MClient.get(entity.getCtx(), entity.getAD_Client_ID());
@@ -164,23 +169,31 @@ public class MercadoLibre implements IWebhook {
                 null
             );
 
-            // Filter only image files and build URLs
+            // Build base URL
             String baseUrl = String.format("/%s/client/attachment/%s/%d/",
                 clientUuid,
                 I_M_Product.Table_Name,
                 productId
             );
 
+            // Categorize files into media (images/videos) and assets (other files)
             for (String fileName : fileNames) {
-                if (isImageFile(fileName)) {
-                    imageUrls.add(baseUrl + fileName);
+                String fileUrl = baseUrl + fileName;
+                if (isMediaFile(fileName)) {
+                    mediaUrls.add(fileUrl);
+                } else {
+                    assetUrls.add(fileUrl);
                 }
             }
+
+            // overwrite files list
+            files.put("media", mediaUrls);
+            files.put("assets", assetUrls);
         } catch (Exception e) {
-            log.warning("Error getting product images: " + e.getMessage());
+            log.warning("Error getting product files: " + e.getMessage());
         }
 
-        return imageUrls;
+        return files;
     }
 
     private boolean isImageFile(String fileName) {
@@ -188,13 +201,53 @@ public class MercadoLibre implements IWebhook {
             return false;
         }
         String lowerCaseFileName = fileName.toLowerCase();
-        return lowerCaseFileName.endsWith(".jpg") ||
-               lowerCaseFileName.endsWith(".jpeg") ||
-               lowerCaseFileName.endsWith(".png") ||
-               lowerCaseFileName.endsWith(".gif") ||
-               lowerCaseFileName.endsWith(".ico") ||
-               lowerCaseFileName.endsWith(".webp") ||
-               lowerCaseFileName.endsWith(".bmp");
+        // Images
+        boolean isImage = lowerCaseFileName.endsWith(".jpg") ||
+            lowerCaseFileName.endsWith(".jpeg") ||
+            lowerCaseFileName.endsWith(".png") ||
+            lowerCaseFileName.endsWith(".gif") ||
+            lowerCaseFileName.endsWith(".ico") ||
+            lowerCaseFileName.endsWith(".webp") ||
+            lowerCaseFileName.endsWith(".bmp") ||
+            lowerCaseFileName.endsWith(".svg")
+        ;
+        return isImage;
+    }
+
+    private boolean isVideoFile(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return false;
+        }
+        String lowerCaseFileName = fileName.toLowerCase();
+        // Videos
+        boolean isVideo = lowerCaseFileName.endsWith(".mp4") ||
+            lowerCaseFileName.endsWith(".webm") ||
+            lowerCaseFileName.endsWith(".ogg") ||
+            lowerCaseFileName.endsWith(".avi") ||
+            lowerCaseFileName.endsWith(".mov") ||
+            lowerCaseFileName.endsWith(".wmv") ||
+            lowerCaseFileName.endsWith(".flv") ||
+            lowerCaseFileName.endsWith(".mkv") ||
+            lowerCaseFileName.endsWith(".m4v")
+        ;
+        return isVideo;
+    }
+
+    private boolean isMediaFile(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return false;
+        }
+        // Images
+        boolean isImage = isImageFile(fileName);
+        if (isImage) {
+            return true;
+        }
+        // Videos
+        boolean isVideo = isVideoFile(fileName);
+        if (isVideo) {
+            return true;
+        }
+        return false;
     }
 
     private void addMetadata(JsonObject requestBodyJson, PO entity) {
@@ -263,9 +316,13 @@ public class MercadoLibre implements IWebhook {
         //  Add Mercado Libre data here
         requestBodyJson.add("document", gson.toJsonTree(documentBuilder.getDocument().getData()));
         requestBodyJson.add("attributes", gson.toJsonTree(getAttributes(entity)));
-        //  Add product images
-        List<String> imageUrls = getProductImageUrls(entity);
-        requestBodyJson.add("images", gson.toJsonTree(imageUrls));
+        //  Add product files (media and assets)
+        Map<String, Object> productFiles = getProductFiles(entity);
+        requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("image_url")));
+        requestBodyJson.add("description_url", gson.toJsonTree(productFiles.get("description_url")));
+        requestBodyJson.add("download_url", gson.toJsonTree(productFiles.get("download_url")));
+        requestBodyJson.add("media", gson.toJsonTree(productFiles.get("media")));
+        requestBodyJson.add("assets", gson.toJsonTree(productFiles.get("assets")));
         String json = gson.toJson(requestBodyJson);
         RequestBody body = RequestBody.create(json, JSON);
         HttpUrl.Builder httpUrl = Objects.requireNonNull(HttpUrl.parse(webhookUrl))
@@ -305,6 +362,8 @@ public class MercadoLibre implements IWebhook {
                     String responseBody = response.body().string();
                     if (responseBody != null && !responseBody.isEmpty()) {
                         try {
+                            // TODO: Add Pulication support to status
+                            // TODO: Add Product support to publication status, item condition, publish type
                             String publicationUrl = null;
                             String publicationId = null;
 
@@ -336,22 +395,17 @@ public class MercadoLibre implements IWebhook {
                             }
 
                             // Update the SP034_Publishing record with the publication data
-                            boolean updated = false;
                             if (publicationUrl != null && !publicationUrl.isEmpty()) {
                                 entity.set_ValueOfColumn("SP034_PublicationURL", publicationUrl);
-                                updated = true;
                                 log.info("Publication URL saved: " + publicationUrl);
                             }
                             if (publicationId != null && !publicationId.isEmpty()) {
                                 entity.set_ValueOfColumn("SP034_PublicationCode", publicationId);
-                                updated = true;
                                 log.info("Publication ID saved: " + publicationId);
                             }
-
-                            if (updated) {
-                                // entity.setIsDirectLoad(true);
-                                entity.saveEx();
-                            }
+                            entity.set_ValueOfColumn("Description", responseBody);
+                            // entity.setIsDirectLoad(true);
+                            entity.saveEx();
                         } catch (Exception e) {
                             log.warning("Error processing webhook response: " + e.getMessage());
                         }
