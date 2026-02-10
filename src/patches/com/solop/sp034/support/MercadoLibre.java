@@ -405,7 +405,7 @@ public class MercadoLibre implements IWebhook {
                             }
                             entity.set_ValueOfColumn("Description", responseBody);
                             // entity.setIsDirectLoad(true);
-                            entity.saveEx();
+                            entity.saveEx(null);
                         } catch (Exception e) {
                             log.warning("Error processing webhook response: " + e.getMessage());
                         }
