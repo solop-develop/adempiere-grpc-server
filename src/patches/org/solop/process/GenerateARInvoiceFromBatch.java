@@ -158,6 +158,9 @@ public class GenerateARInvoiceFromBatch extends GenerateARInvoiceFromBatchAbstra
 			invoiceSchedule.setDiscountDate(invoiceSchedule.getDueDate());
 			invoiceSchedule.saveEx();
 
+			invoice.validatePaySchedule();
+			invoice.saveEx();
+
 			created.getAndIncrement();
 			if (batch.isAutomaticReceipt()) {
 				maybeWithdrawalAmount.getAndUpdate(current -> current.add(invoice.getGrandTotal()));
