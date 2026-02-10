@@ -321,7 +321,7 @@ public class MercadoLibre implements IWebhook {
         requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("image_url")));
         requestBodyJson.add("description_url", gson.toJsonTree(productFiles.get("description_url")));
         requestBodyJson.add("download_url", gson.toJsonTree(productFiles.get("download_url")));
-        requestBodyJson.add("media", gson.toJsonTree(productFiles.get("media")));
+        requestBodyJson.add("media_files", gson.toJsonTree(productFiles.get("media")));
         requestBodyJson.add("assets", gson.toJsonTree(productFiles.get("assets")));
         String json = gson.toJson(requestBodyJson);
         RequestBody body = RequestBody.create(json, JSON);
@@ -403,7 +403,7 @@ public class MercadoLibre implements IWebhook {
                                 entity.set_ValueOfColumn("SP034_PublicationCode", publicationId);
                                 log.info("Publication ID saved: " + publicationId);
                             }
-                            entity.set_ValueOfColumn("Description", responseBody);
+                            // entity.set_ValueOfColumn("Description", responseBody);
                             // entity.setIsDirectLoad(true);
                             entity.saveEx(null);
                         } catch (Exception e) {
