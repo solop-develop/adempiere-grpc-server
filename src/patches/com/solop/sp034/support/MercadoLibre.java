@@ -1,6 +1,7 @@
 package com.solop.sp034.support;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.solop.sp033.interfaces.IWebhook;
 import com.solop.sp034.util.DocumentBuilder;
@@ -303,14 +304,56 @@ public class MercadoLibre implements IWebhook {
                     // Process webhook response
                     String responseBody = response.body().string();
                     if (responseBody != null && !responseBody.isEmpty()) {
-                        JsonObject responseJson = gson.fromJson(responseBody, JsonObject.class);
-                        if (responseJson.has("publication_url")) {
-                            String publicationUrl = responseJson.get("publication_url").getAsString();
-                            // Update the SP034_Publishing record with the publication URL
-                            entity.set_ValueOfColumn("SP034_PublicationURL", publicationUrl);
-                            entity.setIsDirectLoad(true);
-                            entity.saveEx();
-                            log.info("Publication URL saved: " + publicationUrl);
+                        try {
+                            String publicationUrl = null;
+                            String publicationId = null;
+
+                            // Check if response is an array (MercadoLibre returns array)
+                            if (responseBody.trim().startsWith("[")) {
+                                JsonArray responseArray = gson.fromJson(responseBody, JsonArray.class);
+                                if (responseArray.size() > 0) {
+                                    JsonObject firstItem = responseArray.get(0).getAsJsonObject();
+                                    // MercadoLibre uses 'permalink' field
+                                    if (firstItem.has("permalink")) {
+                                        publicationUrl = firstItem.get("permalink").getAsString();
+                                    }
+                                    // Also capture MercadoLibre ID
+                                    if (firstItem.has("id")) {
+                                        publicationId = firstItem.get("id").getAsString();
+                                    }
+                                }
+                            } else {
+                                // Handle single object response
+                                JsonObject responseJson = gson.fromJson(responseBody, JsonObject.class);
+                                    // MercadoLibre uses 'permalink' field
+                                if (responseJson.has("permalink")) {
+                                    publicationUrl = responseJson.get("permalink").getAsString();
+                                }
+                                // Also capture ID if available
+                                if (responseJson.has("id")) {
+                                    publicationId = responseJson.get("id").getAsString();
+                                }
+                            }
+
+                            // Update the SP034_Publishing record with the publication data
+                            boolean updated = false;
+                            if (publicationUrl != null && !publicationUrl.isEmpty()) {
+                                entity.set_ValueOfColumn("SP034_PublicationURL", publicationUrl);
+                                updated = true;
+                                log.info("Publication URL saved: " + publicationUrl);
+                            }
+                            if (publicationId != null && !publicationId.isEmpty()) {
+                                entity.set_ValueOfColumn("SP034_PublicationCode", publicationId);
+                                updated = true;
+                                log.info("Publication ID saved: " + publicationId);
+                            }
+
+                            if (updated) {
+                                // entity.setIsDirectLoad(true);
+                                entity.saveEx();
+                            }
+                        } catch (Exception e) {
+                            log.warning("Error processing webhook response: " + e.getMessage());
                         }
                     }
                 } catch (Exception e) {
