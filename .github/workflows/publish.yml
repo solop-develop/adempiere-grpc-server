@@ -146,7 +146,7 @@ jobs:
 
   # Check secrets to push image in docker hub registry
   check-docker-secrets:
-    name: Check if docker hub registry information was set on secrets
+    name: Check if the registry information was set on secrets and variables
     needs:
       - build-app
     runs-on: ubuntu-latest
@@ -155,7 +155,8 @@ jobs:
     steps:
       - id: check_docker_hub_secrets_job
         run: |
-          if [[ "${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}" != "" && \
+          if [[ "${{ vars.DOCKER_REGISTRY }}" != "" && \
+                "${{ vars.DOCKER_REPO }}" != "" && \
                 "${{ secrets.DOCKER_USERNAME }}" != "" && \
                 "${{ secrets.DOCKER_TOKEN }}" != "" ]]; \
           then
@@ -196,15 +197,26 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Push alpine image in Docker Hub
+      - name: Set Docker Alpine Tags
+        id: set_tags_alpine
+        run: |
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}-alpine"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:$CLEAN_BRANCH_NAME-alpine"
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:alpine"
+          fi
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Push alpine image in Container Registry
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/alpine.Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine
-            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:alpine-${{ github.event.release.tag_name }}
+          tags: ${{ steps.set_tags_alpine.outputs.tags_to_push }}
 
   # TODO: Download .tar and add docker image without uncompress
   # Publish docker image multiplatform in Docker Hub Registry to application
@@ -242,25 +254,59 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Push image in Docker Hub
+      - name: Set Docker Tags
+        id: set_tags
+        run: |
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:${{ github.event.release.tag_name }}"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:$CLEAN_BRANCH_NAME"
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO }}:latest"
+          fi
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Push image in Container Registry
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/focal.Dockerfile
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
-          tags: |
-            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:${{ github.event.release.tag_name }}
-            ${{ secrets.DOCKER_REPO_ADEMPIERE_GRPC_SERVER }}:latest
+          tags: ${{ steps.set_tags.outputs.tags_to_push }}
 
+
+  # Check secrets to push image in docker hub registry
+  check-proxy-docker-secrets:
+    name: Check if Container Registry registry information was set on secrets
+    needs:
+      - build-app
+    runs-on: ubuntu-latest
+    outputs:
+      is_have_secrets: ${{ steps.check_secret_job.outputs.is_have_secrets }}
+    steps:
+      - id: check_secret_job
+        run: |
+          if [[ "${{ vars.DOCKER_REGISTRY }}" != "" && \
+                "${{ vars.DOCKER_REPO_PROXY }}" != "" && \
+                "${{ secrets.DOCKER_USERNAME }}" != "" && \
+                "${{ secrets.DOCKER_TOKEN }}" != "" ]]; \
+          then
+            echo "Secrets to use a container registry are configured in the repo"
+            echo "is_have_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "Secrets to use a container registry were not configured in the repo"
+            echo "is_have_secrets=false" >> $GITHUB_OUTPUT
+          fi
 
   # Publish docker image multiplatform in Docker Hub Registry to application
-  push-grpc-proxy-imame-dhr:
-    name: Push grpc-proxy docker image to Docker Hub
+  push-grpc-proxy-image:
+    name: Push grpc-proxy docker image to Container Registry
     needs:
-      - check-docker-secrets
+      - check-proxy-docker-secrets
     # Skip step based on secret
-    if: needs.check-docker-secrets.outputs.is_have_secrets == 'true'
+    if: needs.check-proxy-docker-secrets.outputs.is_have_secrets == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -286,13 +332,24 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Push image in Docker Hub
+      - name: Set Docker Tags
+        id: set_envoy_tags
+        run: |
+          IS_PRE_RELEASE=${{ github.event.release.prerelease }}
+          BRANCH_NAME="${{ github.event.release.target_commitish }}"
+          CLEAN_BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          TAGS="${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:${{ github.event.release.tag_name }}"
+          TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:$CLEAN_BRANCH_NAME"
+          if [[ "$IS_PRE_RELEASE" == "false" ]]; then
+            TAGS+=",${{ vars.DOCKER_REGISTRY }}/${{ vars.DOCKER_REPO_PROXY }}:latest"
+          fi
+          echo "tags_to_push=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Push image in Container Registry
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/grpc_proxy.Dockerfile
           platforms: linux/amd64,linux/amd64/v2,linux/arm64/v8
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_PROXY_REPO_NAME }}:${{ github.event.release.tag_name }}
-            ${{ secrets.DOCKER_HUB_PROXY_REPO_NAME }}:latest
+          tags: ${{ steps.set_envoy_tags.outputs.tags_to_push }}
