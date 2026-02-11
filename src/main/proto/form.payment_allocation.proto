@@ -68,35 +68,39 @@ service PaymentAllocation {
 		};
 	}
 
-	// list result
+	// list payments result
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
 		option (google.api.http) = {
 			get: "/forms/payment-allocation/payments/{business_partner_id}"
 		};
 	}
+	// list invoices result
 	rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse) {
 		option (google.api.http) = {
 			get: "/forms/payment-allocation/invoices/{business_partner_id}"
 		};
 	}
 
-	// process
+	// List charges to difference
 	rpc ListCharges(ListChargesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/payment-allocation/charges"
 		};
 	}
+	// List organizations without astherisc
 	rpc ListTransactionOrganizations(ListTransactionOrganizationsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/payment-allocation/organizations/transactions"
 		};
 	}
+	// Calculate difference before process
 	rpc CalculateDifference(CalculateDifferenceRequest) returns (CalculateDifferenceResponse) {
 		option (google.api.http) = {
 			post: "/forms/payment-allocation/difference",
 			body: "*"
 		};
 	}
+	// Crete Payment Allocation and Process
 	rpc Process(ProcessRequest) returns (ProcessResponse) {
 		option (google.api.http) = {
 			post: "/forms/payment-allocation/process",
@@ -431,15 +435,11 @@ message CalculateDifferenceRequest {
 	google.protobuf.Timestamp date = 2;
 	int32 transaction_organization_id = 3;
 	int32 currency_id = 4;
-	int32 charge_id = 5;
-	string description = 6;
-	string total_difference = 7;
-	repeated PaymentSelection payment_selections = 8;
-	repeated InvoiceSelection invoice_selections = 9;
-	bool is_multi_currency = 10;
-	int32 conversion_type_id = 11;
-	string table_name = 12;
-	int32 record_id = 13;
+	string total_difference = 5;
+	repeated PaymentSelection payment_selections = 6;
+	repeated InvoiceSelection invoice_selections = 7;
+	bool is_multi_currency = 8;
+	int32 conversion_type_id = 9;
 }
 
 message CalculateDifferenceResponse {
@@ -465,4 +465,6 @@ message ProcessRequest {
 }
 message ProcessResponse {
 	string message = 1;
+	int32 payment_allocation_id = 2;
+	string payment_allocation_document_no = 3;
 }

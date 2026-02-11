@@ -841,14 +841,14 @@ public class PaymentAllocationLogic {
 
 
 	public static CalculateDifferenceResponse.Builder calculateDifference(CalculateDifferenceRequest request) {
-		BigDecimal totalDiff = getDifferenceAmount(
+		final BigDecimal totalDifference = getDifferenceAmount(
 			request.getPaymentSelectionsList(),
 			request.getInvoiceSelectionsList()
 		);
 
 		CalculateDifferenceResponse.Builder builder = CalculateDifferenceResponse.newBuilder()
 			.setDifferenceAmount(
-				NumberManager.getBigDecimalToString(totalDiff)
+				NumberManager.getBigDecimalToString(totalDifference)
 			)
 		;
 		return builder;
@@ -935,7 +935,7 @@ public class PaymentAllocationLogic {
 		MOrg organization = validateAndGetOrganization(request.getTransactionOrganizationId());
 		Properties context = Env.getCtx();
 
-		AtomicReference<String> atomicStatus = new AtomicReference<String>();
+		AtomicReference<MAllocationHdr> atomicAllocation = new AtomicReference<MAllocationHdr>();
 		int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
 		Env.setContext(context, windowNo, I_AD_Org.COLUMNNAME_AD_Org_ID, request.getTransactionOrganizationId());
 
@@ -958,14 +958,20 @@ public class PaymentAllocationLogic {
 			}
 			transactionDate = TimeUtil.getDay(transactionDate); // Remove time mark
 
-			BigDecimal totalDifference = NumberManager.getBigDecimalFromString(
+			// TOOD: Calculate with getDifferenceAmount method
+			// BigDecimal totalDifference = getDifferenceAmount(
+			// 	request.getPaymentSelectionsList(),
+			// 	request.getInvoiceSelectionsList()
+			// );
+			final BigDecimal totalDifference = NumberManager.getBigDecimalFromString(
 				request.getTotalDifference()
 			);
-			String tableName =  request.getTableName();
-			int recordId = request.getRecordId();
-			String status = saveData(
+			final String tableName =  request.getTableName();
+			final int recordId = request.getRecordId();
+			MAllocationHdr allocation = saveData(
 				windowNo, businessPartner.getC_BPartner_ID(),
-				currency.getC_Currency_ID(), request.getIsMultiCurrency(),
+				currency.getC_Currency_ID(),
+				// request.getIsMultiCurrency(),
 				organization.getAD_Org_ID(), transactionDate,
 				request.getChargeId(), request.getDescription(),
 				totalDifference,
@@ -975,24 +981,39 @@ public class PaymentAllocationLogic {
 				recordId,
 				transactionName
 			);
-			atomicStatus.set(status);
+			atomicAllocation.set(allocation);
 		});
 
-		return ProcessResponse.newBuilder()
-			.setMessage(
-				TextManager.getValidString(
-					Msg.parseTranslation(
-						context,
-						atomicStatus.get()
+		ProcessResponse.Builder builder = ProcessResponse.newBuilder();
+
+		MAllocationHdr paymentAllocarAllocation = atomicAllocation.get();
+		if (paymentAllocarAllocation != null && paymentAllocarAllocation.getC_AllocationHdr_ID() > 0) {
+			final String processMessage = Msg.parseTranslation(
+				context,
+				"@C_AllocationHdr_ID@ @Created@: " + paymentAllocarAllocation.getDocumentNo()
+			);
+			builder.setPaymentAllocationId(
+					paymentAllocarAllocation.getC_AllocationHdr_ID()
+				)
+				.setPaymentAllocationDocumentNo(
+					TextManager.getValidString(
+						paymentAllocarAllocation.getDocumentNo()
 					)
 				)
-			)
-		;
+				.setMessage(
+					TextManager.getValidString(
+						processMessage
+					)
+				)
+			;
+		}
+		return builder;
 	}
 
-	private static String saveData(
+	private static MAllocationHdr saveData(
 		int windowNo, int businessPartnerId,
-		int currencyId, boolean isMultiCurrency,
+		int currencyId,
+		// boolean isMultiCurrency,
 		int organizationId, Timestamp transactionDate,
 		int chargeId, String description,
 		BigDecimal totalDifference,
@@ -1003,7 +1024,7 @@ public class PaymentAllocationLogic {
 		String transactionName
 	) {
 		if (paymentSelection == null || invoiceSelection == null || (paymentSelection.size() + invoiceSelection.size() == 0)) {
-			return "";
+			return null;
 		}
 
 		if (organizationId <= 0) {
@@ -1234,7 +1255,7 @@ public class PaymentAllocationLogic {
 		paymentList.clear();
 		amountList.clear();
 
-		return Msg.parseTranslation(Env.getCtx(), "@C_AllocationHdr_ID@ @Created@: " + alloc.getDocumentNo());
+		return alloc;
 	}
 
 }
