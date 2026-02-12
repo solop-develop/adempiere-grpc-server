@@ -169,10 +169,10 @@ public class MercadoLibre implements IWebhook {
                 null
             );
 
-            // Build base URL
+            // Build base URL (using lowercase table name to match S3 paths)
             String baseUrl = String.format("/%s/client/attachment/%s/%d/",
                 clientUuid,
-                I_M_Product.Table_Name,
+                I_M_Product.Table_Name.toLowerCase(),
                 productId
             );
 
