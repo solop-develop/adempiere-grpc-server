@@ -460,8 +460,8 @@ public class MercadoLibre implements IWebhook {
                 // Clear any previous validation errors
                 entity.set_ValueOfColumn("SP034_ValidationMsg", null);
 
-                // Update publish status to 'Published' (P)
-                entity.set_ValueOfColumn("SP034_PublishStatus", "P");
+                // Update publish status to 'Active/Published' (A)
+                entity.set_ValueOfColumn("SP034_PublishStatus", "A");
 
                 entity.saveEx(null);
 
@@ -524,8 +524,8 @@ public class MercadoLibre implements IWebhook {
             // Save error to validation message
             saveValidationError(entity, "MercadoLibre Error (HTTP " + statusCode + ")", errorMessage);
 
-            // Update publish status to 'Error' (E)
-            entity.set_ValueOfColumn("SP034_PublishStatus", "E");
+            // Update publish status to 'Without Publishing' (D) - Error occurred
+            entity.set_ValueOfColumn("SP034_PublishStatus", "D");
             entity.saveEx(null);
 
             log.severe("Webhook error for product " + entity.get_ID() + ": " + errorMessage);
@@ -563,10 +563,10 @@ public class MercadoLibre implements IWebhook {
             // Save to SP034_ValidationMsg
             entity.set_ValueOfColumn("SP034_ValidationMsg", validationMsg);
 
-            // Update publish status to 'Error' (E) if not already set
+            // Update publish status to 'Without Publishing' (D) - Error occurred
             Object currentStatus = entity.get_Value("SP034_PublishStatus");
-            if (currentStatus == null || !currentStatus.equals("E")) {
-                entity.set_ValueOfColumn("SP034_PublishStatus", "E");
+            if (currentStatus == null || !currentStatus.equals("D")) {
+                entity.set_ValueOfColumn("SP034_PublishStatus", "D");
             }
 
             entity.saveEx(null);
