@@ -321,7 +321,7 @@ public class MercadoLibre implements IWebhook {
         requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("image_url")));
         requestBodyJson.add("description_url", gson.toJsonTree(productFiles.get("description_url")));
         requestBodyJson.add("download_url", gson.toJsonTree(productFiles.get("download_url")));
-        requestBodyJson.add("media_files", gson.toJsonTree(productFiles.get("media")));
+        requestBodyJson.add("media", gson.toJsonTree(productFiles.get("media")));
         requestBodyJson.add("assets", gson.toJsonTree(productFiles.get("assets")));
         String json = gson.toJson(requestBodyJson);
         RequestBody body = RequestBody.create(json, JSON);
@@ -355,68 +355,28 @@ public class MercadoLibre implements IWebhook {
         try {
             executorService.submit(() -> {
                 try (Response response = client.newCall(request).execute()) {
-                    if (!response.isSuccessful()) {
-                        throw new AdempiereException("Error sending " + entity.get_ID() + ". Response Code: " + response.code() + ", Body: " + response.body().toString());
-                    }
-                    // Process webhook response
+                    // Get response body
                     String responseBody = response.body().string();
+
+                    if (!response.isSuccessful()) {
+                        // Handle error response from n8n workflow
+                        handleWebhookError(entity, response.code(), responseBody);
+                        return;
+                    }
+
+                    // Handle success response
                     if (responseBody != null && !responseBody.isEmpty()) {
-                        try {
-                            // TODO: Add Pulication support to status
-                            // TODO: Add Product support to publication status, item condition, publish type
-                            String publicationUrl = null;
-                            String publicationId = null;
-
-                            // Check if response is an array (MercadoLibre returns array)
-                            if (responseBody.trim().startsWith("[")) {
-                                JsonArray responseArray = gson.fromJson(responseBody, JsonArray.class);
-                                if (responseArray.size() > 0) {
-                                    JsonObject firstItem = responseArray.get(0).getAsJsonObject();
-                                    // MercadoLibre uses 'permalink' field
-                                    if (firstItem.has("permalink")) {
-                                        publicationUrl = firstItem.get("permalink").getAsString();
-                                    }
-                                    // Also capture MercadoLibre ID
-                                    if (firstItem.has("id")) {
-                                        publicationId = firstItem.get("id").getAsString();
-                                    }
-                                }
-                            } else {
-                                // Handle single object response
-                                JsonObject responseJson = gson.fromJson(responseBody, JsonObject.class);
-                                    // MercadoLibre uses 'permalink' field
-                                if (responseJson.has("permalink")) {
-                                    publicationUrl = responseJson.get("permalink").getAsString();
-                                }
-                                // Also capture ID if available
-                                if (responseJson.has("id")) {
-                                    publicationId = responseJson.get("id").getAsString();
-                                }
-                            }
-
-                            // Update the SP034_Publishing record with the publication data
-                            if (publicationUrl != null && !publicationUrl.isEmpty()) {
-                                entity.set_ValueOfColumn("SP034_PublicationURL", publicationUrl);
-                                log.info("Publication URL saved: " + publicationUrl);
-                            }
-                            if (publicationId != null && !publicationId.isEmpty()) {
-                                entity.set_ValueOfColumn("SP034_PublicationCode", publicationId);
-                                log.info("Publication ID saved: " + publicationId);
-                            }
-                            // entity.set_ValueOfColumn("Description", responseBody);
-                            // entity.setIsDirectLoad(true);
-                            entity.saveEx(null);
-                        } catch (Exception e) {
-                            log.warning("Error processing webhook response: " + e.getMessage());
-                        }
+                        handleWebhookSuccess(entity, responseBody);
                     }
                 } catch (Exception e) {
-                    log.severe(e.getLocalizedMessage());
+                    log.severe("Error calling webhook: " + e.getLocalizedMessage());
+                    // Save error to validation message
+                    saveValidationError(entity, "Webhook Error", e.getLocalizedMessage());
                 }
             });
         } catch (RejectedExecutionException e) {
             log.severe(e.getLocalizedMessage());
-            // Add this to queue to sent after?
+            saveValidationError(entity, "Execution Rejected", e.getLocalizedMessage());
         }
     }
 
@@ -447,6 +407,174 @@ public class MercadoLibre implements IWebhook {
             }
         } catch (Exception e) {
             throw new AdempiereException(e);
+        }
+    }
+
+    /**
+     * Handle successful webhook response from n8n workflow
+     * @param entity SP034_Publishing entity
+     * @param responseBody Response body from webhook
+     */
+    private void handleWebhookSuccess(PO entity, String responseBody) {
+        try {
+            JsonObject responseJson;
+
+            // Check if response is an array (backward compatibility)
+            if (responseBody.trim().startsWith("[")) {
+                JsonArray responseArray = gson.fromJson(responseBody, JsonArray.class);
+                if (responseArray.size() > 0) {
+                    responseJson = responseArray.get(0).getAsJsonObject();
+                } else {
+                    log.warning("Empty array response from webhook");
+                    return;
+                }
+            } else {
+                responseJson = gson.fromJson(responseBody, JsonObject.class);
+            }
+
+            // Check if it's a success response
+            if (responseJson.has("success") && responseJson.get("success").getAsBoolean()) {
+                // Extract publication data
+                String publicationUrl = null;
+                String publicationId = null;
+
+                if (responseJson.has("publication_url")) {
+                    publicationUrl = responseJson.get("publication_url").getAsString();
+                }
+
+                if (responseJson.has("publication_id")) {
+                    publicationId = responseJson.get("publication_id").getAsString();
+                }
+
+                // Update the SP034_Publishing record
+                if (publicationUrl != null && !publicationUrl.isEmpty()) {
+                    entity.set_ValueOfColumn("SP034_PublicationURL", publicationUrl);
+                    log.info("Publication URL saved: " + publicationUrl);
+                }
+
+                if (publicationId != null && !publicationId.isEmpty()) {
+                    entity.set_ValueOfColumn("SP034_PublicationCode", publicationId);
+                    log.info("Publication ID saved: " + publicationId);
+                }
+
+                // Clear any previous validation errors
+                entity.set_ValueOfColumn("SP034_ValidationMsg", null);
+
+                // Update publish status to 'Published' (P)
+                entity.set_ValueOfColumn("SP034_PublishStatus", "P");
+
+                entity.saveEx(null);
+
+                log.info("Product published successfully: " + publicationId);
+            } else {
+                // Success=false in response
+                handleWebhookError(entity, 200, responseBody);
+            }
+
+        } catch (Exception e) {
+            log.warning("Error processing webhook success response: " + e.getMessage());
+            saveValidationError(entity, "Response Processing Error", e.getMessage());
+        }
+    }
+
+    /**
+     * Handle error response from n8n workflow
+     * @param entity SP034_Publishing entity
+     * @param statusCode HTTP status code
+     * @param responseBody Response body from webhook
+     */
+    private void handleWebhookError(PO entity, int statusCode, String responseBody) {
+        try {
+            String errorMessage = "Unknown error";
+            String errorDetails = responseBody;
+
+            if (responseBody != null && !responseBody.isEmpty()) {
+                try {
+                    JsonObject errorResponse = gson.fromJson(responseBody, JsonObject.class);
+
+                    // Extract error message
+                    if (errorResponse.has("error")) {
+                        errorMessage = errorResponse.get("error").getAsString();
+                    }
+
+                    // Extract detailed error information
+                    if (errorResponse.has("error_details")) {
+                        JsonObject details = errorResponse.getAsJsonObject("error_details");
+                        errorDetails = details.toString();
+
+                        // Try to get a more specific message
+                        if (details.has("message")) {
+                            errorMessage = details.get("message").getAsString();
+                        }
+                    }
+
+                    // If there's a message field, use it
+                    if (errorResponse.has("message")) {
+                        errorMessage = errorResponse.get("message").getAsString();
+                    }
+
+                } catch (Exception e) {
+                    // Failed to parse JSON, use raw response
+                    errorMessage = responseBody.length() > 200
+                        ? responseBody.substring(0, 200) + "..."
+                        : responseBody;
+                }
+            }
+
+            // Save error to validation message
+            saveValidationError(entity, "MercadoLibre Error (HTTP " + statusCode + ")", errorMessage);
+
+            // Update publish status to 'Error' (E)
+            entity.set_ValueOfColumn("SP034_PublishStatus", "E");
+            entity.saveEx(null);
+
+            log.severe("Webhook error for product " + entity.get_ID() + ": " + errorMessage);
+
+        } catch (Exception e) {
+            log.severe("Error handling webhook error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Save validation error to SP034_ValidationMsg field
+     * @param entity SP034_Publishing entity
+     * @param errorType Type of error
+     * @param errorMessage Error message
+     */
+    private void saveValidationError(PO entity, String errorType, String errorMessage) {
+        try {
+            // Format error message with timestamp
+            String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(new java.util.Date());
+
+            String validationMsg = String.format(
+                "[%s] %s: %s",
+                timestamp,
+                errorType,
+                errorMessage
+            );
+
+            // Truncate if too long (adjust max length based on your database column size)
+            int maxLength = 2000; // Adjust based on your SP034_ValidationMsg column size
+            if (validationMsg.length() > maxLength) {
+                validationMsg = validationMsg.substring(0, maxLength - 3) + "...";
+            }
+
+            // Save to SP034_ValidationMsg
+            entity.set_ValueOfColumn("SP034_ValidationMsg", validationMsg);
+
+            // Update publish status to 'Error' (E) if not already set
+            Object currentStatus = entity.get_Value("SP034_PublishStatus");
+            if (currentStatus == null || !currentStatus.equals("E")) {
+                entity.set_ValueOfColumn("SP034_PublishStatus", "E");
+            }
+
+            entity.saveEx(null);
+
+            log.warning("Validation error saved for record " + entity.get_ID() + ": " + validationMsg);
+
+        } catch (Exception e) {
+            log.severe("Failed to save validation error: " + e.getMessage());
         }
     }
 
