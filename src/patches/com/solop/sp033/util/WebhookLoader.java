@@ -1,6 +1,7 @@
 package com.solop.sp033.util;
 
 import com.solop.sp033.interfaces.IWebhook;
+import com.solop.sp033.model.MSP033Webhook;
 import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
@@ -68,9 +69,9 @@ public class WebhookLoader {
     }
 
     private void runListener(int listenerId) {
-        PO listener = getListener(listenerId);
-        if(listener != null) {
-            String className = listener.get_ValueAsString("Classname");
+        MSP033Webhook listener = getListener(listenerId);
+        if(listener.get_ID() > 0) {
+            String className = listener.getClassname();
             if(className != null) {
                 IWebhook webhook = WebhookClassLoader.loadClass(className);
                 if(webhook != null) {
@@ -82,9 +83,9 @@ public class WebhookLoader {
     }
 
     public void test(int listenerId) {
-        PO listener = getListener(listenerId);
-        if(listener != null) {
-            String className = listener.get_ValueAsString("Classname");
+        MSP033Webhook listener = getListener(listenerId);
+        if(listener.get_ID() > 0) {
+            String className = listener.getClassname();
             if(className != null) {
                 IWebhook webhook = WebhookClassLoader.loadClass(className);
                 if(webhook != null) {
@@ -95,19 +96,19 @@ public class WebhookLoader {
         }
     }
 
-    private Map<String, Object> getMetadata(PO listener) {
+    private Map<String, Object> getMetadata(MSP033Webhook listener) {
         Map<String, Object> metadata = new HashMap<>();
-        String urlColumm = Changes.SP033_PayloadURL;
-        if (listener.get_ValueAsBoolean(Changes.SP033_IsTest)) {
-            urlColumm = listener.get_ValueAsString(Changes.SP033_TestPayloadURL);
+        String urlColumm = MSP033Webhook.COLUMNNAME_SP033_PayloadURL;
+        if (listener.isSP033_IsTest()) {
+            urlColumm = listener.getSP033_TestPayloadURL();
             if (Util.isEmpty(urlColumm, true)) {
                 throw new AdempiereException("@SP033_TestPayloadURL@ @NotFound@");
             }
         }
         metadata.put(IWebhook.PayloadURL, listener.get_ValueAsString(urlColumm));
-        metadata.put(IWebhook.ContentType, getValidContentType(listener.get_ValueAsString(Changes.SP033_ContentType)));
-        metadata.put(IWebhook.Method, listener.get_ValueAsString(Changes.SP033_Method));
-        metadata.put(IWebhook.Name, listener.get_ValueAsString("Name"));
+        metadata.put(IWebhook.ContentType, getValidContentType(listener.getSP033_ContentType()));
+        metadata.put(IWebhook.Method, listener.getSP033_Method());
+        metadata.put(IWebhook.Name, listener.getName());
         metadata.put(IWebhook.Event, getEventName());
         metadata.put(IWebhook.EventId, persistenceEvent);
         metadata.put(IWebhook.ListenerId, listener.get_ID());
@@ -126,8 +127,8 @@ public class WebhookLoader {
         return IWebhook.ContentType_AJ;
     }
 
-    private PO getListener(int listenerId) {
-        return MTable.get(Env.getCtx(), Changes.SP033_Webhook).getPO(listenerId, null);
+    private MSP033Webhook getListener(int listenerId) {
+        return new MSP033Webhook(Env.getCtx(), listenerId, null);
     }
 
     private boolean isValidEvent() {
