@@ -49,6 +49,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.solop.sp032.util.CurrencyConvertDocumentsUtil;
 import org.spin.queue.util.QueueLoader;
@@ -315,109 +316,112 @@ public class ElectronicInvoicing implements ModelValidator {
 	}
 
 	private void createCustomConversionRate(MInvoice invoice, BigDecimal newConversionRate, int currencyToId){
-		String whereClause = "C_BPartner_ID = ?";
-		List<Object> filtersList = new ArrayList<>();
-		filtersList.add(invoice.getC_BPartner_ID());
 
-		whereClause += " AND C_Invoice_ID = ?";
-		filtersList.add(
-				invoice.get_ID()
-		);
-		String documentNo = invoice.getDocumentNo();
-		Timestamp dateFrom = invoice.getDateAcct();
+		Trx.run(transactionName ->{
+			String whereClause = "C_BPartner_ID = ?";
+			List<Object> filtersList = new ArrayList<>();
+			filtersList.add(invoice.getC_BPartner_ID());
 
-		MConversionType conversionType = new Query(
-			Env.getCtx(),
-			I_C_ConversionType.Table_Name,
-			whereClause,
-			invoice.get_TrxName()
-		)
-			.setParameters(filtersList)
-			.setClient_ID()
-			.first()
-		;
+			whereClause += " AND C_Invoice_ID = ?";
+			filtersList.add(
+					invoice.get_ID()
+			);
+			String documentNo = invoice.getDocumentNo();
+			Timestamp dateFrom = invoice.getDateAcct();
+			MConversionType conversionType = new Query(
+					Env.getCtx(),
+					I_C_ConversionType.Table_Name,
+					whereClause,
+					transactionName
+			)
+					.setParameters(filtersList)
+					.setClient_ID()
+					.first()
+					;
 
-		if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
-			conversionType = new MConversionType(Env.getCtx(), 0, invoice.get_TrxName());
-			MBPartner businessPartner = (MBPartner) invoice.getC_BPartner();
-			conversionType.setAD_Org_ID(0);
-			conversionType.setIsDefault(false);
-			String name = businessPartner.getDisplayValue();
-			String value = businessPartner.getValue();
-			if (!Util.isEmpty(documentNo, true)) {
-				name += " - " + documentNo;
-				value += " - " + documentNo;
+			if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
+				conversionType = new MConversionType(Env.getCtx(), 0, transactionName);
+				MBPartner businessPartner = (MBPartner) invoice.getC_BPartner();
+				conversionType.setAD_Org_ID(0);
+				conversionType.setIsDefault(false);
+				String name = businessPartner.getDisplayValue();
+				String value = businessPartner.getValue();
+				if (!Util.isEmpty(documentNo, true)) {
+					name += " - " + documentNo;
+					value += " - " + documentNo;
+				}
+				conversionType.setValue(value);
+				conversionType.setName(name);
+
+				conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
+
+				conversionType.set_CustomColumn(I_C_Invoice.COLUMNNAME_C_Invoice_ID, invoice.get_ID());
+				conversionType.saveEx();
+				invoice.setC_ConversionType_ID(conversionType.get_ID());
+				invoice.saveEx();
 			}
-			conversionType.setValue(value);
-			conversionType.setName(name);
+			final Timestamp dateTo = TimeUtil.addYears(dateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
 
-			conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
+			final int clientId = invoice.getAD_Client_ID();
+			final int organizationId = invoice.getAD_Org_ID();
 
-			conversionType.set_CustomColumn(I_C_Invoice.COLUMNNAME_C_Invoice_ID, invoice.get_ID());
-			conversionType.saveEx();
-			invoice.setC_ConversionType_ID(conversionType.get_ID());
-			invoice.saveEx();
-		}
-		final Timestamp dateTo = TimeUtil.addYears(dateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
-
-		final int clientId = invoice.getAD_Client_ID();
-		final int organizationId = invoice.getAD_Org_ID();
-
-		MConversionRate existingConversionRate = new Query(
-				Env.getCtx(),
-				I_C_Conversion_Rate.Table_Name,
-				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				invoice.get_TrxName()
-		)
-				.setParameters(invoice.getC_Currency_ID(), currencyToId, conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
-				.first()
-				;
-		if (existingConversionRate == null || existingConversionRate.getC_ConversionType_ID() <= 0) {
-			existingConversionRate = new MConversionRate(Env.getCtx(), 0, invoice.get_TrxName());
-			existingConversionRate.setAD_Org_ID(0);
-			existingConversionRate.setC_ConversionType_ID(
-					conversionType.getC_ConversionType_ID()
-			);
-			existingConversionRate.setC_Currency_ID(
-					invoice.getC_Currency_ID()
-			);
-			existingConversionRate.setC_Currency_ID_To(
-					currencyToId
-			);
-			existingConversionRate.setValidFrom(dateFrom);
-			existingConversionRate.setValidTo(dateTo);
-		}
-		existingConversionRate.setMultiplyRate(newConversionRate);
-		existingConversionRate.saveEx();
+			MConversionRate existingConversionRate = new Query(
+					Env.getCtx(),
+					I_C_Conversion_Rate.Table_Name,
+					"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
+					transactionName
+			)
+					.setParameters(invoice.getC_Currency_ID(), currencyToId, conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
+					.first()
+					;
+			if (existingConversionRate == null || existingConversionRate.getC_ConversionType_ID() <= 0) {
+				existingConversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				existingConversionRate.setAD_Org_ID(0);
+				existingConversionRate.setC_ConversionType_ID(
+						conversionType.getC_ConversionType_ID()
+				);
+				existingConversionRate.setC_Currency_ID(
+						invoice.getC_Currency_ID()
+				);
+				existingConversionRate.setC_Currency_ID_To(
+						currencyToId
+				);
+				existingConversionRate.setValidFrom(dateFrom);
+				existingConversionRate.setValidTo(dateTo);
+			}
+			existingConversionRate.setMultiplyRate(newConversionRate);
+			existingConversionRate.saveEx();
 
 
-		// Invert conversion rate
-		MConversionRate invertConversionRate = new Query(
-				Env.getCtx(),
-				I_C_Conversion_Rate.Table_Name,
-				"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-				invoice.get_TrxName()
-		)
-				.setParameters(currencyToId, invoice.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
-				.first()
-				;
-		if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
-			invertConversionRate = new MConversionRate(Env.getCtx(), 0, invoice.get_TrxName());
-			invertConversionRate.setAD_Org_ID(0);
-			invertConversionRate.setC_ConversionType_ID(
-				conversionType.getC_ConversionType_ID()
-			);
-			invertConversionRate.setC_Currency_ID(
-				currencyToId
-			);
-			invertConversionRate.setC_Currency_ID_To(
-				invoice.getC_Currency_ID()
-			);
-			invertConversionRate.setValidFrom(dateFrom);
-			invertConversionRate.setValidTo(dateTo);
-		}
-		invertConversionRate.setDivideRate(newConversionRate);
-		invertConversionRate.saveEx();
+			// Invert conversion rate
+			MConversionRate invertConversionRate = new Query(
+					Env.getCtx(),
+					I_C_Conversion_Rate.Table_Name,
+					"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
+					transactionName
+			)
+					.setParameters(currencyToId, invoice.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
+					.first()
+					;
+			if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
+				invertConversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				invertConversionRate.setAD_Org_ID(0);
+				invertConversionRate.setC_ConversionType_ID(
+						conversionType.getC_ConversionType_ID()
+				);
+				invertConversionRate.setC_Currency_ID(
+						currencyToId
+				);
+				invertConversionRate.setC_Currency_ID_To(
+						invoice.getC_Currency_ID()
+				);
+				invertConversionRate.setValidFrom(dateFrom);
+				invertConversionRate.setValidTo(dateTo);
+			}
+			invertConversionRate.setDivideRate(newConversionRate);
+			invertConversionRate.saveEx();
+		});
+
 
 	}
 
