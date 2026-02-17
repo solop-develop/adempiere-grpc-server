@@ -437,6 +437,7 @@ public class MercadoLibre implements IWebhook {
                 // Extract publication data
                 String publicationUrl = null;
                 String publicationId = null;
+                String newStatus = null;
 
                 if (responseJson.has("publication_url")) {
                     publicationUrl = responseJson.get("publication_url").getAsString();
@@ -444,6 +445,11 @@ public class MercadoLibre implements IWebhook {
 
                 if (responseJson.has("publication_id")) {
                     publicationId = responseJson.get("publication_id").getAsString();
+                }
+
+                // Extract status from response (for pause/close/activate actions)
+                if (responseJson.has("new_status")) {
+                    newStatus = responseJson.get("new_status").getAsString();
                 }
 
                 // Update the SP034_Publishing record
@@ -460,12 +466,30 @@ public class MercadoLibre implements IWebhook {
                 // Clear any previous validation errors
                 entity.set_ValueOfColumn("SP034_ValidationMsg", null);
 
-                // Update publish status to 'Active/Published' (A)
-                entity.set_ValueOfColumn("SP034_PublishStatus", "A");
+                // Update publish status based on new_status from response
+                // Map MercadoLibre status to ADempiere status
+                String publishStatus = "A"; // Default to Active/Published
+                if (newStatus != null && !newStatus.isEmpty()) {
+                    switch (newStatus.toLowerCase()) {
+                        case "active":
+                            publishStatus = "A"; // Active/Published
+                            break;
+                        case "paused":
+                            publishStatus = "O"; // Paused
+                            break;
+                        case "closed":
+                            publishStatus = "C"; // Closed
+                            break;
+                        default:
+                            publishStatus = "D"; // Default to Without Publishing if unknown status
+                            log.warning("Unknown status from MercadoLibre: " + newStatus + ", defaulting to Active");
+                    }
+                    log.info("Status updated based on MercadoLibre response: " + newStatus + " -> " + publishStatus);
+                }
 
+                entity.set_ValueOfColumn("SP034_PublishStatus", publishStatus);
                 entity.saveEx(null);
-
-                log.info("Product published successfully: " + publicationId);
+                log.info("Product published successfully: " + publicationId + " with status: " + publishStatus);
             } else {
                 // Success=false in response
                 handleWebhookError(entity, 200, responseBody);
