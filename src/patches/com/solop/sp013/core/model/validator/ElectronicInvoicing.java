@@ -316,7 +316,12 @@ public class ElectronicInvoicing implements ModelValidator {
 	}
 
 	private void createCustomConversionRate(MInvoice invoice, BigDecimal newConversionRate, int currencyToId){
-
+		BigDecimal currentRate =  MConversionRate.getRate(invoice.getC_Currency_ID(), currencyToId,
+			invoice.getDateAcct(), invoice.getC_ConversionType_ID(),
+			invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
+		if (newConversionRate.compareTo(currentRate) == 0) {
+			return;
+		}
 		Trx.run(transactionName ->{
 			String whereClause = "C_BPartner_ID = ?";
 			List<Object> filtersList = new ArrayList<>();
