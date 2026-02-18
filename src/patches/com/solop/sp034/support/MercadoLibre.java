@@ -316,6 +316,23 @@ public class MercadoLibre implements IWebhook {
         //  Add Mercado Libre data here
         requestBodyJson.add("document", gson.toJsonTree(documentBuilder.getDocument().getData()));
         requestBodyJson.add("attributes", gson.toJsonTree(getAttributes(entity)));
+        //  Add item condition and publish type from M_Product
+        int productId = entity.get_ValueAsInt("M_Product_ID");
+        if (productId > 0) {
+            MProduct product = MProduct.get(entity.getCtx(), productId);
+            if (product != null) {
+                // SP034_ML_ItemCondition: new, used, not_specified
+                Object itemCondition = product.get_Value("SP034_ML_ItemCondition");
+                if (itemCondition != null && !itemCondition.toString().isEmpty()) {
+                    requestBodyJson.addProperty("item_condition", itemCondition.toString());
+                }
+                // SP034_ML_PublishType: bronze, free, gold, gold_premium, gold_pro, gold_special, silver
+                Object publishType = product.get_Value("SP034_ML_PublishType");
+                if (publishType != null && !publishType.toString().isEmpty()) {
+                    requestBodyJson.addProperty("publish_type", publishType.toString());
+                }
+            }
+        }
         //  Add product files (media and assets)
         Map<String, Object> productFiles = getProductFiles(entity);
         requestBodyJson.add("image_url", gson.toJsonTree(productFiles.get("image_url")));
