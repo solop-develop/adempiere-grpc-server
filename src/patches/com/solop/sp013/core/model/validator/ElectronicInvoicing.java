@@ -319,7 +319,7 @@ public class ElectronicInvoicing implements ModelValidator {
 		BigDecimal currentRate =  MConversionRate.getRate(invoice.getC_Currency_ID(), currencyToId,
 			invoice.getDateAcct(), invoice.getC_ConversionType_ID(),
 			invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
-		if (newConversionRate.compareTo(currentRate) == 0) {
+		if (currentRate != null && newConversionRate.compareTo(currentRate) == 0) {
 			return;
 		}
 		Trx.run(transactionName ->{
