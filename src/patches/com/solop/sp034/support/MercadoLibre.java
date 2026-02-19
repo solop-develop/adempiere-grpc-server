@@ -508,8 +508,15 @@ public class MercadoLibre implements IWebhook {
                 entity.saveEx(null);
                 log.info("Product published successfully: " + publicationId + " with status: " + publishStatus);
             } else {
-                // Success=false in response
-                handleWebhookError(entity, 200, responseBody);
+                // Success=false in response — read actual ML HTTP status from error_details.http_status
+                int mlStatusCode = 400; // Default to 400 for ML validation errors
+                if (responseJson.has("error_details")) {
+                    JsonObject errorDetails = responseJson.getAsJsonObject("error_details");
+                    if (errorDetails.has("http_status") && !errorDetails.get("http_status").isJsonNull()) {
+                        mlStatusCode = errorDetails.get("http_status").getAsInt();
+                    }
+                }
+                handleWebhookError(entity, mlStatusCode, responseBody);
             }
 
         } catch (Exception e) {
