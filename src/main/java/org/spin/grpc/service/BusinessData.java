@@ -17,6 +17,7 @@ package org.spin.grpc.service;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -291,6 +293,9 @@ public class BusinessData extends BusinessDataImplBase {
 				recordId = 0;
 			}
 		}
+
+		//	Validate duplicate execution BEFORE the builder creates AD_PInstance via withRecordId()
+		checkDuplicateExecution(processId, recordId, request.getParameters().getFieldsMap());
 
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
@@ -618,7 +623,131 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 		return value;
 	}
-	
+
+	/**
+	 * Validates that the same process with the same parameters has not been recently
+	 * executed (within 2 minutes) by the same user and session.
+	 * Blocks concurrent execution (IsProcessing=Y) and recently completed duplicate runs.
+	 * @param processId  AD_Process_ID
+	 * @param recordId   Record_ID used for the process
+	 * @param requestParameters parameters map from the gRPC request
+	 */
+	private static void checkDuplicateExecution(int processId, int recordId, Map<String, Value> requestParameters) {
+		int userId = Env.getAD_User_ID(Env.getCtx());
+		if (userId <= 0) {
+			return;
+		}
+		Timestamp twoMinutesAgo = new Timestamp(System.currentTimeMillis() - (2L * 60 * 1000));
+
+		StringBuilder whereClause = new StringBuilder(
+			"AD_Process_ID = ? AND AD_User_ID = ? AND Record_ID = ? AND Created >= ?"
+		);
+		List<Object> params = new ArrayList<>();
+		params.add(processId);
+		params.add(userId);
+		params.add(recordId);
+		params.add(twoMinutesAgo);
+
+		//	Filter by current session when available
+		MSession currentSession = MSession.get(Env.getCtx(), false);
+		if (currentSession != null && currentSession.getAD_Session_ID() > 0) {
+			whereClause.append(" AND AD_Session_ID = ?");
+			params.add(currentSession.getAD_Session_ID());
+		}
+
+		List<MPInstance> recentInstances = new Query(
+			Env.getCtx(),
+			I_AD_PInstance.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(params)
+			.list()
+		;
+
+		if (recentInstances.isEmpty()) {
+			return;
+		}
+
+		// TODO: Add support to browser selection and row edits.
+		TreeMap<String, String> currentFingerprint = buildParametersFingerprint(requestParameters);
+		for (MPInstance recentInstance : recentInstances) {
+			//	Block concurrent executions of the same process for the same user/session/record
+			if (recentInstance.isProcessing()) {
+				throw new AdempiereException("@AD_Process_ID@ @IsProcessing@");
+			}
+			//	For recently completed instances: compare parameters to detect duplicate submission
+			MPInstancePara[] storedParams = recentInstance.getParameters();
+			TreeMap<String, String> storedFingerprint = buildStoredParametersFingerprint(storedParams);
+			if (currentFingerprint.equals(storedFingerprint)) {
+				throw new AdempiereException("@DuplicateProcess@");
+			}
+		}
+	}
+
+	/**
+	 * Builds a normalized parameter fingerprint from the gRPC request parameters.
+	 * @param parameters proto Value map from the request
+	 * @return sorted map of parameter name → string value
+	 */
+	private static TreeMap<String, String> buildParametersFingerprint(Map<String, Value> parameters) {
+		TreeMap<String, String> fingerprint = new TreeMap<>();
+		if (parameters == null) {
+			return fingerprint;
+		}
+		for (Map.Entry<String, Value> entry : parameters.entrySet()) {
+			Object val = ValueManager.getObjectFromProtoValue(entry.getValue());
+			String valStr = "";
+			if (val instanceof java.math.BigDecimal) {
+				valStr = ((java.math.BigDecimal) val).toPlainString();
+			} else if (val != null) {
+				valStr = val.toString();
+			}
+			fingerprint.put(entry.getKey(), valStr);
+		}
+		return fingerprint;
+	}
+
+	/**
+	 * Builds a normalized parameter fingerprint from stored AD_PInstance_Para rows.
+	 * Each row may carry both the base value and its range (_To) counterpart.
+	 * @param params array of MPInstancePara loaded from DB
+	 * @return sorted map of parameter name → string value
+	 */
+	private static TreeMap<String, String> buildStoredParametersFingerprint(MPInstancePara[] params) {
+		TreeMap<String, String> fingerprint = new TreeMap<>();
+		if (params == null) {
+			return fingerprint;
+		}
+		for (MPInstancePara param : params) {
+			String name = param.getParameterName();
+			if (Util.isEmpty(name, true)) {
+				continue;
+			}
+			//	Resolve effective base value
+			String value = "";
+			if (!Util.isEmpty(param.getP_String(), true)) {
+				value = param.getP_String();
+			} else if (param.getP_Number() != null) {
+				value = param.getP_Number().toPlainString();
+			} else if (param.getP_Date() != null) {
+				value = param.getP_Date().toString();
+			}
+			fingerprint.put(name, value);
+
+			//	Resolve range (_To) value stored on the same row
+			if (!Util.isEmpty(param.getP_String_To(), true)) {
+				fingerprint.put(name + "_To", param.getP_String_To());
+			} else if (param.getP_Number_To() != null) {
+				fingerprint.put(name + "_To", param.getP_Number_To().toPlainString());
+			} else if (param.getP_Date_To() != null) {
+				fingerprint.put(name + "_To", param.getP_Date_To().toString());
+			}
+		}
+		return fingerprint;
+	}
+
+
 	/**
 	 * Convert a PO from query
 	 * @param request
@@ -1035,7 +1164,7 @@ public class BusinessData extends BusinessDataImplBase {
 			Entity.Builder valueObject = ConvertUtil.convertEntity(entity);
 			builder.addRecords(valueObject.build());
 		}
-		//	
+		//
 		builder.setRecordCount(count);
 		//	Set page token
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
