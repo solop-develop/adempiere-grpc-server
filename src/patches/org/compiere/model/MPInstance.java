@@ -301,10 +301,9 @@ public class MPInstance extends X_AD_PInstance
 	/**
 	 * 	Before Save
 	 *	@param newRecord new
-	 *	@param success success
 	 *	@return success
 	 */
-	protected boolean beforeSave(boolean newRecord, boolean success)
+	protected boolean beforeSave(boolean newRecord)
 	{
 		//	Fill session
 		if (newRecord) {
@@ -319,8 +318,8 @@ public class MPInstance extends X_AD_PInstance
 				setAD_User_ID(userId);
 			}
 		}
-		return success;
-	}	//	afterSave
+		return true;
+	}	//	beforeSave
 	
 	/**
 	 * 	After Save
