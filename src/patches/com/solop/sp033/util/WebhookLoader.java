@@ -98,14 +98,14 @@ public class WebhookLoader {
 
     private Map<String, Object> getMetadata(MSP033Webhook listener) {
         Map<String, Object> metadata = new HashMap<>();
-        String urlColumm = MSP033Webhook.COLUMNNAME_SP033_PayloadURL;
+        String url= listener.getSP033_PayloadURL();
         if (listener.isSP033_IsTest()) {
-            urlColumm = listener.getSP033_TestPayloadURL();
-            if (Util.isEmpty(urlColumm, true)) {
+            url = listener.getSP033_TestPayloadURL();
+            if (Util.isEmpty(url, true)) {
                 throw new AdempiereException("@SP033_TestPayloadURL@ @NotFound@");
             }
         }
-        metadata.put(IWebhook.PayloadURL, listener.get_ValueAsString(urlColumm));
+        metadata.put(IWebhook.PayloadURL, url);
         metadata.put(IWebhook.ContentType, getValidContentType(listener.getSP033_ContentType()));
         metadata.put(IWebhook.Method, listener.getSP033_Method());
         metadata.put(IWebhook.Name, listener.getName());
