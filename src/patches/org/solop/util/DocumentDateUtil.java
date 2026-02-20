@@ -16,10 +16,9 @@ public class DocumentDateUtil {
      * @param dateDocColumnName name of the column used as DateDoc in the Document (DateInvoiced, DateOrdered...)
      */
     public static void updateDateAcct(PO document, String dateDocColumnName) {
-        System.out.println("Doc Date changed: " + document.is_ValueChanged(dateDocColumnName));
-        System.out.println("Acct Date changed: " + document.is_ValueChanged(DateAcctColumnName));
 
-        if (document.is_ValueChanged(dateDocColumnName) && !document.is_ValueChanged(DateAcctColumnName)) {
+        if (document.is_new() || (document.is_ValueChanged(dateDocColumnName)
+            && !document.is_ValueChanged(DateAcctColumnName))) {
             document.set_ValueOfColumn(DateAcctColumnName, document.get_Value(dateDocColumnName));
         }
     }

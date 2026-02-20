@@ -944,9 +944,24 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 					setM_PriceList_ID (ii);
 			}
 		}
+		boolean priceListChanged = is_ValueChanged(COLUMNNAME_M_PriceList_ID);
+		if(newRecord || priceListChanged || is_ValueChanged(COLUMNNAME_DateInvoiced)) {
+			if(getM_PriceList_ID() > 0) {
+				MPriceList priceList = (MPriceList) getM_PriceList();
+				if (newRecord || priceListChanged) {
+					setIsTaxIncluded(priceList.isTaxIncluded());
+					setC_Currency_ID(priceList.getC_Currency_ID());
+				}
+				//	Set Price List Version in context
+				MPriceListVersion priceListVersion = priceList.getPriceListVersion(getDateInvoiced());
+				if(priceListVersion != null) {
+					Env.setContext(getCtx(), 0, "M_PriceList_Version_ID", priceListVersion.getM_PriceList_Version_ID());
+				}
+			}
+		}
 
 		//	Currency
-		if (getC_Currency_ID() == 0 || (is_ValueChanged(COLUMNNAME_M_PriceList_ID) && getM_PriceList_ID() > 0))
+		if (getC_Currency_ID() == 0 && getM_PriceList_ID() > 0)
 		{
 			String sql = "SELECT C_Currency_ID FROM M_PriceList WHERE M_PriceList_ID=?";
 			int ii = DB.getSQLValue (null, sql, getM_PriceList_ID());
@@ -1021,13 +1036,6 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 			}
 		}
 
-		if(newRecord || is_ValueChanged(COLUMNNAME_M_PriceList_ID)) {
-			MPriceList priceList = (MPriceList) getM_PriceList();
-			setIsTaxIncluded(priceList.isTaxIncluded());
-		}
-		System.out.println("---------------------------------------------------------------------------");
-		System.out.println("DateInvoiced: " + getDateInvoiced());
-		System.out.println("DateAcct: " + getDateAcct());
 		return true;
 	}	//	beforeSave
 
