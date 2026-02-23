@@ -177,7 +177,8 @@ public class ValueManager {
 			return null;
 		}
 		if (displayTypeId <= 0) {
-			return ValueManager.getObjectFromProtoValue(value);
+			Object objectValue = ValueManager.getObjectFromProtoValue(value);
+			return objectValue;
 		}
 		//	Validate values
 		if(DisplayType.isID(displayTypeId) || DisplayType.Integer == displayTypeId) {
@@ -192,20 +193,27 @@ public class ValueManager {
 				}
 				return lookupValue;
 			}
-			return NumberManager.getIntegerFromProtoValue(value);
+			int integerValue = NumberManager.getIntegerFromProtoValue(value);
+			return integerValue;
 		} else if(DisplayType.isNumeric(displayTypeId)) {
-			return NumberManager.getBigDecimalFromProtoValue(value);
+			BigDecimal bigDecimalValue = NumberManager.getBigDecimalFromProtoValue(value);
+			return bigDecimalValue;
 		} else if(DisplayType.YesNo == displayTypeId) {
-			return BooleanManager.getBooleanFromProtoValue(value);
+			boolean booleanValue = BooleanManager.getBooleanFromProtoValue(value);
+			return booleanValue;
 		} else if(DisplayType.isDate(displayTypeId)) {
-			return TimeManager.getTimestampFromProtoValue(value);
+			Timestamp timestampValue = TimeManager.getTimestampFromProtoValue(value);
+			return timestampValue;
 		} else if(DisplayType.isText(displayTypeId) || DisplayType.List == displayTypeId) {
-			return TextManager.getStringFromProtoValue(value);
+			String stringValue = TextManager.getStringFromProtoValue(value);
+			return stringValue;
 		} else if (DisplayType.Button == displayTypeId) {
-			return getObjectFromProtoValue(value);
+			Object objectValue = ValueManager.getObjectFromProtoValue(value);
+			return objectValue;
 		}
 		//	
-		return getObjectFromProtoValue(value);
+		Object objectValue = ValueManager.getObjectFromProtoValue(value);
+		return objectValue;
 	}
 
 
