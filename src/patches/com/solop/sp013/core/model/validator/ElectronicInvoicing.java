@@ -23,8 +23,6 @@ import com.solop.sp013.core.queue.ElectronicDocument;
 import com.solop.sp013.core.util.ElectronicInvoicingChanges;
 import com.solop.sp013.core.util.ElectronicInvoicingSummaryGrouping;
 import com.solop.sp013.core.util.ElectronicInvoicingUtil;
-import org.adempiere.core.domains.models.I_C_BPartner;
-import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Conversion_Rate;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_M_InOut;
@@ -46,6 +44,7 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
@@ -57,8 +56,8 @@ import org.spin.queue.util.QueueLoader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Document Builder
@@ -266,6 +265,8 @@ public class ElectronicInvoicing implements ModelValidator {
 
 		BigDecimal expectedRate = null;
 		String firstDocumentNo = null;
+		Timestamp originalDateFrom = null;
+		int originalConversionTypeId = 0;
 
 		//Validate by direct reference in invoice header
 		if (invoice.getReferenceDocument_ID() > 0) {
@@ -281,6 +282,8 @@ public class ElectronicInvoicing implements ModelValidator {
 					referenceInvoice.getDateAcct(), referenceInvoice.getC_ConversionType_ID(),
 					referenceInvoice.getAD_Client_ID(), referenceInvoice.getAD_Org_ID());
 			firstDocumentNo = referenceInvoice.getDocumentNo();
+			originalDateFrom = referenceInvoice.getDateAcct();
+			originalConversionTypeId = referenceInvoice.getC_ConversionType_ID();
 		}
 
 		MTable allocateInvoiceTable = MTable.get(invoice.getCtx(), "C_AllocateInvoice");
@@ -303,6 +306,8 @@ public class ElectronicInvoicing implements ModelValidator {
 				if (expectedRate == null) {
 					expectedRate = referenceConversionRate;
 					firstDocumentNo = referenceInvoice.getDocumentNo();
+					originalDateFrom = referenceInvoice.getDateAcct();
+					originalConversionTypeId = referenceInvoice.getC_ConversionType_ID();
 				} else if (expectedRate.compareTo(referenceConversionRate) != 0) {
 					int precision = 2;
 					throw new AdempiereException("@ReferenceDocument_ID@ " + firstDocumentNo + ": @C_Conversion_Rate_ID@ (" + expectedRate.setScale(precision, RoundingMode.HALF_UP)
@@ -311,76 +316,43 @@ public class ElectronicInvoicing implements ModelValidator {
 			}
 		}
 		if (expectedRate != null) {
-			createCustomConversionRate(invoice, expectedRate, currencyToId);
+			createCustomConversionRate(invoice, expectedRate, currencyToId, originalDateFrom, originalConversionTypeId);
 		}
 	}
 
-	private void createCustomConversionRate(MInvoice invoice, BigDecimal newConversionRate, int currencyToId){
+	private void createCustomConversionRate(MInvoice invoice, BigDecimal newConversionRate, int currencyToId, Timestamp originalDateFrom, int originalConversionTypeId){
 		BigDecimal currentRate =  MConversionRate.getRate(invoice.getC_Currency_ID(), currencyToId,
 			invoice.getDateAcct(), invoice.getC_ConversionType_ID(),
 			invoice.getAD_Client_ID(), invoice.getAD_Org_ID());
 		if (currentRate != null && newConversionRate.compareTo(currentRate) == 0) {
 			return;
 		}
-		Trx.run(transactionName ->{
-			String whereClause = "C_BPartner_ID = ?";
-			List<Object> filtersList = new ArrayList<>();
-			filtersList.add(invoice.getC_BPartner_ID());
+		AtomicInteger conversionTypeId = new AtomicInteger(0);
 
-			whereClause += " AND C_Invoice_ID = ?";
-			filtersList.add(
-					invoice.get_ID()
-			);
-			String documentNo = invoice.getDocumentNo();
-			Timestamp dateFrom = invoice.getDateAcct();
-			MConversionType conversionType = new Query(
-					Env.getCtx(),
-					I_C_ConversionType.Table_Name,
-					whereClause,
-					transactionName
-			)
-					.setParameters(filtersList)
-					.setClient_ID()
-					.first()
-					;
+		Trx.run(transactionName ->{
+			MConversionType originalConversionType = new MConversionType (invoice.getCtx(), originalConversionTypeId, transactionName);
+
+			String whereClause = "SP013_IsConversionForDay = 'Y' AND SP013_RefConversionType_ID = ? AND EXISTS (SELECT 1 FROM C_Conversion_Rate cr WHERE cr.ValidFrom = ? " +
+					" AND C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = C_ConversionType.C_ConversionType_ID)";
+			MConversionType conversionType = new Query(invoice.getCtx(), MConversionType.Table_Name, whereClause, transactionName)
+				.setParameters(originalConversionTypeId, originalDateFrom, invoice.getC_Currency_ID(), currencyToId)
+				.setClient_ID()
+				.first();
 
 			if (conversionType == null || conversionType.getC_ConversionType_ID() <= 0) {
-				conversionType = new MConversionType(Env.getCtx(), 0, transactionName);
-				MBPartner businessPartner = (MBPartner) invoice.getC_BPartner();
+				conversionType = new MConversionType(invoice.getCtx(), 0, transactionName);
 				conversionType.setAD_Org_ID(0);
 				conversionType.setIsDefault(false);
-				String name = businessPartner.getDisplayValue();
-				String value = businessPartner.getValue();
-				if (!Util.isEmpty(documentNo, true)) {
-					name += " - " + documentNo;
-					value += " - " + documentNo;
-				}
-				conversionType.setValue(value);
-				conversionType.setName(name);
 
-				conversionType.set_CustomColumn(I_C_BPartner.COLUMNNAME_C_BPartner_ID, businessPartner.getC_BPartner_ID());
+				conversionType.setValue(originalConversionType.getValue() + " - " + DisplayType.getDateFormat().format(originalDateFrom));
+				conversionType.setName(originalConversionType.getName() + " - " + DisplayType.getDateFormat().format(originalDateFrom));
+				conversionType.set_ValueOfColumn("SP013_IsConversionForDay", true);
+				conversionType.set_ValueOfColumn("SP013_RefConversionType_ID", originalConversionTypeId);
 
-				conversionType.set_CustomColumn(I_C_Invoice.COLUMNNAME_C_Invoice_ID, invoice.get_ID());
 				conversionType.saveEx();
-				invoice.setC_ConversionType_ID(conversionType.get_ID());
-				invoice.saveEx();
-			}
-			final Timestamp dateTo = TimeUtil.addYears(dateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
-
-			final int clientId = invoice.getAD_Client_ID();
-			final int organizationId = invoice.getAD_Org_ID();
-
-			MConversionRate existingConversionRate = new Query(
-					Env.getCtx(),
-					I_C_Conversion_Rate.Table_Name,
-					"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-					transactionName
-			)
-					.setParameters(invoice.getC_Currency_ID(), currencyToId, conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
-					.first()
-					;
-			if (existingConversionRate == null || existingConversionRate.getC_ConversionType_ID() <= 0) {
-				existingConversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				final Timestamp dateTo = TimeUtil.addYears(originalDateFrom, CurrencyConvertDocumentsUtil.TIME_Interval);
+				// Conversion Rate
+				MConversionRate existingConversionRate = new MConversionRate(invoice.getCtx(), 0, transactionName);
 				existingConversionRate.setAD_Org_ID(0);
 				existingConversionRate.setC_ConversionType_ID(
 						conversionType.getC_ConversionType_ID()
@@ -391,25 +363,14 @@ public class ElectronicInvoicing implements ModelValidator {
 				existingConversionRate.setC_Currency_ID_To(
 						currencyToId
 				);
-				existingConversionRate.setValidFrom(dateFrom);
+
+				existingConversionRate.setMultiplyRate(newConversionRate);
+				existingConversionRate.setValidFrom(originalDateFrom);
 				existingConversionRate.setValidTo(dateTo);
-			}
-			existingConversionRate.setMultiplyRate(newConversionRate);
-			existingConversionRate.saveEx();
+				existingConversionRate.saveEx();
 
-
-			// Invert conversion rate
-			MConversionRate invertConversionRate = new Query(
-					Env.getCtx(),
-					I_C_Conversion_Rate.Table_Name,
-					"C_Currency_ID = ? AND C_Currency_ID_To = ? AND C_ConversionType_ID = ? AND ValidFrom <= ? AND ValidTo >= ? AND AD_Client_ID IN (0, ?) AND AD_Org_ID IN (0, ?) ",
-					transactionName
-			)
-					.setParameters(currencyToId, invoice.getC_Currency_ID(), conversionType.getC_ConversionType_ID(), dateFrom, dateFrom, clientId, organizationId)
-					.first()
-					;
-			if (invertConversionRate == null || invertConversionRate.getC_ConversionType_ID() <= 0) {
-				invertConversionRate = new MConversionRate(Env.getCtx(), 0, transactionName);
+				// Inverse Conversion Rate
+				MConversionRate invertConversionRate = new MConversionRate(invoice.getCtx(), 0, transactionName);
 				invertConversionRate.setAD_Org_ID(0);
 				invertConversionRate.setC_ConversionType_ID(
 						conversionType.getC_ConversionType_ID()
@@ -420,14 +381,20 @@ public class ElectronicInvoicing implements ModelValidator {
 				invertConversionRate.setC_Currency_ID_To(
 						invoice.getC_Currency_ID()
 				);
-				invertConversionRate.setValidFrom(dateFrom);
+				invertConversionRate.setValidFrom(originalDateFrom);
 				invertConversionRate.setValidTo(dateTo);
+
+				invertConversionRate.setDivideRate(newConversionRate);
+				invertConversionRate.saveEx();
+
 			}
-			invertConversionRate.setDivideRate(newConversionRate);
-			invertConversionRate.saveEx();
+			conversionTypeId.set(conversionType.get_ID());
 		});
 
-
+		if (conversionTypeId.get()> 0) {
+			invoice.setC_ConversionType_ID(conversionTypeId.get());
+			invoice.saveEx();
+		}
 	}
 
 	@Override
