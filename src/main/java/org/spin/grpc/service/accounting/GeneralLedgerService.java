@@ -55,8 +55,8 @@ import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.ReferenceUtil;
-import org.spin.grpc.service.UserInterface;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
+import org.spin.grpc.service.ui.TabEntityLogic;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
@@ -436,7 +436,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			.setId(accountingCombination.get_ID())
 		;
 
-		Entity.Builder entityBuilder = UserInterface.getTabEntity(
+		Entity.Builder entityBuilder = TabEntityLogic.getTabEntity(
 			getEntityBuilder.build(),
 			new ArrayList<Object>()
 		);
