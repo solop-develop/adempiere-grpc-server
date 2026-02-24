@@ -1037,6 +1037,9 @@ public class Security extends SecurityImplBase {
 		if (roleId < 0) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
+		// if (roleId == 0) {
+		// 	roleId = SessionManager.getDefaultRoleId(userId);
+		// }
 		MRole role = MRole.get(context, roleId);
 
 		// Get organization
@@ -1058,11 +1061,15 @@ public class Security extends SecurityImplBase {
 
 		// Get warehouse
 		int warehouseId = -1;
-		if (request.getWarehouseId() >= 0) {
+		if (request.getWarehouseId() > 0) {
 			warehouseId = request.getWarehouseId();
 		}
-		if (warehouseId < 0) {
-			warehouseId = 0;
+		if (warehouseId <= 0) {
+			warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
+			if (warehouseId < 0) {
+				// TODO: Verify it access
+				warehouseId = 0;
+			}
 		}
 
 		// Default preference values
