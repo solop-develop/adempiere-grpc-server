@@ -1044,7 +1044,7 @@ public class Security extends SecurityImplBase {
 
 		// Get organization
 		int organizationId = -1;
-		if (request.getOrganizationId() > 0) {
+		if (request.getOrganizationId() >= 0) {
 			organizationId = request.getOrganizationId();
 			if (!role.isOrgAccess(organizationId, true)) {
 				// invlaid organization from role
@@ -1052,7 +1052,7 @@ public class Security extends SecurityImplBase {
 				log.warning("Invalid organization (" + organizationId + ") from role (" + roleId + ") access.");
 			}
 		}
-		if (organizationId <= 0) {
+		if (organizationId < 0) {
 			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			if (organizationId < 0) {
 				// TODO: Verify it access
@@ -1062,7 +1062,7 @@ public class Security extends SecurityImplBase {
 
 		// Get warehouse
 		int warehouseId = -1;
-		if (request.getWarehouseId() > 0) {
+		if (request.getWarehouseId() >= 0) {
 			warehouseId = request.getWarehouseId();
 			if (!SessionManager.isWarehouseAccess(organizationId, warehouseId)) {
 				// invlaid warehouse from organization
@@ -1070,7 +1070,7 @@ public class Security extends SecurityImplBase {
 				log.warning("Invalid warehouse (" + warehouseId + ") from organization (" + organizationId + ") allocation.");
 			}
 		}
-		if (warehouseId <= 0) {
+		if (warehouseId < 0) {
 			warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
 			if (warehouseId < 0) {
 				// TODO: Verify it access
