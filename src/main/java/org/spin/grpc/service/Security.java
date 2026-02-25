@@ -99,7 +99,10 @@ import org.spin.base.util.ContextManager;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.model.MADAttachmentReference;
 import org.spin.model.MADToken;
+import org.spin.service.grpc.authentication.AuthorizationServerInterceptor;
+import org.spin.service.grpc.authentication.KeycloakSessionHandler;
 import org.spin.service.grpc.authentication.SessionManager;
+import org.spin.service.grpc.authentication.TokenTypeDetector;
 import org.spin.service.grpc.util.base.PreferenceUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
@@ -119,7 +122,7 @@ import io.grpc.stub.StreamObserver;
  * Security service
  */
 public class Security extends SecurityImplBase {
-	
+
 	/**
 	 * Load Validators
 	 */
@@ -128,7 +131,7 @@ public class Security extends SecurityImplBase {
 		DB.validateSupportedUUIDFromDB();
 		MCountry.getCountries(Env.getCtx());
 	}
-	
+
 	/**	Logger			*/
 	private CLogger log = CLogger.getCLogger(Security.class);
 	/**	Menu */
@@ -145,18 +148,18 @@ public class Security extends SecurityImplBase {
 			services.entrySet().parallelStream().forEach(service -> {
 				Service.Builder availableService = Service.newBuilder();
 				availableService.setId(
-						service.getKey()
-					)
-					.setDisplayName(
-						TextManager.getValidString(
-							service.getValue().get(OpenIDUtil.DISPLAYNAME)
+								service.getKey()
 						)
-					)
-					.setAuthorizationUri(
-						TextManager.getValidString(
-							service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)
+						.setDisplayName(
+								TextManager.getValidString(
+										service.getValue().get(OpenIDUtil.DISPLAYNAME)
+								)
 						)
-					)
+						.setAuthorizationUri(
+								TextManager.getValidString(
+										service.getValue().get(OpenIDUtil.ENDPOINT_Authorization_URI)
+								)
+						)
 				;
 				serviceBuilder.addServices(availableService);
 			});
@@ -166,14 +169,14 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
-	
+
 	@Override
 	public void runLogout(LogoutRequest request, StreamObserver<Session> responseObserver) {
 		try {
@@ -187,10 +190,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -209,10 +212,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -231,10 +234,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -267,18 +270,21 @@ public class Security extends SecurityImplBase {
 		// Session values
 		Session.Builder builder = Session.newBuilder();
 		final String bearerToken = SessionManager.createSessionAndGetToken(
-			currentSession.getWebSession(),
-			language,
-			role.getAD_Role_ID(),
-			userId,
-			currentSession.getAD_Org_ID(),
-			warehouseId,
-			isOpenID
+				currentSession.getWebSession(),
+				language,
+				role.getAD_Role_ID(),
+				userId,
+				currentSession.getAD_Org_ID(),
+				warehouseId,
+				isOpenID
 		);
+
+		// Update Keycloak session cache (so next request finds new session)
+		updateKeycloakCacheIfNeeded(bearerToken);
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-			userId, language, role.getAD_Role_ID(), role.getAD_Client_ID(), currentSession.getAD_Org_ID(), warehouseId
+				userId, language, role.getAD_Role_ID(), role.getAD_Client_ID(), currentSession.getAD_Org_ID(), warehouseId
 		);
 
 		builder.setToken(bearerToken);
@@ -299,10 +305,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -322,14 +328,14 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
-	
+
 	/**
 	 * Convert languages to gRPC
 	 * @param request
@@ -339,54 +345,54 @@ public class Security extends SecurityImplBase {
 		final int userId = Env.getAD_User_ID(Env.getCtx());
 
 		final String whereClause = "AD_Role.IsActive = 'Y' "
-			+ "AND EXISTS("
+				+ "AND EXISTS("
 				+ "SELECT 1 FROM AD_User_Roles ur "
 				+ "WHERE ur.AD_Role_ID = AD_Role.AD_Role_ID "
-					+ "AND ur.IsActive = 'Y' "
-					+ "AND ur.AD_User_ID = ? "
-			+ ") "
-			+ "AND ("
+				+ "AND ur.IsActive = 'Y' "
+				+ "AND ur.AD_User_ID = ? "
+				+ ") "
+				+ "AND ("
 				+ "("
-					+ "IsAccessAllOrgs = 'Y' AND EXISTS("
-						+ "SELECT 1 FROM AD_Org AS o "
-						+ "WHERE (o.AD_Client_ID = AD_Role.AD_Client_ID OR o.AD_Org_ID = 0) "
-							+ "AND o.IsActive = 'Y' "
-							+ "AND o.IsSummary = 'N' "
-					+ ")"
-				+ ") "
-				+ "OR ("
-					+ "IsUseUserOrgAccess = 'N' AND EXISTS("
-						+ "SELECT 1 FROM AD_Role_OrgAccess AS ro "
-						+ "INNER JOIN AD_Org AS o "
-							+ "ON o.AD_Org_ID = ro.AD_Org_ID "
-							+ "AND o.IsActive = 'Y' "
-							+ "AND o.IsSummary = 'N' "
-						+ "WHERE ro.AD_Role_ID = AD_Role.AD_Role_ID "
-							+ "AND ro.IsActive = 'Y' "
-					+ ")"
-				+ ") "
-				+ "OR ("
-					+ "IsUseUserOrgAccess = 'Y' AND EXISTS("
-						+ "SELECT 1 FROM AD_User_OrgAccess AS uo "
-						+ "INNER JOIN AD_Org AS o "
-							+ "ON o.AD_Org_ID = uo.AD_Org_ID "
-							+ "AND o.IsActive = 'Y' "
-							+ "AND o.IsSummary = 'N' "
-						+ "WHERE uo.AD_User_ID = ? "
-							+ "AND uo.IsActive = 'Y' "
-					+ ")"
+				+ "IsAccessAllOrgs = 'Y' AND EXISTS("
+				+ "SELECT 1 FROM AD_Org AS o "
+				+ "WHERE (o.AD_Client_ID = AD_Role.AD_Client_ID OR o.AD_Org_ID = 0) "
+				+ "AND o.IsActive = 'Y' "
+				+ "AND o.IsSummary = 'N' "
 				+ ")"
-			+ ")"
-		;
+				+ ") "
+				+ "OR ("
+				+ "IsUseUserOrgAccess = 'N' AND EXISTS("
+				+ "SELECT 1 FROM AD_Role_OrgAccess AS ro "
+				+ "INNER JOIN AD_Org AS o "
+				+ "ON o.AD_Org_ID = ro.AD_Org_ID "
+				+ "AND o.IsActive = 'Y' "
+				+ "AND o.IsSummary = 'N' "
+				+ "WHERE ro.AD_Role_ID = AD_Role.AD_Role_ID "
+				+ "AND ro.IsActive = 'Y' "
+				+ ")"
+				+ ") "
+				+ "OR ("
+				+ "IsUseUserOrgAccess = 'Y' AND EXISTS("
+				+ "SELECT 1 FROM AD_User_OrgAccess AS uo "
+				+ "INNER JOIN AD_Org AS o "
+				+ "ON o.AD_Org_ID = uo.AD_Org_ID "
+				+ "AND o.IsActive = 'Y' "
+				+ "AND o.IsSummary = 'N' "
+				+ "WHERE uo.AD_User_ID = ? "
+				+ "AND uo.IsActive = 'Y' "
+				+ ")"
+				+ ")"
+				+ ")"
+				;
 		Query query = new Query(
-			Env.getCtx(),
-			I_AD_Role.Table_Name,
-			whereClause,
-			null
+				Env.getCtx(),
+				I_AD_Role.Table_Name,
+				whereClause,
+				null
 		)
-			.setParameters(userId, userId)
-			// .setOnlyActiveRecords(true)
-		;
+				.setParameters(userId, userId)
+				// .setOnlyActiveRecords(true)
+				;
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -400,26 +406,26 @@ public class Security extends SecurityImplBase {
 		}
 
 		ListRolesResponse.Builder builder = ListRolesResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				TextManager.getValidString(nexPageToken)
-			)
-		;
+				.setRecordCount(count)
+				.setNextPageToken(
+						TextManager.getValidString(nexPageToken)
+				)
+				;
 		query
-			.setOrderBy(I_AD_Role.COLUMNNAME_Name)
-			// .setLimit(limit, offset)
-			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			.forEach(roleId -> {
-			// .<MRole>list()
-			// .forEach(role -> {
-				// MRole.get static method not instance the role in 0=* (asterisk)
-				// MRole role = role.get(Env.getCtx(), roleId);
-				Role.Builder orgBuilder = convertRole(roleId);
-				// Role.Builder orgBuilder = convertRole(role);
-				builder.addRoles(
-					orgBuilder
-				);
-			});
+				.setOrderBy(I_AD_Role.COLUMNNAME_Name)
+				// .setLimit(limit, offset)
+				.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+				.forEach(roleId -> {
+					// .<MRole>list()
+					// .forEach(role -> {
+					// MRole.get static method not instance the role in 0=* (asterisk)
+					// MRole role = role.get(Env.getCtx(), roleId);
+					Role.Builder orgBuilder = convertRole(roleId);
+					// Role.Builder orgBuilder = convertRole(role);
+					builder.addRoles(
+							orgBuilder
+					);
+				});
 		//	Return
 		return builder;
 	}
@@ -428,7 +434,7 @@ public class Security extends SecurityImplBase {
 
 	@Override
 	public void listOrganizations(ListOrganizationsRequest request,
-			StreamObserver<ListOrganizationsResponse> responseObserver) {
+								  StreamObserver<ListOrganizationsResponse> responseObserver) {
 		try {
 			if (request == null) {
 				throw new AdempiereException("Object Request Null");
@@ -440,10 +446,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -474,26 +480,26 @@ public class Security extends SecurityImplBase {
 					+ "WHERE r.AD_Client_ID = AD_Org.AD_Client_ID "
 					+ "AND r.AD_Role_ID = ? "
 					+ "AND r.IsActive = 'Y' "
-				+ ") "
-				+ "OR AD_Org_ID = 0 "
-			+ ")";
+					+ ") "
+					+ "OR AD_Org_ID = 0 "
+					+ ")";
 			parameters.add(role.getAD_Role_ID());
 		} else {
 			if(role.isUseUserOrgAccess()) {
 				whereClause = "EXISTS("
-					+ "SELECT 1 FROM AD_User_OrgAccess AS ua "
-					+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
-					+ "AND ua.AD_User_ID = ? "
-					+ "AND ua.IsActive = 'Y' "
-				+ ")";
+						+ "SELECT 1 FROM AD_User_OrgAccess AS ua "
+						+ "WHERE ua.AD_Org_ID = AD_Org.AD_Org_ID "
+						+ "AND ua.AD_User_ID = ? "
+						+ "AND ua.IsActive = 'Y' "
+						+ ")";
 				parameters.add(Env.getAD_User_ID(Env.getCtx()));
 			} else {
 				whereClause = "EXISTS("
-					+ "SELECT 1 FROM AD_Role_OrgAccess AS ra "
-					+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
-					+ "AND ra.AD_Role_ID = ? "
-					+ "AND ra.IsActive = 'Y' "
-				+ ")";
+						+ "SELECT 1 FROM AD_Role_OrgAccess AS ra "
+						+ "WHERE ra.AD_Org_ID = AD_Org.AD_Org_ID "
+						+ "AND ra.AD_Role_ID = ? "
+						+ "AND ra.IsActive = 'Y' "
+						+ ")";
 				parameters.add(role.getAD_Role_ID());
 			}
 		}
@@ -501,15 +507,15 @@ public class Security extends SecurityImplBase {
 		parameters.add(false);
 
 		Query query = new Query(
-			Env.getCtx(),
-			I_AD_Org.Table_Name,
-			whereClause,
-			null
+				Env.getCtx(),
+				I_AD_Org.Table_Name,
+				whereClause,
+				null
 		)
-			.setParameters(parameters)
-			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
+				.setParameters(parameters)
+				.setOnlyActiveRecords(true)
+				.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+				;
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -523,24 +529,24 @@ public class Security extends SecurityImplBase {
 		}
 
 		ListOrganizationsResponse.Builder builder = ListOrganizationsResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				TextManager.getValidString(nexPageToken)
-			)
-		;
+				.setRecordCount(count)
+				.setNextPageToken(
+						TextManager.getValidString(nexPageToken)
+				)
+				;
 		//	Get List
 		query
-			.setOrderBy("AD_Client_ID DESC, Name")
-			// .setLimit(limit, offset)
-			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			// .<MOrg>list()
-			.forEach(organizationId -> {
-				// MOrg.get static method not instance the organization in 0=* (asterisk)
-				// MOrg organization = MOrg.get(Env.getCtx(), organizationId);
-				Organization.Builder organizationBuilder = convertOrganization(organizationId);
-				builder.addOrganizations(organizationBuilder);
-			});
-		//	
+				.setOrderBy("AD_Client_ID DESC, Name")
+				// .setLimit(limit, offset)
+				.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+				// .<MOrg>list()
+				.forEach(organizationId -> {
+					// MOrg.get static method not instance the organization in 0=* (asterisk)
+					// MOrg organization = MOrg.get(Env.getCtx(), organizationId);
+					Organization.Builder organizationBuilder = convertOrganization(organizationId);
+					builder.addOrganizations(organizationBuilder);
+				});
+		//
 		return builder;
 	}
 
@@ -557,12 +563,12 @@ public class Security extends SecurityImplBase {
 		MOrg organization = MOrg.get(Env.getCtx(), organizationId);
 		if (organizationId == 0) {
 			organization = new Query(
-				Env.getCtx(),
-				I_AD_Org.Table_Name,
-				"AD_Org_ID = 0",
-				null
+					Env.getCtx(),
+					I_AD_Org.Table_Name,
+					"AD_Org_ID = 0",
+					null
 			)
-				.first()
+					.first()
 			;
 		}
 		organizationBuilder = convertOrganization(organization);
@@ -580,63 +586,63 @@ public class Security extends SecurityImplBase {
 			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
-					organizationBuilder.setCorporateBrandingImage(
+				organizationBuilder.setCorporateBrandingImage(
 						TextManager.getValidString(
-						attachmentReference.getFileName()
-					)
+								attachmentReference.getFileName()
+						)
 				);
 			}
 		}
-		
+
 		organizationBuilder.setId(
-				organization.getAD_Org_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					organization.getUUID()
+						organization.getAD_Org_ID()
 				)
-			)
-			.setValue(
-				TextManager.getValidString(
-					organization.getValue()
+				.setUuid(
+						TextManager.getValidString(
+								organization.getUUID()
+						)
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					organization.getName()
+				.setValue(
+						TextManager.getValidString(
+								organization.getValue()
+						)
 				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					organization.getDescription()
+				.setName(
+						TextManager.getValidString(
+								organization.getName()
+						)
 				)
-			)
-			.setDuns(
-				TextManager.getValidString(
-					organizationInfo.getDUNS()
+				.setDescription(
+						TextManager.getValidString(
+								organization.getDescription()
+						)
 				)
-			)
-			.setTaxId(
-				TextManager.getValidString(
-					organizationInfo.getTaxID()
+				.setDuns(
+						TextManager.getValidString(
+								organizationInfo.getDUNS()
+						)
 				)
-			)
-			.setPhone(
-				TextManager.getValidString(
-					organizationInfo.getPhone()
+				.setTaxId(
+						TextManager.getValidString(
+								organizationInfo.getTaxID()
+						)
 				)
-			)
-			.setPhone2(
-				TextManager.getValidString(
-					organizationInfo.getPhone2()
+				.setPhone(
+						TextManager.getValidString(
+								organizationInfo.getPhone()
+						)
 				)
-			)
-			.setFax(
-				TextManager.getValidString(
-					organizationInfo.getFax()
+				.setPhone2(
+						TextManager.getValidString(
+								organizationInfo.getPhone2()
+						)
 				)
-			)
-			.setIsReadOnly(false)
+				.setFax(
+						TextManager.getValidString(
+								organizationInfo.getFax()
+						)
+				)
+				.setIsReadOnly(false)
 		;
 		return organizationBuilder;
 	}
@@ -656,10 +662,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -673,15 +679,15 @@ public class Security extends SecurityImplBase {
 		int organizationId = request.getOrganizationId();
 		final String whereClause = "AD_Org_ID = ? AND IsInTransit = ? ";
 		Query query = new Query(
-			Env.getCtx(),
-			I_M_Warehouse.Table_Name,
-			whereClause,
-			null
+				Env.getCtx(),
+				I_M_Warehouse.Table_Name,
+				whereClause,
+				null
 		)
-			.setParameters(organizationId, false)
-			.setOnlyActiveRecords(true)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
+				.setParameters(organizationId, false)
+				.setOnlyActiveRecords(true)
+				.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+				;
 
 		//	Get page and count
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
@@ -695,30 +701,30 @@ public class Security extends SecurityImplBase {
 		}
 
 		ListWarehousesResponse.Builder builder = ListWarehousesResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				TextManager.getValidString(
-					nexPageToken
+				.setRecordCount(count)
+				.setNextPageToken(
+						TextManager.getValidString(
+								nexPageToken
+						)
 				)
-			)
-		;
+				;
 
 		//	Get List
 		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
 		query
-			//.setLimit(limit, offset)
-			.setOrderBy("AD_Client_ID DESC, Name")
-			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
-			// .<MWarehouse>list()
-			.forEach(warehouseId -> {
-				// MWarehouse.get static method not instance the warehouse in 0=* (asterisk)
-				// MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
-				Warehouse.Builder warehouseBuilder = convertWarehouse(warehouseId);
-				builder.addWarehouses(
-					warehouseBuilder
-				);
-			});
-		//	
+				//.setLimit(limit, offset)
+				.setOrderBy("AD_Client_ID DESC, Name")
+				.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
+				// .<MWarehouse>list()
+				.forEach(warehouseId -> {
+					// MWarehouse.get static method not instance the warehouse in 0=* (asterisk)
+					// MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
+					Warehouse.Builder warehouseBuilder = convertWarehouse(warehouseId);
+					builder.addWarehouses(
+							warehouseBuilder
+					);
+				});
+		//
 		return builder;
 	}
 
@@ -735,12 +741,12 @@ public class Security extends SecurityImplBase {
 		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
 		if (warehouseId == 0) {
 			warehouse = new Query(
-				Env.getCtx(),
-				I_M_Warehouse.Table_Name,
-				"M_Warehouse_ID = 0",
-				null
+					Env.getCtx(),
+					I_M_Warehouse.Table_Name,
+					"M_Warehouse_ID = 0",
+					null
 			)
-				.first()
+					.first()
 			;
 		}
 		warehouseBuilder = convertWarehouse(warehouse);
@@ -752,28 +758,28 @@ public class Security extends SecurityImplBase {
 			return warehouseBuilder;
 		}
 		warehouseBuilder.setId(
-				warehouse.getM_Warehouse_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					warehouse.getUUID()
+						warehouse.getM_Warehouse_ID()
 				)
-			)
-			.setValue(
-				TextManager.getValidString(
-					warehouse.getValue()
+				.setUuid(
+						TextManager.getValidString(
+								warehouse.getUUID()
+						)
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					warehouse.getName()
+				.setValue(
+						TextManager.getValidString(
+								warehouse.getValue()
+						)
 				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					warehouse.getDescription()
+				.setName(
+						TextManager.getValidString(
+								warehouse.getName()
+						)
 				)
-			)
+				.setDescription(
+						TextManager.getValidString(
+								warehouse.getDescription()
+						)
+				)
 		;
 		return warehouseBuilder;
 	}
@@ -807,10 +813,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -890,14 +896,14 @@ public class Security extends SecurityImplBase {
 			}
 		}
 		return createValidSession(
-			isDefaultRole,
-			request.getClientVersion(),
-			request.getLanguage(),
-			roleId,
-			userId,
-			organizationId,
-			warehouseId,
-			false
+				isDefaultRole,
+				request.getClientVersion(),
+				request.getLanguage(),
+				roleId,
+				userId,
+				organizationId,
+				warehouseId,
+				false
 		);
 	}
 
@@ -939,19 +945,19 @@ public class Security extends SecurityImplBase {
 
 		//	Session values
 		final String bearerToken = SessionManager.createSessionAndGetToken(
-			clientVersion,
-			language,
-			roleId,
-			userId,
-			organizationId,
-			warehouseId,
-			isOpenID
+				clientVersion,
+				language,
+				roleId,
+				userId,
+				organizationId,
+				warehouseId,
+				isOpenID
 		);
 
 		//	Return session
 		Session.Builder builder = Session.newBuilder()
-			.setToken(bearerToken)
-		;
+				.setToken(bearerToken)
+				;
 
 		return builder;
 	}
@@ -969,10 +975,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -988,14 +994,14 @@ public class Security extends SecurityImplBase {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
 		return createValidSession(
-			true,
-			request.getClientVersion(),
-			request.getLanguage(),
-			-1,
-			validUser.getAD_User_ID(),
-			-1,
-			-1,
-			true
+				true,
+				request.getClientVersion(),
+				request.getLanguage(),
+				-1,
+				validUser.getAD_User_ID(),
+				-1,
+				-1,
+				true
 		);
 	}
 
@@ -1013,10 +1019,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -1044,7 +1050,7 @@ public class Security extends SecurityImplBase {
 
 		// Get organization
 		int organizationId = -1;
-		if (request.getOrganizationId() >= 0) {
+		if (request.getOrganizationId() > 0) {
 			organizationId = request.getOrganizationId();
 			if (!role.isOrgAccess(organizationId, true)) {
 				// invlaid organization from role
@@ -1052,7 +1058,7 @@ public class Security extends SecurityImplBase {
 				log.warning("Invalid organization (" + organizationId + ") from role (" + roleId + ") access.");
 			}
 		}
-		if (organizationId < 0) {
+		if (organizationId <= 0) {
 			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			if (organizationId < 0) {
 				// TODO: Verify it access
@@ -1062,7 +1068,7 @@ public class Security extends SecurityImplBase {
 
 		// Get warehouse
 		int warehouseId = -1;
-		if (request.getWarehouseId() >= 0) {
+		if (request.getWarehouseId() > 0) {
 			warehouseId = request.getWarehouseId();
 			if (!SessionManager.isWarehouseAccess(organizationId, warehouseId)) {
 				// invlaid warehouse from organization
@@ -1070,7 +1076,7 @@ public class Security extends SecurityImplBase {
 				log.warning("Invalid warehouse (" + warehouseId + ") from organization (" + organizationId + ") allocation.");
 			}
 		}
-		if (warehouseId < 0) {
+		if (warehouseId <= 0) {
 			warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
 			if (warehouseId < 0) {
 				// TODO: Verify it access
@@ -1092,26 +1098,28 @@ public class Security extends SecurityImplBase {
 			isOpenID = currentSession.get_ValueAsInt(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) > 0;
 		}
 		final String bearerToken = SessionManager.createSessionAndGetToken(
-			currentSession.getWebSession(),
-			language,
-			roleId,
-			userId,
-			organizationId,
-			warehouseId,
-			isOpenID
+				currentSession.getWebSession(),
+				language,
+				roleId,
+				userId,
+				organizationId,
+				warehouseId,
+				isOpenID
 		);
 		builder.setToken(bearerToken);
+		// Update Keycloak session cache before logout (so next request finds new session)
+		updateKeycloakCacheIfNeeded(bearerToken);
 		// Logout
 		logoutSession(LogoutRequest.newBuilder().build());
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-			userId,
-			language,
-			roleId,
-			role.getAD_Client_ID(),
-			organizationId,
-			warehouseId
+				userId,
+				language,
+				roleId,
+				role.getAD_Client_ID(),
+				organizationId,
+				warehouseId
 		);
 
 		// Return session
@@ -1124,28 +1132,28 @@ public class Security extends SecurityImplBase {
 			return builder;
 		}
 		builder.setId(
-				country.getC_Country_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					country.getUUID()
+						country.getC_Country_ID()
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					country.getName()
+				.setUuid(
+						TextManager.getValidString(
+								country.getUUID()
+						)
 				)
-			)
-			.setCode(
-				TextManager.getValidString(
-					country.getCountryCode()
+				.setName(
+						TextManager.getValidString(
+								country.getName()
+						)
 				)
-			)
-			.setDisplaySequence(
-				TextManager.getValidString(
-					country.getDisplaySequence()
+				.setCode(
+						TextManager.getValidString(
+								country.getCountryCode()
+						)
 				)
-			)
+				.setDisplaySequence(
+						TextManager.getValidString(
+								country.getDisplaySequence()
+						)
+				)
 		;
 		return builder;
 	}
@@ -1160,52 +1168,52 @@ public class Security extends SecurityImplBase {
 		MCountry country = MCountry.get(context, Env.getContextAsInt(Env.getCtx(), "#C_Country_ID"));
 		Country.Builder countryBuilder = convertCountry(country);
 		session.setCountry(
-			countryBuilder.build()
+				countryBuilder.build()
 		);
 
 		//	Set values for currency
 		MCurrency currency = MCurrency.get(context, country.getC_Currency_ID());
 		Currency.Builder currencyBuilder = CoreFunctionalityConvert.convertCurrency(currency);
 		session.setCurrency(
-			currencyBuilder.build()
+				currencyBuilder.build()
 		);
 
 		String language = SessionManager.getDefaultLanguage(
-			Env.getAD_Language(
-				context
-			)
+				Env.getAD_Language(
+						context
+				)
 		);
 		session.setLanguage(
-			TextManager.getValidString(
-				language
-			)
+				TextManager.getValidString(
+						language
+				)
 		);
 
 		//	Set default context
 		Struct.Builder contextValues = Struct.newBuilder();
 		context.entrySet()
-			.stream()
-			.filter(contextKeyValue -> {
-				final String contextKey = TextManager.getStringFromObject(
-					contextKeyValue.getKey()
-				);
-				return ContextManager.isPreferenceConext(contextKey) ||
-					ContextManager.isSessionContext(contextKey)
-				;
-			})
-			.forEach(contextKeyValue -> {
-				final String contextKey = TextManager.getStringFromObject(
-					contextKeyValue.getKey()
-				);
-				final String contextStringValue = TextManager.getStringFromObject(
-					contextKeyValue.getValue()
-				);
-				Value.Builder contextProtoValue = convertProtoValueFromContext(contextStringValue);
-				contextValues.putFields(
-					contextKey,
-					contextProtoValue.build()
-				);
-			})
+				.stream()
+				.filter(contextKeyValue -> {
+					final String contextKey = TextManager.getStringFromObject(
+							contextKeyValue.getKey()
+					);
+					return ContextManager.isPreferenceConext(contextKey) ||
+							ContextManager.isSessionContext(contextKey)
+							;
+				})
+				.forEach(contextKeyValue -> {
+					final String contextKey = TextManager.getStringFromObject(
+							contextKeyValue.getKey()
+					);
+					final String contextStringValue = TextManager.getStringFromObject(
+							contextKeyValue.getValue()
+					);
+					Value.Builder contextProtoValue = convertProtoValueFromContext(contextStringValue);
+					contextValues.putFields(
+							contextKey,
+							contextProtoValue.build()
+					);
+				})
 		;
 		session.setDefaultContext(contextValues);
 	}
@@ -1222,23 +1230,23 @@ public class Security extends SecurityImplBase {
 		}
 		if (NumberManager.isNumeric(value)) {
 			builder.setNumberValue(
-				NumberManager.getIntFromString(value)
+					NumberManager.getIntFromString(value)
 			);
 		} else if (BooleanManager.isBoolean(value)) {
 			boolean booleanValue = BooleanManager.getBooleanFromString(
-				value.trim()
+					value.trim()
 			);
 			builder.setBoolValue(booleanValue);
 		} else if(TimeManager.isDate(value)) {
 			builder = TimeManager.getProtoValueFromTimestamp(
-				TimeManager.getTimestampFromString(value)
+					TimeManager.getTimestampFromString(value)
 			);
 		} else {
 			builder.setStringValue(
-				TextManager.getValidString(value)
+					TextManager.getValidString(value)
 			);
 		}
-		//	
+		//
 		return builder;
 	}
 
@@ -1258,8 +1266,56 @@ public class Security extends SecurityImplBase {
 		return builder;
 	}
 
+
 	/**
-	 * Logout session
+	 * If the current request was authenticated with a Keycloak token,
+	 * update the Keycloak sid → AD_Session_ID cache so the next request
+	 * picks up the new session (after change-role or set-session-attribute).
+	 *
+	 * @param bearerToken the new local JWT returned by createSessionAndGetToken
+	 */
+	private void updateKeycloakCacheIfNeeded(String bearerToken) {
+		String originalToken = AuthorizationServerInterceptor.ORIGINAL_TOKEN.get();
+		if (originalToken == null) {
+			return;
+		}
+		if (TokenTypeDetector.detect(originalToken) != TokenTypeDetector.TokenType.KEYCLOAK) {
+			return;
+		}
+		String keycloakSid = KeycloakSessionHandler.extractSessionId(originalToken);
+		if (keycloakSid == null || keycloakSid.isBlank()) {
+			return;
+		}
+		int newSessionId = extractSessionIdFromBearerToken(bearerToken);
+		if (newSessionId <= 0) {
+			return;
+		}
+		KeycloakSessionHandler.updateSessionCache(keycloakSid, newSessionId);
+	}
+
+	/**
+	 * Extract AD_Session_ID from a local JWT bearer token (jti claim).
+	 */
+	private int extractSessionIdFromBearerToken(String token) {
+		try {
+			String[] parts = token.split("\\.");
+			if (parts.length != 3) {
+				return -1;
+			}
+			String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]));
+			com.google.gson.JsonObject claims = com.google.gson.JsonParser.parseString(payload).getAsJsonObject();
+			if (claims.has("jti") && !claims.get("jti").isJsonNull()) {
+				return Integer.parseInt(claims.get("jti").getAsString());
+			}
+		} catch (Exception e) {
+			log.warning("Could not extract session ID from bearer token: " + e.getMessage());
+		}
+		return -1;
+	}
+
+
+	/**
+	 * Get session info
 	 * @param request
 	 * @return
 	 */
@@ -1271,37 +1327,37 @@ public class Security extends SecurityImplBase {
 		//	Session values
 		SessionInfo.Builder builder = SessionInfo.newBuilder();
 		builder.setId(
-				session.getAD_Session_ID()
-			)
-			.setUuid(
-				session.getUUID()
-			)
-			.setName(
-				TextManager.getValidString(
-					session.getDescription()
+						session.getAD_Session_ID()
 				)
-			)
-			.setUserInfo(
-				convertUserInfo(
-					MUser.get(context, session.getCreatedBy())
+				.setUuid(
+						session.getUUID()
 				)
-			)
+				.setName(
+						TextManager.getValidString(
+								session.getDescription()
+						)
+				)
+				.setUserInfo(
+						convertUserInfo(
+								MUser.get(context, session.getCreatedBy())
+						)
+				)
 		;
 		//	Set role
 		Role.Builder roleBuilder = convertRole(
-			MRole.get(context, session.getAD_Role_ID())
+				MRole.get(context, session.getAD_Role_ID())
 		);
 		builder.setRoleInfo(roleBuilder.build());
 
 		//	Set organization
 		Organization.Builder organizationBuilder = convertOrganization(
-			session.getAD_Org_ID()
+				session.getAD_Org_ID()
 		);
 		builder.setOrganizationInfo(organizationBuilder);
 
 		//	Set warehouse
 		Warehouse.Builder warehousBuilder = convertWarehouse(
-			Env.getContextAsInt(context, "#M_Warehouse_ID")
+				Env.getContextAsInt(context, "#M_Warehouse_ID")
 		);
 		builder.setWarehouseInfo(warehousBuilder);
 
@@ -1318,41 +1374,41 @@ public class Security extends SecurityImplBase {
 	 */
 	private UserInfo.Builder convertUserInfo(MUser user) {
 		UserInfo.Builder userInfo = UserInfo.newBuilder()
-			.setId(
-				user.getAD_User_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					user.getUUID()
+				.setId(
+						user.getAD_User_ID()
 				)
-			)
-			.setValue(
-				TextManager.getValidString(
-					user.getValue()
+				.setUuid(
+						TextManager.getValidString(
+								user.getUUID()
+						)
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					user.getName()
+				.setValue(
+						TextManager.getValidString(
+								user.getValue()
+						)
 				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					user.getDescription()
+				.setName(
+						TextManager.getValidString(
+								user.getName()
+						)
 				)
-			)
-			.setComments(
-				TextManager.getValidString(
-					user.getComments()
+				.setDescription(
+						TextManager.getValidString(
+								user.getDescription()
+						)
 				)
-			)
-		;
+				.setComments(
+						TextManager.getValidString(
+								user.getComments()
+						)
+				)
+				;
 		// client of user record
 		MClient clientUser = MClient.get(Env.getCtx(), user.getAD_Client_ID());
 		userInfo.setClientUuid(
-			TextManager.getValidString(
-				clientUser.getUUID()
-			)
+				TextManager.getValidString(
+						clientUser.getUUID()
+				)
 		);
 
 		// client of session
@@ -1360,16 +1416,16 @@ public class Security extends SecurityImplBase {
 		if(user.getLogo_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(clientId)) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), clientId);
 			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
-				Env.getCtx(),
-				clientInfo.getFileHandler_ID(),
-				user.getLogo_ID(),
-				null
+					Env.getCtx(),
+					clientInfo.getFileHandler_ID(),
+					user.getLogo_ID(),
+					null
 			);
 			if(attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 				userInfo.setImage(
-					TextManager.getValidString(
-						attachmentReference.getFileName()
-					)
+						TextManager.getValidString(
+								attachmentReference.getFileName()
+						)
 				);
 			}
 		}
@@ -1390,20 +1446,20 @@ public class Security extends SecurityImplBase {
 				+ "AND ur.AD_User_ID = ? "
 				+ "AND ur.IsActive = 'Y' "
 				// TODO: add `LIMIT 1` or `AND ROWNUM = 1` to best performance
-			+ ")"
-		;
+				+ ")"
+				;
 		int roleCount = new Query(
-			Env.getCtx(),
-			I_AD_Role.Table_Name,
-			whereClause,
-			null
+				Env.getCtx(),
+				I_AD_Role.Table_Name,
+				whereClause,
+				null
 		)
-			.setParameters(session.getCreatedBy())
-			.setOnlyActiveRecords(true)
-			// .getIDsAsList()
-			// .<MRole>list()
-			.count()
-		;
+				.setParameters(session.getCreatedBy())
+				.setOnlyActiveRecords(true)
+				// .getIDsAsList()
+				// .<MRole>list()
+				.count()
+				;
 		//	Validate
 		if(roleCount <= 0) {
 			return null;
@@ -1429,23 +1485,23 @@ public class Security extends SecurityImplBase {
 			return builder;
 		}
 		builder.setId(
-				client.getAD_Client_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					client.getUUID()
+						client.getAD_Client_ID()
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					client.getName()
+				.setUuid(
+						TextManager.getValidString(
+								client.getUUID()
+						)
 				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					client.getDescription()
+				.setName(
+						TextManager.getValidString(
+								client.getName()
+						)
 				)
-			)
+				.setDescription(
+						TextManager.getValidString(
+								client.getDescription()
+						)
+				)
 		;
 
 		// System client info
@@ -1455,9 +1511,9 @@ public class Security extends SecurityImplBase {
 			dictionaryCode = clientInfoSystem.get_ValueAsString("ECA56_DictionaryCode");
 		}
 		builder.setDictionaryCode(
-			TextManager.getValidString(
-				dictionaryCode
-			)
+				TextManager.getValidString(
+						dictionaryCode
+				)
 		);
 
 		// Add client logo
@@ -1465,46 +1521,46 @@ public class Security extends SecurityImplBase {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), client.getAD_Client_ID());
 			if (clientInfo.getLogo_ID() > 0) {
 				MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
-					Env.getCtx(),
-					clientInfo.getFileHandler_ID(),
-					clientInfo.getLogo_ID(),
-					null
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogo_ID(),
+						null
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogo(
-						TextManager.getValidString(
-							attachmentReference.getFileName()
-						)
+							TextManager.getValidString(
+									attachmentReference.getFileName()
+							)
 					);
 				}
 			}
 			if (clientInfo.getLogoReport_ID() > 0) {
 				MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
-					Env.getCtx(),
-					clientInfo.getFileHandler_ID(),
-					clientInfo.getLogoReport_ID(),
-					null
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogoReport_ID(),
+						null
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoReport(
-						TextManager.getValidString(
-							attachmentReference.getFileName()
-						)
+							TextManager.getValidString(
+									attachmentReference.getFileName()
+							)
 					);
 				}
 			}
 			if (clientInfo.getLogoWeb_ID() > 0) {
 				MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
-					Env.getCtx(),
-					clientInfo.getFileHandler_ID(),
-					clientInfo.getLogoWeb_ID(),
-					null
+						Env.getCtx(),
+						clientInfo.getFileHandler_ID(),
+						clientInfo.getLogoWeb_ID(),
+						null
 				);
 				if (attachmentReference != null && attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					builder.setLogoWeb(
-						TextManager.getValidString(
-							attachmentReference.getFileName()
-						)
+							TextManager.getValidString(
+									attachmentReference.getFileName()
+							)
 					);
 				}
 			}
@@ -1522,12 +1578,12 @@ public class Security extends SecurityImplBase {
 		MRole role = MRole.get(Env.getCtx(), roleId);
 		if (roleId == 0) {
 			role = new Query(
-				Env.getCtx(),
-				I_AD_Role.Table_Name,
-				"AD_Role_ID = 0",
-				null
+					Env.getCtx(),
+					I_AD_Role.Table_Name,
+					"AD_Role_ID = 0",
+					null
 			)
-				.first()
+					.first()
 			;
 		}
 		roleBuilder = convertRole(role);
@@ -1545,55 +1601,55 @@ public class Security extends SecurityImplBase {
 			return builder;
 		}
 		Client.Builder clientBuilder = convertClient(
-			role.getAD_Client_ID()
+				role.getAD_Client_ID()
 		);
 		builder = Role.newBuilder()
-			.setId(
-				role.getAD_Role_ID()
-			)
-			.setUuid(
-				TextManager.getValidString(
-					role.getUUID()
+				.setId(
+						role.getAD_Role_ID()
 				)
-			)
-			.setName(
-				TextManager.getValidString(
-					role.getName()
+				.setUuid(
+						TextManager.getValidString(
+								role.getUUID()
+						)
 				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					role.getDescription()
+				.setName(
+						TextManager.getValidString(
+								role.getName()
+						)
 				)
-			)
-			.setClientInfo(
-				clientBuilder
-			)
-			.setCanExport(role.isCanExport())
-			.setCanReport(role.isCanReport())
-			.setPersonalAccess(role.isPersonalAccess())
-			.setPersonalLock(role.isPersonalLock())
-			.setAllowHtmlView(role.isAllow_HTML_View())
-			.setAllowInfoAccount(role.isAllow_Info_Account())
-			.setAllowInfoAsset(role.isAllow_Info_Asset())
-			.setAllowInfoBusinessPartner(role.isAllow_Info_BPartner())
-			.setAllowInfoCashJournal(role.isAllow_Info_CashJournal())
-			.setAllowInfoCrp(role.isAllow_Info_CRP())
-			.setAllowInfoInOut(role.isAllow_Info_InOut())
-			.setAllowInfoInvoice(role.isAllow_Info_Invoice())
-			.setAllowInfoMrp(role.isAllow_Info_MRP())
-			.setAllowInfoOrder(role.isAllow_Info_Order())
-			.setAllowInfoPayment(role.isAllow_Info_Payment())
-			.setAllowInfoProduct(role.isAllow_Info_Product())
-			.setAllowInfoResource(role.isAllow_Info_Resource())
-			.setAllowInfoSchedule(role.isAllow_Info_Schedule())
-			.setAllowXlsView(role.isAllow_XLS_View())
-			.setShowAccounting(
-				role.isShowAcct()
-			)
-			.setPreferenceLevel(
-				role.getPreferenceType()
-			)
+				.setDescription(
+						TextManager.getValidString(
+								role.getDescription()
+						)
+				)
+				.setClientInfo(
+						clientBuilder
+				)
+				.setCanExport(role.isCanExport())
+				.setCanReport(role.isCanReport())
+				.setPersonalAccess(role.isPersonalAccess())
+				.setPersonalLock(role.isPersonalLock())
+				.setAllowHtmlView(role.isAllow_HTML_View())
+				.setAllowInfoAccount(role.isAllow_Info_Account())
+				.setAllowInfoAsset(role.isAllow_Info_Asset())
+				.setAllowInfoBusinessPartner(role.isAllow_Info_BPartner())
+				.setAllowInfoCashJournal(role.isAllow_Info_CashJournal())
+				.setAllowInfoCrp(role.isAllow_Info_CRP())
+				.setAllowInfoInOut(role.isAllow_Info_InOut())
+				.setAllowInfoInvoice(role.isAllow_Info_Invoice())
+				.setAllowInfoMrp(role.isAllow_Info_MRP())
+				.setAllowInfoOrder(role.isAllow_Info_Order())
+				.setAllowInfoPayment(role.isAllow_Info_Payment())
+				.setAllowInfoProduct(role.isAllow_Info_Product())
+				.setAllowInfoResource(role.isAllow_Info_Resource())
+				.setAllowInfoSchedule(role.isAllow_Info_Schedule())
+				.setAllowXlsView(role.isAllow_XLS_View())
+				.setShowAccounting(
+						role.isShowAcct()
+				)
+				.setPreferenceLevel(
+						role.getPreferenceType()
+				)
 		;
 
 		//	return
@@ -1615,10 +1671,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -1671,15 +1727,15 @@ public class Security extends SecurityImplBase {
 
 				// Get `AD_Tree_Menu_ID` from active tree
 				final String sql = "SELECT tr.AD_Tree_ID "
-					+ "FROM AD_Tree AS tr "
-					+ "WHERE tr.IsActive = 'Y' "
-					+ "AND tr.AD_Client_ID IN(0, ?) "
-					+ "AND tr.TreeType = 'MM' "
-					+ "AND tr.IsAllNodes = 'Y' "
-					+ "AND ROWNUM = 1 "
-					// Client company after system, is default 'Y', and first created tree id
-					+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID "
-				;
+						+ "FROM AD_Tree AS tr "
+						+ "WHERE tr.IsActive = 'Y' "
+						+ "AND tr.AD_Client_ID IN(0, ?) "
+						+ "AND tr.TreeType = 'MM' "
+						+ "AND tr.IsAllNodes = 'Y' "
+						+ "AND ROWNUM = 1 "
+						// Client company after system, is default 'Y', and first created tree id
+						+ "ORDER BY tr.AD_Client_ID DESC, tr.IsDefault DESC, tr.AD_Tree_ID "
+						;
 				//	Get Tree
 				treeId = DB.getSQLValue(null, sql, clientId);
 			}
@@ -1707,10 +1763,10 @@ public class Security extends SecurityImplBase {
 			MTreeNode child = (MTreeNode)childrens.nextElement();
 			MMenu menu = MMenu.getFromId(Env.getCtx(), child.getNode_ID());
 			Menu.Builder childBuilder = convertMenu(
-				Env.getCtx(),
-				menu,
-				child.getParent_ID(),
-				language
+					Env.getCtx(),
+					menu,
+					child.getParent_ID(),
+					language
 			);
 			//	Explode child
 			addChildren(Env.getCtx(), childBuilder, child, language);
@@ -1750,41 +1806,41 @@ public class Security extends SecurityImplBase {
 			description = menu.getDescription();
 		}
 		builder
-			.setId(
-				TextManager.getValidString(
-					menu.getUUID()
-				))
-			.setUuid(
-				TextManager.getValidString(
-					menu.getUUID()
+				.setId(
+						TextManager.getValidString(
+								menu.getUUID()
+						))
+				.setUuid(
+						TextManager.getValidString(
+								menu.getUUID()
+						)
 				)
-			)
-			.setInternalId(
-				menu.getAD_Menu_ID()
-			)
-			.setParentId(parentId)
-			// .setSequence(
-			// 	menu.getSeqNo()
-			// )
-			.setName(
-				TextManager.getValidString(name)
-			)
-			.setDescription(
-				TextManager.getValidString(description))
-			.setAction(
-				TextManager.getValidString(
-					menu.getAction()
+				.setInternalId(
+						menu.getAD_Menu_ID()
 				)
-			)
-			.setIsSalesTransaction(
-				menu.isSOTrx()
-			)
-			.setIsSummary(
-				menu.isSummary()
-			)
-			.setIsReadOnly(
-				menu.isReadOnly()
-			)
+				.setParentId(parentId)
+				// .setSequence(
+				// 	menu.getSeqNo()
+				// )
+				.setName(
+						TextManager.getValidString(name)
+				)
+				.setDescription(
+						TextManager.getValidString(description))
+				.setAction(
+						TextManager.getValidString(
+								menu.getAction()
+						)
+				)
+				.setIsSalesTransaction(
+						menu.isSOTrx()
+				)
+				.setIsSummary(
+						menu.isSummary()
+				)
+				.setIsReadOnly(
+						menu.isReadOnly()
+				)
 		;
 		//	Supported actions
 		final String menuAction = menu.getAction();
@@ -1793,184 +1849,184 @@ public class Security extends SecurityImplBase {
 			if(menuAction.equals(MMenu.ACTION_Form) && menu.getAD_Form_ID() > 0) {
 				MForm form = new MForm(context, menu.getAD_Form_ID(), null);
 				actionReference.setId(
-						form.getAD_Form_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							form.getUUID()
+								form.getAD_Form_ID()
 						)
-					)
-					.setName(
-						TextManager.getValidString(
-							form.get_Translation(I_AD_Form.COLUMNNAME_Name)
+						.setUuid(
+								TextManager.getValidString(
+										form.getUUID()
+								)
 						)
-					)
-					.setDescription(
-						TextManager.getValidString(
-							form.get_Translation(I_AD_Form.COLUMNNAME_Description)
+						.setName(
+								TextManager.getValidString(
+										form.get_Translation(I_AD_Form.COLUMNNAME_Name)
+								)
 						)
-					)
-					.setHelp(
-						TextManager.getValidString(
-							form.get_Translation(I_AD_Form.COLUMNNAME_Help)
+						.setDescription(
+								TextManager.getValidString(
+										form.get_Translation(I_AD_Form.COLUMNNAME_Description)
+								)
 						)
-					)
+						.setHelp(
+								TextManager.getValidString(
+										form.get_Translation(I_AD_Form.COLUMNNAME_Help)
+								)
+						)
 				;
 				builder.setActionId(
-						form.getAD_Form_ID()
-					)
-					.setActionUuid(
-						TextManager.getValidString(
-							form.getUUID()
+								form.getAD_Form_ID()
 						)
-					)
-					.setForm(actionReference)
+						.setActionUuid(
+								TextManager.getValidString(
+										form.getUUID()
+								)
+						)
+						.setForm(actionReference)
 				;
 			} else if (menuAction.equals(MMenu.ACTION_Window) && menu.getAD_Window_ID() > 0) {
 				MWindow window = MWindow.get(context, menu.getAD_Window_ID());
 				actionReference.setId(
-						window.getAD_Window_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							window.getUUID()
+								window.getAD_Window_ID()
 						)
-					)
-					.setName(
-						TextManager.getValidString(
-							window.get_Translation(I_AD_Window.COLUMNNAME_Name)
+						.setUuid(
+								TextManager.getValidString(
+										window.getUUID()
+								)
 						)
-					)
-					.setDescription(
-						TextManager.getValidString(
-							window.get_Translation(I_AD_Window.COLUMNNAME_Description)
+						.setName(
+								TextManager.getValidString(
+										window.get_Translation(I_AD_Window.COLUMNNAME_Name)
+								)
 						)
-					)
-					.setHelp(
-						TextManager.getValidString(
-							window.get_Translation(I_AD_Window.COLUMNNAME_Help)
+						.setDescription(
+								TextManager.getValidString(
+										window.get_Translation(I_AD_Window.COLUMNNAME_Description)
+								)
 						)
-					)
+						.setHelp(
+								TextManager.getValidString(
+										window.get_Translation(I_AD_Window.COLUMNNAME_Help)
+								)
+						)
 				;
 				builder.setActionId(
-						window.getAD_Window_ID()
-					)
-					.setActionUuid(
-						TextManager.getValidString(
-							window.getUUID()
+								window.getAD_Window_ID()
 						)
-					)
-					.setWindow(actionReference)
+						.setActionUuid(
+								TextManager.getValidString(
+										window.getUUID()
+								)
+						)
+						.setWindow(actionReference)
 				;
-				
+
 			} else if ((menuAction.equals(MMenu.ACTION_Process) || menuAction.equals(MMenu.ACTION_Report))
 					&& menu.getAD_Process_ID() > 0) {
 				MProcess process = MProcess.get(context, menu.getAD_Process_ID());
 				actionReference.setId(
-						process.getAD_Process_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							process.getUUID()
+								process.getAD_Process_ID()
 						)
-					)
-					.setName(
-						TextManager.getValidString(
-							process.get_Translation(I_AD_Process.COLUMNNAME_Name)
+						.setUuid(
+								TextManager.getValidString(
+										process.getUUID()
+								)
 						)
-					)
-					.setDescription(
-						TextManager.getValidString(
-							process.get_Translation(I_AD_Process.COLUMNNAME_Description)
+						.setName(
+								TextManager.getValidString(
+										process.get_Translation(I_AD_Process.COLUMNNAME_Name)
+								)
 						)
-					)
-					.setHelp(
-						TextManager.getValidString(
-							process.get_Translation(I_AD_Process.COLUMNNAME_Help)
+						.setDescription(
+								TextManager.getValidString(
+										process.get_Translation(I_AD_Process.COLUMNNAME_Description)
+								)
 						)
-					)
+						.setHelp(
+								TextManager.getValidString(
+										process.get_Translation(I_AD_Process.COLUMNNAME_Help)
+								)
+						)
 				;
 				builder.setActionId(
-						process.getAD_Process_ID()
-					)
-					.setActionUuid(
-						TextManager.getValidString(
-							process.getUUID()
+								process.getAD_Process_ID()
 						)
-					)
-					.setProcess(actionReference)
+						.setActionUuid(
+								TextManager.getValidString(
+										process.getUUID()
+								)
+						)
+						.setProcess(actionReference)
 				;
 			} else if (menuAction.equals(MMenu.ACTION_SmartBrowse) && menu.getAD_Browse_ID() > 0) {
 				MBrowse smartBrowser = MBrowse.get(context, menu.getAD_Browse_ID());
 				actionReference.setId(
-						smartBrowser.getAD_Browse_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							smartBrowser.getUUID()
+								smartBrowser.getAD_Browse_ID()
 						)
-					)
-					.setName(
-						TextManager.getValidString(
-							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Name)
+						.setUuid(
+								TextManager.getValidString(
+										smartBrowser.getUUID()
+								)
 						)
-					)
-					.setDescription(
-						TextManager.getValidString(
-							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Description)
+						.setName(
+								TextManager.getValidString(
+										smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Name)
+								)
 						)
-					)
-					.setHelp(
-						TextManager.getValidString(
-							smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Help)
+						.setDescription(
+								TextManager.getValidString(
+										smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Description)
+								)
 						)
-					)
+						.setHelp(
+								TextManager.getValidString(
+										smartBrowser.get_Translation(I_AD_Browse.COLUMNNAME_Help)
+								)
+						)
 				;
 				builder.setActionId(
-						smartBrowser.getAD_Browse_ID()
-					)
-					.setActionUuid(
-						TextManager.getValidString(
-							smartBrowser.getUUID()
+								smartBrowser.getAD_Browse_ID()
 						)
-					)
-					.setBrowser(actionReference)
+						.setActionUuid(
+								TextManager.getValidString(
+										smartBrowser.getUUID()
+								)
+						)
+						.setBrowser(actionReference)
 				;
 			} else if (menuAction.equals(MMenu.ACTION_WorkFlow) && menu.getAD_Workflow_ID() > 0) {
 				MWorkflow workflow = MWorkflow.get(context, menu.getAD_Workflow_ID());
 				actionReference.setId(
-						workflow.getAD_Workflow_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							workflow.getUUID()
+								workflow.getAD_Workflow_ID()
 						)
-					)
-					.setName(
-						TextManager.getValidString(
-							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Name)
+						.setUuid(
+								TextManager.getValidString(
+										workflow.getUUID()
+								)
 						)
-					)
-					.setDescription(
-						TextManager.getValidString(
-							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Description)
+						.setName(
+								TextManager.getValidString(
+										workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Name)
+								)
 						)
-					)
-					.setHelp(
-						TextManager.getValidString(
-							workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Help)
+						.setDescription(
+								TextManager.getValidString(
+										workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Description)
+								)
 						)
-					)
+						.setHelp(
+								TextManager.getValidString(
+										workflow.get_Translation(I_AD_Workflow.COLUMNNAME_Help)
+								)
+						)
 				;
 				builder.setActionId(
-						workflow.getAD_Workflow_ID()
-					)
-					.setActionUuid(
-						TextManager.getValidString(
-							workflow.getUUID()
+								workflow.getAD_Workflow_ID()
 						)
-					)
-					.setWorkflow(actionReference)
+						.setActionUuid(
+								TextManager.getValidString(
+										workflow.getUUID()
+								)
+						)
+						.setWorkflow(actionReference)
 				;
 			}
 		}
@@ -1979,23 +2035,23 @@ public class Security extends SecurityImplBase {
 		if (menu.get_ColumnIndex("WebPath") >= 0 && !Util.isEmpty(menu.get_ValueAsString("WebPath"))) {
 			final String targetPath = getTargetPath(menu);
 			builder.setTargetPath(
-					TextManager.getValidString(targetPath)
-				)
-				.setWebPath(
-					TextManager.getValidString(
-						menu.get_ValueAsString("WebPath")
+							TextManager.getValidString(targetPath)
 					)
-				)
+					.setWebPath(
+							TextManager.getValidString(
+									menu.get_ValueAsString("WebPath")
+							)
+					)
 			;
 		}
 		if (menu.get_ColumnIndex("AD_Module_ID") >= 0 && menu.get_ValueAsInt("AD_Module_ID") > 0) {
 			builder.setModuleId(
-				menu.get_ValueAsInt("AD_Module_ID")
+					menu.get_ValueAsInt("AD_Module_ID")
 			);
 		}
 		if (menu.get_ColumnIndex("AD_SubModule_ID") >= 0 && menu.get_ValueAsInt("AD_SubModule_ID") > 0) {
 			builder.setSubModuleId(
-				menu.get_ValueAsInt("AD_SubModule_ID")
+					menu.get_ValueAsInt("AD_SubModule_ID")
 			);
 		}
 
@@ -2045,17 +2101,17 @@ public class Security extends SecurityImplBase {
 			MTreeNode child = (MTreeNode) childrens.nextElement();
 			MMenu menuNone = MMenu.getFromId(context, child.getNode_ID());
 			Menu.Builder childBuilder = convertMenu(
-				context,
-				menuNone,
-				child.getParent_ID(),
-				language
+					context,
+					menuNone,
+					child.getParent_ID(),
+					language
 			);
 			childBuilder.setSequence(
-				child.getSeqNo()
+					child.getSeqNo()
 			);
 			addChildren(context, childBuilder, child, language);
 			builder.addChildren(
-				childBuilder.build()
+					childBuilder.build()
 			);
 		}
 	}
@@ -2073,10 +2129,10 @@ public class Security extends SecurityImplBase {
 			log.warning(e.getLocalizedMessage());
 			e.printStackTrace();
 			responseObserver.onError(
-				Status.INTERNAL
-					.withDescription(e.getLocalizedMessage())
-					.withCause(e)
-					.asRuntimeException()
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)
+							.asRuntimeException()
 			);
 		}
 	}
@@ -2105,9 +2161,9 @@ public class Security extends SecurityImplBase {
 				isWithAccess = false;
 			}
 			boolean isRecordAccess = role.isRecordAccess(
-				I_AD_Window.Table_ID,
-				dictionaryId,
-				MRole.SQL_RO
+					I_AD_Window.Table_ID,
+					dictionaryId,
+					MRole.SQL_RO
 			);
 			if (!isRecordAccess) {
 				if (!Util.isEmpty(message, true)) {
@@ -2124,9 +2180,9 @@ public class Security extends SecurityImplBase {
 				isWithAccess = false;
 			}
 			boolean isRecordAccess = role.isRecordAccess(
-				I_AD_Process.Table_ID,
-				dictionaryId,
-				MRole.SQL_RO
+					I_AD_Process.Table_ID,
+					dictionaryId,
+					MRole.SQL_RO
 			);
 			if (!isRecordAccess) {
 				if (!Util.isEmpty(message, true)) {
@@ -2143,9 +2199,9 @@ public class Security extends SecurityImplBase {
 				isWithAccess = false;
 			}
 			boolean isRecordAccess = role.isRecordAccess(
-				I_AD_Browse.Table_ID,
-				dictionaryId,
-				MRole.SQL_RO
+					I_AD_Browse.Table_ID,
+					dictionaryId,
+					MRole.SQL_RO
 			);
 			if (!isRecordAccess) {
 				if (!Util.isEmpty(message, true)) {
@@ -2162,9 +2218,9 @@ public class Security extends SecurityImplBase {
 				isWithAccess = false;
 			}
 			boolean isRecordAccess = role.isRecordAccess(
-				I_AD_Form.Table_ID,
-				dictionaryId,
-				MRole.SQL_RO
+					I_AD_Form.Table_ID,
+					dictionaryId,
+					MRole.SQL_RO
 			);
 			if (!isRecordAccess) {
 				if (!Util.isEmpty(message, true)) {
@@ -2176,14 +2232,14 @@ public class Security extends SecurityImplBase {
 		}
 
 		builder.setIsAccess(isWithAccess)
-			.setMessage(
-				TextManager.getValidString(
-					Msg.parseTranslation(
-						Env.getCtx(),
-						message
-					)
+				.setMessage(
+						TextManager.getValidString(
+								Msg.parseTranslation(
+										Env.getCtx(),
+										message
+								)
+						)
 				)
-			)
 		;
 
 		return builder;
