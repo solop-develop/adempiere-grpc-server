@@ -530,7 +530,7 @@ public class Security extends SecurityImplBase {
 		;
 		//	Get List
 		query
-			.setOrderBy(I_AD_Org.COLUMNNAME_Name)
+			.setOrderBy("AD_Client_ID DESC, Name")
 			// .setLimit(limit, offset)
 			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			// .<MOrg>list()
@@ -707,7 +707,7 @@ public class Security extends SecurityImplBase {
 		// TODO: Fix .setLimit combined with .setApplyAccessFilter and with access record (ROWNUM error)
 		query
 			//.setLimit(limit, offset)
-			.setOrderBy(I_M_Warehouse.COLUMNNAME_Name)
+			.setOrderBy("AD_Client_ID DESC, Name")
 			.getIDsAsList() // do not use the list of identifiers because it cannot be instantiated zero (0)
 			// .<MWarehouse>list()
 			.forEach(warehouseId -> {
@@ -1044,14 +1044,15 @@ public class Security extends SecurityImplBase {
 
 		// Get organization
 		int organizationId = -1;
-		if (request.getOrganizationId() >= 0) {
+		if (request.getOrganizationId() > 0) {
 			organizationId = request.getOrganizationId();
 			if (!role.isOrgAccess(organizationId, true)) {
 				// invlaid organization from role
 				organizationId = -1;
+				log.warning("Invalid organization (" + organizationId + ") from role (" + roleId + ") access.");
 			}
 		}
-		if (organizationId < 0) {
+		if (organizationId <= 0) {
 			organizationId = SessionManager.getDefaultOrganizationId(roleId, userId);
 			if (organizationId < 0) {
 				// TODO: Verify it access
@@ -1063,6 +1064,11 @@ public class Security extends SecurityImplBase {
 		int warehouseId = -1;
 		if (request.getWarehouseId() > 0) {
 			warehouseId = request.getWarehouseId();
+			if (!SessionManager.isWarehouseAccess(organizationId, warehouseId)) {
+				// invlaid warehouse from organization
+				warehouseId = -1;
+				log.warning("Invalid warehouse (" + warehouseId + ") from organization (" + organizationId + ") allocation.");
+			}
 		}
 		if (warehouseId <= 0) {
 			warehouseId = SessionManager.getDefaultWarehouseId(organizationId);
@@ -1100,7 +1106,12 @@ public class Security extends SecurityImplBase {
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-			userId, language, roleId, role.getAD_Client_ID(), organizationId, warehouseId
+			userId,
+			language,
+			roleId,
+			role.getAD_Client_ID(),
+			organizationId,
+			warehouseId
 		);
 
 		// Return session
