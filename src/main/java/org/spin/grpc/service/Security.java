@@ -1049,7 +1049,7 @@ public class Security extends SecurityImplBase {
 			if (!role.isOrgAccess(organizationId, true)) {
 				// invlaid organization from role
 				organizationId = -1;
-				log.warning("Invalid organization from role access: " + organizationId);
+				log.warning("Invalid organization (" + organizationId + ") from role (" + roleId + ") access.");
 			}
 		}
 		if (organizationId <= 0) {
@@ -1067,7 +1067,7 @@ public class Security extends SecurityImplBase {
 			if (!SessionManager.isWarehouseAccess(organizationId, warehouseId)) {
 				// invlaid warehouse from organization
 				warehouseId = -1;
-				log.warning("Invalid warehouse from organization allocation: " + organizationId);
+				log.warning("Invalid warehouse (" + warehouseId + ") from organization (" + organizationId + ") allocation.");
 			}
 		}
 		if (warehouseId <= 0) {
@@ -1106,7 +1106,12 @@ public class Security extends SecurityImplBase {
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-			userId, language, roleId, role.getAD_Client_ID(), organizationId, warehouseId
+			userId,
+			language,
+			roleId,
+			role.getAD_Client_ID(),
+			organizationId,
+			warehouseId
 		);
 
 		// Return session
