@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fa2dcf45-337e-480d-af71-54e92af27727" name="Changes" comment="Remove validation for Print format Chart">
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/copilot.data.migration.edit.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/AllInOneServices.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/standalone.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/resources/standalone.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_C_PaymentProcessorBatch.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_C_SalesBudget.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_C_SalesBudgetLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_Forecast.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_ForecastAdjustApp.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_ForecastAdjustFactor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_ForecastComparison.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_ForecastKPISnapshot.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/I_M_ForecastLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_C_PaymentProcessorBatch.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_C_SalesBudget.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_C_SalesBudgetLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_Forecast.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_ForecastAdjustApp.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_ForecastAdjustFactor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_ForecastComparison.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_ForecastKPISnapshot.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/adempiere/core/domains/models/X_M_ForecastLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MForecastAdjustApp.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MForecastAdjustFactor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MForecastComparison.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MForecastKPISnapshot.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MGoal.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MInOut.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MInvoice.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MJournal.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MJournalBatch.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MOrder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MPInstance.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MPayment.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MSalesBudget.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/compiere/model/MSalesBudgetLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/solop/process/GenerateAPInvoiceFromBatch.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/solop/process/GenerateAPInvoiceFromBatchAbstract.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/solop/process/GenerateARInvoiceFromBatch.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/solop/util/DocumentDateUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/eca62/support/IS3.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/eca62/support/ResourceMetadata.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/eca62/support/S3.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/service/grpc/authentication/SessionManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/service/grpc/util/value/CollectionManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/service/grpc/util/value/TimeManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/service/grpc/util/value/ValueManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/patches/org/spin/util/AttachmentUtil.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="adempiere-grpc-server" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="adempiere-grpc-server" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="adempiere-grpc-server" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="application" type="c8890929:TasksNode$1" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="adempiere-grpc-server" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="build" type="c8890929:TasksNode$1" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="bugfixes/#1989" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;yamelsenih&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/solop-develop/adempiere-grpc-server&quot;,
+    &quot;accountId&quot;: &quot;b56126c9-da5b-4759-9928-5bd774f35d35&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;solop-develop&quot;,
+    &quot;repository&quot;: &quot;adempiere-grpc-server&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="32ndePDKtzAXYvHitkaESPmK7Xk" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.adempiere-grpc-server [build].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.adempiere-grpc-server [run].executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/opt/Development/workspace-solop-jdk-17/adempiere-grpc-server/src/patches/org/solop/util&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.project.gradle&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/patches/org/solop/util" />
+      <recent name="$PROJECT_DIR$/src/patches/org/compiere/model" />
+      <recent name="$PROJECT_DIR$/src/patches/com/solop/sp012/support/montevideo" />
+      <recent name="$PROJECT_DIR$/src/patches/com/solop/sp012/support/piedras" />
+      <recent name="$PROJECT_DIR$/src/patches/com/solop/sp009" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="org.compiere.model" />
+      <recent name="org.solop.process" />
+      <recent name="org.solop.util" />
+      <recent name="org.eevolution.crm.process" />
+      <recent name="com.solop.sp009.model.validator" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Gradle.adempiere-grpc-server [run]">
+    <configuration name="adempiere-grpc-server [build]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="build" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <configuration name="adempiere-grpc-server [run]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="run" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Gradle.adempiere-grpc-server [run]" />
+        <item itemvalue="Gradle.adempiere-grpc-server [build]" />
+        <item itemvalue="Gradle.adempiere-grpc-server [run]" />
+        <item itemvalue="Gradle.adempiere-grpc-server [build]" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fa2dcf45-337e-480d-af71-54e92af27727" name="Changes" comment="fix: Add core-tools dependency version to build.gradle" />
+      <created>1758060368454</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1758060368454</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Cambio menor">
+      <option name="closed" value="true" />
+      <created>1759503472425</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1759503472425</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Problema al aplicar descuento manual en línea de orden desde Punto de Venta, referencia: https://github.com/solop-develop/adempiere-solop/issues/1649">
+      <option name="closed" value="true" />
+      <created>1759510690559</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1759510690559</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Problema al aplicar descuento manual en línea de orden desde Punto de Venta, referencia: https://github.com/solop-develop/adempiere-solop/issues/1649">
+      <option name="closed" value="true" />
+      <created>1759512950685</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1759512950685</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Error con cobro en lugar de pago al completar Documento por Pagar con Regla de Pago &quot;Efectivo&quot;&#10;Referencia: https://github.com/solop-develop/adempiere-solop/issues/1698">
+      <option name="closed" value="true" />
+      <created>1759961830208</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1759961830208</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Correccion de Orden de venta reactiva genera nueva orden de compra enlazada,&#10;referencia: https://github.com/solop-develop/adempiere-solop/issues/1692">
+      <option name="closed" value="true" />
+      <created>1759967820553</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1759967820553</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Se corrige Exportar Registros desde tabla M_ProductPrice, referencia: https://github.com/solop-develop/adempiere-solop/issues/990">
+      <option name="closed" value="true" />
+      <created>1759970370663</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1759970370663</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Se corrige error con &quot;Permitir generar Factura Parcial al realizar Entrega Parcial en Orden de Salida&quot;, referencias: https://github.com/solop-develop/adempiere-solop/issues/1707">
+      <option name="closed" value="true" />
+      <created>1759973858259</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1759973858259</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Se corrige error con posible transacción colgada, referencia:https://github.com/solop-develop/adempiere-solop/issues/1715">
+      <option name="closed" value="true" />
+      <created>1760040627863</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1760040627863</updated>
+    </task>
+    <task id="LOCAL-00022" summary="Actualiza versiones de dependencias para la facturación electrónica y conexión de administración de compras">
+      <option name="closed" value="true" />
+      <created>1760112415192</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1760112415192</updated>
+    </task>
+    <task id="LOCAL-00023" summary="Update dependency versions for adempiereCore and related tools to 1.4.9">
+      <option name="closed" value="true" />
+      <created>1760115266802</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1760115266802</updated>
+    </task>
+    <task id="LOCAL-00024" summary="Update adempiereCore version to 1.4.10">
+      <option name="closed" value="true" />
+      <created>1760125661467</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1760125661467</updated>
+    </task>
+    <task id="LOCAL-00025" summary="Se corrige error con redondeo de descuento en POS, referencia: https://github.com/solop-develop/adempiere-solop/issues/1717">
+      <option name="closed" value="true" />
+      <created>1760155736827</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1760155736827</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Se corrige error con error al completar entrega desde POS, referencia: https://github.com/solop-develop/adempiere-solop/issues/1723">
+      <option name="closed" value="true" />
+      <created>1760159925805</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1760159925805</updated>
+    </task>
+    <task id="LOCAL-00027" summary="chore: update adempiereCore version to 1.4.11">
+      <option name="closed" value="true" />
+      <created>1760208878547</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1760208878547</updated>
+    </task>
+    <task id="LOCAL-00028" summary="chore: add luy localization dependency version 1.4.11 to build.gradle">
+      <option name="closed" value="true" />
+      <created>1760371646595</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1760371646595</updated>
+    </task>
+    <task id="LOCAL-00029" summary="fix: correct discount calculation rounding in MOrderLine">
+      <option name="closed" value="true" />
+      <created>1760374567293</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1760374567293</updated>
+    </task>
+    <task id="LOCAL-00030" summary="fix: update price calculation logic in MOrderLine to prioritize actual price changes">
+      <option name="closed" value="true" />
+      <created>1760375724590</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1760375724590</updated>
+    </task>
+    <task id="LOCAL-00031" summary="feat: add GenerateInvoiceInOutBound and GenerateShipmentOutBound classes for invoice and shipment processing">
+      <option name="closed" value="true" />
+      <created>1760404944663</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1760404944663</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Se corrige error con regla de facturación para orden de salida, referencias: https://github.com/solop-develop/adempiere-solop/issues/1705">
+      <option name="closed" value="true" />
+      <created>1760459070193</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1760459070193</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Se agrega validación para el códigodel socio de negocio y el RUT, referencias: https://github.com/solop-develop/adempiere-solop/issues/1740">
+      <option name="closed" value="true" />
+      <created>1760547302754</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1760547302754</updated>
+    </task>
+    <task id="LOCAL-00034" summary="fix: update shopping-admin-connection dependency version to 1.0.1">
+      <option name="closed" value="true" />
+      <created>1760558050806</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1760558050806</updated>
+    </task>
+    <task id="LOCAL-00035" summary="fix: update adempiereCoreVersion to 1.4.12">
+      <option name="closed" value="true" />
+      <created>1760810046030</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1760810046030</updated>
+    </task>
+    <task id="LOCAL-00036" summary="Se corrige problema con almacén y organización de contra-documento, referencia: https://github.com/solop-develop/adempiere-solop/issues/1747">
+      <option name="closed" value="true" />
+      <created>1760826595617</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1760826595617</updated>
+    </task>
+    <task id="LOCAL-00037" summary="fix: update adempiereCoreVersion to 1.4.13">
+      <option name="closed" value="true" />
+      <created>1760828959352</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1760828959352</updated>
+    </task>
+    <task id="LOCAL-00038" summary="fix: add method to set outbound line values in MInOut processing">
+      <option name="closed" value="true" />
+      <created>1760983829771</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1760983829771</updated>
+    </task>
+    <task id="LOCAL-00039" summary="feat: add MOrderLine class for managing order line details and operations">
+      <option name="closed" value="true" />
+      <created>1761078847367</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1761078847367</updated>
+    </task>
+    <task id="LOCAL-00040" summary="fix: update quantity handling in MOrderLine for new records and value changes">
+      <option name="closed" value="true" />
+      <created>1761166700382</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1761166700382</updated>
+    </task>
+    <task id="LOCAL-00041" summary="Se corrige error con uso concurrente de registro de aplicación, referencia: https://github.com/solop-develop/adempiere-solop/issues/1771">
+      <option name="closed" value="true" />
+      <created>1761612979481</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1761612979481</updated>
+    </task>
+    <task id="LOCAL-00042" summary="Se resuelve problema con proyecto en linea de orden, referencia: https://github.com/solop-develop/adempiere-solop/issues/1765">
+      <option name="closed" value="true" />
+      <created>1761667850762</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1761667850762</updated>
+    </task>
+    <task id="LOCAL-00043" summary="Se agrega validación para asignacionesz de pagos en facturas, referencia: https://github.com/solop-develop/adempiere-solop/issues/1770">
+      <option name="closed" value="true" />
+      <created>1761687798069</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1761687798069</updated>
+    </task>
+    <task id="LOCAL-00044" summary="fix: update adempiereCoreVersion to 1.4.14 and agency-project to core-1.4.13-1.0.0">
+      <option name="closed" value="true" />
+      <created>1761773923491</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1761773923491</updated>
+    </task>
+    <task id="LOCAL-00045" summary="feat: add ForecastReplenishment and GenerateDocumentTax classes for improved inventory and tax document generation">
+      <option name="closed" value="true" />
+      <created>1762213531076</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1762213531076</updated>
+    </task>
+    <task id="LOCAL-00046" summary="References: https://github.com/solop-develop/adempiere-solop/issues/1842">
+      <option name="closed" value="true" />
+      <created>1762436127689</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1762436127689</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Fixed error with DB exception">
+      <option name="closed" value="true" />
+      <created>1762548594948</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1762548594948</updated>
+    </task>
+    <task id="LOCAL-00048" summary="fix: update adempiereCoreVersion to 1.4.18">
+      <option name="closed" value="true" />
+      <created>1762562871246</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1762562871246</updated>
+    </task>
+    <task id="LOCAL-00049" summary="Se corrige error con consulta SQL que tarda más de lo esperado, referencias: https://github.com/solop-develop/adempiere-solop/issues/1989">
+      <option name="closed" value="true" />
+      <created>1764784016576</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1764784016576</updated>
+    </task>
+    <task id="LOCAL-00050" summary="feat: add CreateProjectFromOpportunity process for project creation from opportunities&#10;References: https://github.com/solop-develop/adempiere-solop/issues/1994">
+      <option name="closed" value="true" />
+      <created>1765291481395</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1765291481396</updated>
+    </task>
+    <task id="LOCAL-00051" summary="feat: add CreateProjectFromOpportunity process for project creation from opportunities&#10;References: https://github.com/solop-develop/adempiere-solop/issues/1948">
+      <option name="closed" value="true" />
+      <created>1765292777689</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1765292777689</updated>
+    </task>
+    <task id="LOCAL-00052" summary="fix: update shopping-admin-connection dependency to core-1.5.0-1.0.1">
+      <option name="closed" value="true" />
+      <created>1765467555896</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1765467555896</updated>
+    </task>
+    <task id="LOCAL-00053" summary="Fixed error with publishing product">
+      <option name="closed" value="true" />
+      <created>1766521134691</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1766521134691</updated>
+    </task>
+    <task id="LOCAL-00054" summary="Fixed error with publishing product">
+      <option name="closed" value="true" />
+      <created>1766523208019</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1766523208019</updated>
+    </task>
+    <task id="LOCAL-00055" summary="Fixed error with publishing product">
+      <option name="closed" value="true" />
+      <created>1766531561807</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1766531561807</updated>
+    </task>
+    <task id="LOCAL-00056" summary="Fixed error with publishing product">
+      <option name="closed" value="true" />
+      <created>1766538082454</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1766538082455</updated>
+    </task>
+    <task id="LOCAL-00057" summary="Fixed error with publishing product">
+      <option name="closed" value="true" />
+      <created>1766771123825</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1766771123825</updated>
+    </task>
+    <task id="LOCAL-00058" summary="Fixed error with slow complete order references: https://github.com/solop-develop/adempiere-solop/issues/2141">
+      <option name="closed" value="true" />
+      <created>1768691163997</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1768691163997</updated>
+    </task>
+    <task id="LOCAL-00059" summary="Update ADempiere version to 1.5.0">
+      <option name="closed" value="true" />
+      <created>1769121884416</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1769121884416</updated>
+    </task>
+    <task id="LOCAL-00060" summary="Update Storage Update, fix error with duplicated values">
+      <option name="closed" value="true" />
+      <created>1769196157060</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1769196157060</updated>
+    </task>
+    <task id="LOCAL-00061" summary="Update Storage Update, fix error with duplicated values">
+      <option name="closed" value="true" />
+      <created>1769206599487</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1769206599487</updated>
+    </task>
+    <task id="LOCAL-00062" summary="Remove validation for Print format Chart">
+      <option name="closed" value="true" />
+      <created>1771463521585</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1771463521585</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Se agrega validación para el códigodel socio de negocio y el RUT, referencias: https://github.com/solop-develop/adempiere-solop/issues/1740" />
+    <MESSAGE value="fix: update shopping-admin-connection dependency version to 1.0.1" />
+    <MESSAGE value="fix: update adempiereCoreVersion to 1.4.12" />
+    <MESSAGE value="Se corrige problema con almacén y organización de contra-documento, referencia: https://github.com/solop-develop/adempiere-solop/issues/1747" />
+    <MESSAGE value="fix: update adempiereCoreVersion to 1.4.13" />
+    <MESSAGE value="fix: add method to set outbound line values in MInOut processing" />
+    <MESSAGE value="feat: add MOrderLine class for managing order line details and operations" />
+    <MESSAGE value="fix: update quantity handling in MOrderLine for new records and value changes" />
+    <MESSAGE value="Se corrige error con uso concurrente de registro de aplicación, referencia: https://github.com/solop-develop/adempiere-solop/issues/1771" />
+    <MESSAGE value="Se resuelve problema con proyecto en linea de orden, referencia: https://github.com/solop-develop/adempiere-solop/issues/1765" />
+    <MESSAGE value="Se agrega validación para asignacionesz de pagos en facturas, referencia: https://github.com/solop-develop/adempiere-solop/issues/1770" />
+    <MESSAGE value="fix: update adempiereCoreVersion to 1.4.14 and agency-project to core-1.4.13-1.0.0" />
+    <MESSAGE value="feat: add ForecastReplenishment and GenerateDocumentTax classes for improved inventory and tax document generation" />
+    <MESSAGE value="References: https://github.com/solop-develop/adempiere-solop/issues/1842" />
+    <MESSAGE value="Fixed error with DB exception" />
+    <MESSAGE value="fix: update adempiereCoreVersion to 1.4.18" />
+    <MESSAGE value="Se corrige error con consulta SQL que tarda más de lo esperado, referencias: https://github.com/solop-develop/adempiere-solop/issues/1989" />
+    <MESSAGE value="feat: add CreateProjectFromOpportunity process for project creation from opportunities&#10;References: https://github.com/solop-develop/adempiere-solop/issues/1994" />
+    <MESSAGE value="feat: add CreateProjectFromOpportunity process for project creation from opportunities&#10;References: https://github.com/solop-develop/adempiere-solop/issues/1948" />
+    <MESSAGE value="fix: update shopping-admin-connection dependency to core-1.5.0-1.0.1" />
+    <MESSAGE value="Fixed error with publishing product" />
+    <MESSAGE value="Fixed error with slow complete order references: https://github.com/solop-develop/adempiere-solop/issues/2141" />
+    <MESSAGE value="Update ADempiere version to 1.5.0" />
+    <MESSAGE value="Update Storage Update, fix error with duplicated values" />
+    <MESSAGE value="Remove validation for Print format Chart" />
+    <option name="LAST_COMMIT_MESSAGE" value="Remove validation for Print format Chart" />
+  </component>
+</project>
