@@ -161,9 +161,15 @@ public class DictionaryConvertUtil {
 			+ Optional.ofNullable(info.Query).orElse("")
 			+ Optional.ofNullable(info.ValidationCode).orElse("")
 		);
+		MTable table = MTable.get(context, info.TableName);
 		builder.setTableName(
 				TextManager.getValidString(
 					info.TableName
+				)
+			)
+			.setAccessLevel(
+				TextManager.getValidString(
+					table.getAccessLevel()
 				)
 			)
 			.setReferenceId(
