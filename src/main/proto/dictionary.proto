@@ -60,6 +60,7 @@ service Dictionary {
 			}
 		};
 	}
+	// List Process/Report by Table
 	rpc ListProcesses(ListProcessesRequest) returns (ListProcessesResponse) {
 		option (google.api.http) = {
 			get: "/dictionary/processes/table/{table_name}"
@@ -78,6 +79,7 @@ service Dictionary {
 		option (google.api.http) = { get: "/dictionary/forms/{id}" };
 	}
 
+	// List identifier columns for search and display
 	rpc ListIdentifiersColumns(ListIdentifierColumnsRequest) returns (ListIdentifierColumnsResponse) {
 		option (google.api.http) = {
 			get: "/dictionary/identifiers/{table_name}"
@@ -105,6 +107,7 @@ service Dictionary {
 		};
 	}
 
+	// List selection columns for search and display
 	rpc ListSelectionColumns(ListSelectionColumnsRequest) returns (ListSelectionColumnsResponse) {
 		option (google.api.http) = {
 			get: "/dictionary/selections/{table_name}"
@@ -132,6 +135,7 @@ service Dictionary {
 		};
 	}
 
+	// List report fields for display
 	rpc ListReportFields(ListSelectionColumnsRequest) returns (ListSelectionColumnsResponse) {
 		option (google.api.http) = {
 			get: "/dictionary/report-fields/{table_name}"
@@ -487,6 +491,7 @@ message Reference {
 	int32 reference_id = 2;
 	int32 reference_value_id = 3;
 	repeated string context_column_names = 4;
+	string access_level = 5;
 }
 
 // Report Type for Export
