@@ -1292,6 +1292,7 @@ public class ExpressShipmentService extends ExpressShipmentServiceImplBase {
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
 			// .setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+			.setOrderBy("Updated DESC")
 		;
 
 		int count = query.count();
