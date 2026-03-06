@@ -284,7 +284,7 @@ public class ImportFileLoaderLogic {
 
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 		if (clientInfo == null) {
-			throw new AdempiereException("@ClientInfo@");
+			throw new AdempiereException("@ClientInfo@ @NotFound@");
 		}
 		if (clientInfo.getFileHandler_ID() <= 0) {
 			throw new AdempiereException("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
