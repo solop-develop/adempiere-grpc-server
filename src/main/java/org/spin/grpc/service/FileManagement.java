@@ -79,7 +79,7 @@ import io.grpc.stub.StreamObserver;
  */
 public class FileManagement extends FileManagementImplBase {
 	/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(FileManagement.class);
+	private static CLogger log = CLogger.getCLogger(FileManagement.class);
 	
 	public String tableName = I_C_Invoice.Table_Name;
 
@@ -91,7 +91,7 @@ public class FileManagement extends FileManagementImplBase {
 	private static MClientInfo validateAndGetClientInfo() {
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
-			throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+			throw new AdempiereException("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
 		}
 		return clientInfo;
 	}
@@ -165,15 +165,20 @@ public class FileManagement extends FileManagementImplBase {
 		}
 
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
+		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
+			log.warning("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
+			return null;
+		}
 		MADAttachmentReference reference = new Query(
-				Env.getCtx(),
-				I_AD_AttachmentReference.Table_Name,
-				"(UUID || '-' || FileName) = ? AND FileHandler_ID = ?",
-				null
-			)
+			Env.getCtx(),
+			I_AD_AttachmentReference.Table_Name,
+			"(UUID || '-' || FileName) = ? AND FileHandler_ID = ?",
+			null
+		)
 			.setOrderBy(I_AD_AttachmentReference.COLUMNNAME_AD_Attachment_ID + " DESC")
 			.setParameters(resourceName, clientInfo.getFileHandler_ID())
-			.first();
+			.first()
+		;
 
 		if (reference == null || reference.getAD_AttachmentReference_ID() <= 0) {
 			return null;
@@ -234,7 +239,7 @@ public class FileManagement extends FileManagementImplBase {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		if (!AttachmentUtil.getInstance().isValidForClient(clientId)) {
 			responseObserver.onError(
-				new AdempiereException("@FileHandler_ID@ @NotFound@")
+				new AdempiereException("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@")
 			);
 			return;
 		}
@@ -394,7 +399,8 @@ public class FileManagement extends FileManagementImplBase {
 						.withFileName(resourceReference.getFileName())
 						.withClientId(clientInfo.getAD_Client_ID())
 						.withData(data)
-						.saveAttachment();
+						.saveAttachment()
+					;
 
 					MADAttachmentReference.resetAttachmentReferenceCache(clientInfo.getFileHandler_ID(), resourceReference);
 					ResourceReference.Builder response = convertResourceReference(resourceReference);
@@ -606,6 +612,7 @@ public class FileManagement extends FileManagementImplBase {
 		// validate client info with configured file handler
 		MClientInfo clientInfo = MClientInfo.get(attachment.getCtx());
 		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
+			log.warning("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
 			return builder;
 		}
 
@@ -973,6 +980,7 @@ public class FileManagement extends FileManagementImplBase {
 		// validate client info with configured file handler
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 		if (clientInfo == null || clientInfo.getAD_Client_ID() < 0 || clientInfo.getFileHandler_ID() <= 0) {
+			log.warning("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
 			return builder;
 		}
 

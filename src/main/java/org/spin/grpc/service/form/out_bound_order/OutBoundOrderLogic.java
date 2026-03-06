@@ -1122,10 +1122,10 @@ public class OutBoundOrderLogic {
 			// Set from client
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 			if (clientInfo.getC_UOM_Weight_ID() <= 0) {
-				throw new AdempiereException("@C_UOM_Weight_ID@ @NotFound@ @SeeClientInfoConfig@");
+				throw new AdempiereException("@C_UOM_Weight_ID@ @NotFound@. @SeeClientInfoConfig@");
 			}
 			if (clientInfo.getC_UOM_Volume_ID() <= 0) {
-				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@ @SeeClientInfoConfig@");
+				throw new AdempiereException("@C_UOM_Volume_ID@ @NotFound@. @SeeClientInfoConfig@");
 			}
 			if (freightId <= 0) {
 				throw  new AdempiereException("@FillMandatory@ @M_Freight_ID@");

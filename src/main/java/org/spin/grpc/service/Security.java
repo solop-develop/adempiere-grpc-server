@@ -583,7 +583,12 @@ public class Security extends SecurityImplBase {
 
 		if(organizationInfo.getCorporateBrandingImage_ID() > 0 && AttachmentUtil.getInstance().isValidForClient(organizationInfo.getAD_Client_ID())) {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), organizationInfo.getAD_Client_ID());
-			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(Env.getCtx(), clientInfo.getFileHandler_ID(), organizationInfo.getCorporateBrandingImage_ID(), null);
+			MADAttachmentReference attachmentReference = MADAttachmentReference.getByImageId(
+				Env.getCtx(),
+				clientInfo.getFileHandler_ID(),
+				organizationInfo.getCorporateBrandingImage_ID(),
+				null
+			);
 			if(attachmentReference != null
 					&& attachmentReference.getAD_AttachmentReference_ID() > 0) {
 					organizationBuilder.setCorporateBrandingImage(
