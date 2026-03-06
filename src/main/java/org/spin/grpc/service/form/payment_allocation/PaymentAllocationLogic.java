@@ -20,8 +20,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -945,6 +947,28 @@ public class PaymentAllocationLogic {
 		// validate and get Currency
 		MCurrency currency = validateAndGetCurrency(request.getCurrencyId());
 
+		// Validate duplicate payment IDs
+		Set<Integer> seenPaymentIds = new HashSet<>();
+		List<Integer> duplicatePaymentIds = request.getPaymentSelectionsList().stream()
+			.map(PaymentSelection::getId)
+			.filter(id -> !seenPaymentIds.add(id))
+			.distinct()
+			.collect(Collectors.toList());
+		if (!duplicatePaymentIds.isEmpty()) {
+			throw new AdempiereException("Duplicate payment IDs in selection: " + duplicatePaymentIds);
+		}
+
+		// Validate duplicate invoice IDs
+		Set<Integer> seenInvoiceIds = new HashSet<>();
+		List<Integer> duplicateInvoiceIds = request.getInvoiceSelectionsList().stream()
+			.map(InvoiceSelection::getId)
+			.filter(id -> !seenInvoiceIds.add(id))
+			.distinct()
+			.collect(Collectors.toList());
+		if (!duplicateInvoiceIds.isEmpty()) {
+			throw new AdempiereException("Duplicate invoice IDs in selection: " + duplicateInvoiceIds);
+		}
+
 		Trx.run(transactionName -> {
 			// transaction date
 			Timestamp transactionDate = TimeManager.getTimestampFromProtoTimestamp(
@@ -1055,13 +1079,13 @@ public class PaymentAllocationLogic {
 		}
 
 		//	Create Allocation manual
-		final String userName = Env.getContext(Env.getCtx(), "#AD_User_Name");
+		final String userNameAsDescription = Env.getContext(Env.getCtx(), "#AD_User_Name");
 		MAllocationHdr alloc = new MAllocationHdr(
 			Env.getCtx(),
 			true,
 			transactionDate,
 			currencyId,
-			userName,
+			userNameAsDescription,
 			transactionName
 		);
 		alloc.setAD_Org_ID(organizationId);
@@ -1109,9 +1133,10 @@ public class PaymentAllocationLogic {
 				PaymentSelection payment = paymentSelection.get(j);
 
 				int paymentId = payment.getId();
-				BigDecimal paymentAmt = NumberManager.getBigDecimalFromString(
-					payment.getAppliedAmount()
-				);
+				BigDecimal paymentAmt = amountList.get(j);
+				// BigDecimal paymentAmt = NumberManager.getBigDecimalFromString(
+				// 	payment.getAppliedAmount()
+				// );
 
 				// only match same sign (otherwise appliedAmt increases)
 				// and not zero (appliedAmt was checked earlier)
