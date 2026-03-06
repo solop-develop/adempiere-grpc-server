@@ -2386,7 +2386,7 @@ public class WebStore extends WebStoreImplBase {
 		//	Get
 		int mailTextId = clientInfo.getRestorePassword_MailText_ID();
 		if(mailTextId <= 0) {
-			throw new AdempiereException("@RestorePassword_MailText_ID@ @NotFound@");
+			throw new AdempiereException("@RestorePassword_MailText_ID@ @NotFound@. @SeeClientInfoConfig@");
 		}
 		//	Set from mail template
 		MMailText text = new MMailText (Env.getCtx(), mailTextId, null);

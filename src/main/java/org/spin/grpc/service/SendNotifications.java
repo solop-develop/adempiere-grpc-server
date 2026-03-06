@@ -320,7 +320,7 @@ public class SendNotifications extends SendNotificationsImplBase{
 		try {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 			if(clientInfo.getFileHandler_ID() <= 0) {
-				throw new AdempiereException("@FileHandler_ID@ @NotFound@");
+				throw new AdempiereException("@FileHandler_ID@ @NotFound@. @SeeClientInfoConfig@");
 			}
 
 			MADAppRegistration genericConnector = MADAppRegistration.getById(
