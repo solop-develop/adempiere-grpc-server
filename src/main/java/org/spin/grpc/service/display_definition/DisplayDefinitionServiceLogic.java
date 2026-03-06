@@ -2068,7 +2068,7 @@ public class DisplayDefinitionServiceLogic {
 			MClientInfo clientInfo = MClientInfo.get(Env.getCtx());
 			int customerTemplateId = clientInfo.getC_BPartnerCashTrx_ID();
 			if (customerTemplateId <= 0) {
-				throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+				throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@. @SeeClientInfoConfig@");
 			}
 			if (businessPartner.getC_BPartner_ID() == clientInfo.getC_BPartnerCashTrx_ID()) {
 				throw new AdempiereException("@POS.ModifyTemplateCustomerNotAllowed@");
