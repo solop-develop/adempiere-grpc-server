@@ -1882,7 +1882,7 @@ public class DisplayDefinitionServiceLogic {
 		MClientInfo clientInfo = MClientInfo.get(context);
 		int customerTemplateId = clientInfo.getC_BPartnerCashTrx_ID();
 		if(customerTemplateId <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@");
+			throw new AdempiereException("@FillMandatory@ @C_BPartnerCashTrx_ID@. @SeeClientInfoConfig@");
 		}
 		MBPartner template = MBPartner.get(context, customerTemplateId);
 		if (template == null || template.getC_BPartner_ID() <= 0) {
