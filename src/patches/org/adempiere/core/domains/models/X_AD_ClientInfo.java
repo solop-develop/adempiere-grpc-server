@@ -22,7 +22,9 @@ import org.compiere.model.I_Persistent;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
+import org.compiere.util.Env;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.util.Properties;
 
@@ -35,20 +37,28 @@ public class X_AD_ClientInfo extends PO implements I_AD_ClientInfo, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20260227L;
+	private static final long serialVersionUID = 20260306L;
 
     /** Standard Constructor */
-    public X_AD_ClientInfo(Properties ctx, int AD_ClientInfo_ID, String trxName)
+    public X_AD_ClientInfo (Properties ctx, int AD_ClientInfo_ID, String trxName)
     {
       super (ctx, AD_ClientInfo_ID, trxName);
       /** if (AD_ClientInfo_ID == 0)
         {
+			setAllowsAttendanceOutOfTolerance (false);
+// N
+			setAttendanceRangeTolerance (Env.ZERO);
+// 0
+			setAttendanceTimeTolerance (Env.ZERO);
+// 0
 			setIsDiscountLineAmt (false);
+			setIsRequiresToleranceApproval (false);
+// N
         } */
     }
 
     /** Load Constructor */
-    public X_AD_ClientInfo(Properties ctx, ResultSet rs, String trxName)
+    public X_AD_ClientInfo (Properties ctx, ResultSet rs, String trxName)
     {
       super (ctx, rs, trxName);
     }
@@ -297,6 +307,86 @@ public class X_AD_ClientInfo extends PO implements I_AD_ClientInfo, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Allows Attendance Out Of Tolerance.
+		@param AllowsAttendanceOutOfTolerance Allows Attendance Out Of Tolerance	  */
+	public void setAllowsAttendanceOutOfTolerance (boolean AllowsAttendanceOutOfTolerance)
+	{
+		set_Value (COLUMNNAME_AllowsAttendanceOutOfTolerance, Boolean.valueOf(AllowsAttendanceOutOfTolerance));
+	}
+
+	/** Get Allows Attendance Out Of Tolerance.
+		@return Allows Attendance Out Of Tolerance	  */
+	public boolean isAllowsAttendanceOutOfTolerance () 
+	{
+		Object oo = get_Value(COLUMNNAME_AllowsAttendanceOutOfTolerance);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	public I_AD_User getApprovalSupervisor() throws RuntimeException
+    {
+		return (I_AD_User)MTable.get(getCtx(), I_AD_User.Table_Name)
+			.getPO(getApprovalSupervisor_ID(), get_TrxName());	}
+
+	/** Set Approval Supervisor.
+		@param ApprovalSupervisor_ID Approval Supervisor	  */
+	public void setApprovalSupervisor_ID (int ApprovalSupervisor_ID)
+	{
+		if (ApprovalSupervisor_ID < 1) 
+			set_Value (COLUMNNAME_ApprovalSupervisor_ID, null);
+		else 
+			set_Value (COLUMNNAME_ApprovalSupervisor_ID, Integer.valueOf(ApprovalSupervisor_ID));
+	}
+
+	/** Get Approval Supervisor.
+		@return Approval Supervisor	  */
+	public int getApprovalSupervisor_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_ApprovalSupervisor_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set Attendance Range Tolerance.
+		@param AttendanceRangeTolerance Attendance Range Tolerance	  */
+	public void setAttendanceRangeTolerance (BigDecimal AttendanceRangeTolerance)
+	{
+		set_Value (COLUMNNAME_AttendanceRangeTolerance, AttendanceRangeTolerance);
+	}
+
+	/** Get Attendance Range Tolerance.
+		@return Attendance Range Tolerance	  */
+	public BigDecimal getAttendanceRangeTolerance () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_AttendanceRangeTolerance);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
+	/** Set Attendance Time Tolerance.
+		@param AttendanceTimeTolerance Attendance Time Tolerance	  */
+	public void setAttendanceTimeTolerance (BigDecimal AttendanceTimeTolerance)
+	{
+		set_Value (COLUMNNAME_AttendanceTimeTolerance, AttendanceTimeTolerance);
+	}
+
+	/** Get Attendance Time Tolerance.
+		@return Attendance Time Tolerance	  */
+	public BigDecimal getAttendanceTimeTolerance () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_AttendanceTimeTolerance);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
 	}
 
 	public I_C_AcctSchema getC_AcctSchema1() throws RuntimeException
@@ -551,7 +641,7 @@ public class X_AD_ClientInfo extends PO implements I_AD_ClientInfo, I_Persistent
 
 	/** ForecastEngine AD_Reference_ID=54603 */
 	public static final int FORECASTENGINE_AD_Reference_ID=54603;
-	/** Default Forecast Engine = org.solop.util.DefaultForecastEngine */
+	/** Default Forecast Engine = org.solop.forecast.engine.DefaultForecastEngine */
 	public static final String FORECASTENGINE_DefaultForecastEngine = "org.solop.forecast.engine.DefaultForecastEngine";
 	/** Set Forecast Engine.
 		@param ForecastEngine Forecast Engine	  */
@@ -632,6 +722,27 @@ public class X_AD_ClientInfo extends PO implements I_AD_ClientInfo, I_Persistent
 	public boolean isDiscountLineAmt () 
 	{
 		Object oo = get_Value(COLUMNNAME_IsDiscountLineAmt);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	/** Set Requires Out Of Tolerance Approval.
+		@param IsRequiresToleranceApproval Requires Out Of Tolerance Approval	  */
+	public void setIsRequiresToleranceApproval (boolean IsRequiresToleranceApproval)
+	{
+		set_Value (COLUMNNAME_IsRequiresToleranceApproval, Boolean.valueOf(IsRequiresToleranceApproval));
+	}
+
+	/** Get Requires Out Of Tolerance Approval.
+		@return Requires Out Of Tolerance Approval	  */
+	public boolean isRequiresToleranceApproval () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsRequiresToleranceApproval);
 		if (oo != null) 
 		{
 			 if (oo instanceof Boolean) 

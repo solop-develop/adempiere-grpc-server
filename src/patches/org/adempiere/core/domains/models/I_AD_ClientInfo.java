@@ -185,6 +185,44 @@ public interface I_AD_ClientInfo
 
 	public I_AD_Tree getAD_Tree_SalesRegion() throws RuntimeException;
 
+    /** Column name AllowsAttendanceOutOfTolerance */
+    public static final String COLUMNNAME_AllowsAttendanceOutOfTolerance = "AllowsAttendanceOutOfTolerance";
+
+	/** Set Allows Attendance Out Of Tolerance	  */
+	public void setAllowsAttendanceOutOfTolerance (boolean AllowsAttendanceOutOfTolerance);
+
+	/** Get Allows Attendance Out Of Tolerance	  */
+	public boolean isAllowsAttendanceOutOfTolerance();
+
+    /** Column name ApprovalSupervisor_ID */
+    public static final String COLUMNNAME_ApprovalSupervisor_ID = "ApprovalSupervisor_ID";
+
+	/** Set Approval Supervisor	  */
+	public void setApprovalSupervisor_ID (int ApprovalSupervisor_ID);
+
+	/** Get Approval Supervisor	  */
+	public int getApprovalSupervisor_ID();
+
+	public I_AD_User getApprovalSupervisor() throws RuntimeException;
+
+    /** Column name AttendanceRangeTolerance */
+    public static final String COLUMNNAME_AttendanceRangeTolerance = "AttendanceRangeTolerance";
+
+	/** Set Attendance Range Tolerance	  */
+	public void setAttendanceRangeTolerance (BigDecimal AttendanceRangeTolerance);
+
+	/** Get Attendance Range Tolerance	  */
+	public BigDecimal getAttendanceRangeTolerance();
+
+    /** Column name AttendanceTimeTolerance */
+    public static final String COLUMNNAME_AttendanceTimeTolerance = "AttendanceTimeTolerance";
+
+	/** Set Attendance Time Tolerance	  */
+	public void setAttendanceTimeTolerance (BigDecimal AttendanceTimeTolerance);
+
+	/** Get Attendance Time Tolerance	  */
+	public BigDecimal getAttendanceTimeTolerance();
+
     /** Column name C_AcctSchema1_ID */
     public static final String COLUMNNAME_C_AcctSchema1_ID = "C_AcctSchema1_ID";
 
@@ -390,6 +428,15 @@ public interface I_AD_ClientInfo
 	  * Payment Discount calculation does not include Taxes and Charges
 	  */
 	public boolean isDiscountLineAmt();
+
+    /** Column name IsRequiresToleranceApproval */
+    public static final String COLUMNNAME_IsRequiresToleranceApproval = "IsRequiresToleranceApproval";
+
+	/** Set Requires Out Of Tolerance Approval	  */
+	public void setIsRequiresToleranceApproval (boolean IsRequiresToleranceApproval);
+
+	/** Get Requires Out Of Tolerance Approval	  */
+	public boolean isRequiresToleranceApproval();
 
     /** Column name KeepLogDays */
     public static final String COLUMNNAME_KeepLogDays = "KeepLogDays";
