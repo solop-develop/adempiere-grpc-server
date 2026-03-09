@@ -26,6 +26,7 @@ import org.compiere.model.MBankAccount;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
 
 public class BankStatementMatchUtil {
 
@@ -52,7 +53,7 @@ public class BankStatementMatchUtil {
 	public static Query buildPaymentQuery(
 		int bankStatementId,
 		int bankAccountId,
-		boolean isMatchedMode,
+		int matchMode,
 		Timestamp dateFrom,
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
@@ -78,13 +79,15 @@ public class BankStatementMatchUtil {
 		paymentFilters.add(bankAccountId);
 
 		//	Match
-		// if(isMatchedMode) {
-		// 	whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
-		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
-		// } else {
-		// 	whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
-		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
-		// }
+		if(matchMode == MatchMode.MODE_MATCHED.getNumber()) {
+			whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+		} else if (matchMode == MatchMode.MODE_NOT_MATCHED.getNumber()) {
+			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+		} else {
+			// all mode MatchMode.MODE_ALL
+		}
 
 		//	Date Trx
 		if (dateFrom != null) {
@@ -131,7 +134,7 @@ public class BankStatementMatchUtil {
 	public static Query buildBankMovementQuery(
 		int bankStatementId,
 		int bankAccountId,
-		boolean isMatchedMode,
+		int matchMode,
 		Timestamp dateFrom,
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
@@ -153,15 +156,17 @@ public class BankStatementMatchUtil {
 		}
 
 		//	Match
-		// if(isMatchedMode) {
-		// 	whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
-		// 		+ "OR C_BPartner_ID IS NOT NULL "
-		// 		+ "OR C_Invoice_ID IS NOT NULL) ";
-		// } else {
-		// 	whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
-		// 		+ "AND C_BPartner_ID IS NULL "
-		// 		+ "AND C_Invoice_ID IS NULL) ";
-		// }
+		if(matchMode == MatchMode.MODE_MATCHED.getNumber()) {
+			whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
+				+ "OR C_BPartner_ID IS NOT NULL "
+				+ "OR C_Invoice_ID IS NOT NULL) ";
+		} else if (matchMode == MatchMode.MODE_NOT_MATCHED.getNumber()) {
+			whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
+				+ "AND C_BPartner_ID IS NULL "
+				+ "AND C_Invoice_ID IS NULL) ";
+		} else {
+			// all mode MatchMode.MODE_ALL
+		}
 
 		//	Date Trx
 		if (dateFrom != null) {
