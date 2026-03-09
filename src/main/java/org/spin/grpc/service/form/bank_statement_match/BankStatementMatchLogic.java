@@ -59,6 +59,8 @@ import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsReques
 import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListSearchModesRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
+import org.spin.backend.grpc.form.bank_statement_match.ManualMatchRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ManualMatchResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
@@ -570,6 +572,67 @@ public abstract class BankStatementMatchLogic {
 		});
 
 		return builderList;
+	}
+
+
+
+	public static ManualMatchResponse.Builder manualMatch(ManualMatchRequest request) {
+		if (request.getPaymentId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
+		if (request.getImportedMovementId() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @I_BankStatement_ID@");
+		}
+
+		X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), request.getImportedMovementId(), null);
+		if (importedMovement == null || importedMovement.getI_BankStatement_ID() <= 0) {
+			throw new AdempiereException("@I_BankStatement_ID@ @NotFound@");
+		}
+		if (importedMovement.isProcessed()) {
+			throw new AdempiereException("@I_BankStatement_ID@ @IsProcessed@");
+		}
+
+		MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
+		if (payment == null || payment.getC_Payment_ID() <= 0) {
+			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
+		}
+
+		// Validate same direction: receipt vs payment (receivable/payable)
+		boolean paymentIsReceipt = payment.isReceipt();
+		boolean importedIsReceipt = importedMovement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0;
+		if (paymentIsReceipt != importedIsReceipt) {
+			throw new AdempiereException("@IsReceipt@ @NotMatch@: "
+				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + (paymentIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ") vs "
+				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + (importedIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ")"
+			);
+		}
+
+		// Validate same currency
+		if (payment.getC_Currency_ID() != importedMovement.getC_Currency_ID()) {
+			throw new AdempiereException(
+				"@C_Currency_ID@ @NotMatch@: "
+				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getCurrencyISO() + ") vs "
+				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedMovement.getC_Currency().getISO_Code() + ")"
+			);
+		}
+
+		// Validate matching amount: PayAmt vs abs(TrxAmt)
+		BigDecimal importedAmount = importedMovement.getTrxAmt().abs();
+		if (payment.getPayAmt().compareTo(importedAmount) != 0) {
+			throw new AdempiereException("@PayAmt@ @NotMatch@: "
+				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getPayAmt() + ") vs "
+				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedAmount + ")"
+			);
+		}
+
+		// Assign and persist
+		importedMovement.setC_Payment_ID(payment.getC_Payment_ID());
+		importedMovement.saveEx();
+
+		MatchingMovement.Builder matchingMovementBuilder = BankStatementMatchConvertUtil.convertMatchMovement(importedMovement);
+		return ManualMatchResponse.newBuilder()
+			.setMatchedMovement(matchingMovementBuilder)
+		;
 	}
 
 

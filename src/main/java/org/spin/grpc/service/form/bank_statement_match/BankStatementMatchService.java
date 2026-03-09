@@ -33,6 +33,8 @@ import org.spin.backend.grpc.form.bank_statement_match.ListPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListResultMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListSearchModesRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ManualMatchRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ManualMatchResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
@@ -241,6 +243,28 @@ public class BankStatementMatchService extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			ListResultMovementsResponse.Builder builder = BankStatementMatchLogic.listResultMovements(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void manualMatch(ManualMatchRequest request, StreamObserver<ManualMatchResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ManualMatchResponse.Builder builder = BankStatementMatchLogic.manualMatch(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

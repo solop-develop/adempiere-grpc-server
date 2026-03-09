@@ -65,8 +65,8 @@ public class BankStatementMatchUtil {
 		;
 
 		if(bankStatementId > 0) {
-			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
-				+ "INNER JOIN C_BankStatementLine bsl "
+			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
+				+ "INNER JOIN C_BankStatementLine AS bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
 				+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
@@ -79,10 +79,10 @@ public class BankStatementMatchUtil {
 
 		//	Match
 		// if(isMatchedMode) {
-		// 	whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement ibs "
+		// 	whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
 		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
 		// } else {
-		// 	whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement ibs "
+		// 	whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
 		// 		+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
 		// }
 
@@ -143,8 +143,8 @@ public class BankStatementMatchUtil {
 		filterParameters.add(bankAccountId);
 
 		if(bankStatementId > 0) {
-			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
-				+ "INNER JOIN C_BankStatementLine bsl "
+			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
+				+ "INNER JOIN C_BankStatementLine AS bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
 				+ "WHERE bsl.C_BankStatementLine_ID = I_BankStatement.C_BankStatementLine_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
@@ -210,8 +210,8 @@ public class BankStatementMatchUtil {
 		String whereClasueBankStatement = "C_BankAccount_ID = ? ";
 
 		if(bankStatementId > 0) {
-			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement bs "
-				+ "INNER JOIN C_BankStatementLine bsl "
+			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
+				+ "INNER JOIN C_BankStatementLine AS bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
 				+ "WHERE bsl.C_Payment_ID = I_BankStatement.C_Payment_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
