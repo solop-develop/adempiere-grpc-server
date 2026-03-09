@@ -40,6 +40,7 @@ import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
@@ -107,6 +108,66 @@ public abstract class BankStatementMatchLogic {
 		}
 
 		return BankStatementMatchConvertUtil.convertBankStatement(bankStatement);
+	}
+
+	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
+		//	Add to recent Item
+		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
+			MMenu.ACTION_Form,
+			FORM_ID
+		);
+
+		String whereClause = "Processed = 'N' AND Processing = 'N'";
+		List<Object> filtersList = new ArrayList<Object>();
+		final String searchValue = request.getSearchValue();
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClause += " AND ("
+				+ "UPPER(DocumentNo) LIKE UPPER(?) "
+				+ "OR UPPER(Name) LIKE UPPER(?)"
+				+ "OR UPPER(Description) LIKE UPPER(?)"
+				+ ")"
+			;
+			filtersList.add(searchValue);
+			filtersList.add(searchValue);
+			filtersList.add(searchValue);
+		}
+
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_BankStatement.Table_Name,
+			whereClause,
+			null
+		)
+			.setParameters(filtersList)
+			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
+		;
+
+		//	Get page and count
+		int recordCount = query.count();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		//	Set page token
+		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
+			.setRecordCount(recordCount)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
+		query.setLimit(limit, offset)
+			.getIDsAsList()
+			.forEach(bankStatementId -> {
+				BankStatement.Builder builder = BankStatementMatchConvertUtil.convertBankStatement(bankStatementId);
+				builderList.addRecords(builder);
+			});
+
+		return builderList;
 	}
 
 
@@ -473,52 +534,6 @@ public abstract class BankStatementMatchLogic {
 			);
 			builderList.addRecords(builder);
 		}
-
-		return builderList;
-	}
-
-
-	public static ListBankStatementsResponse.Builder listBankStatements(ListBankStatementsRequest request) {
-		//	Add to recent Item
-		org.spin.dictionary.util.DictionaryUtil.addToRecentItem(
-			MMenu.ACTION_Form,
-			FORM_ID
-		);
-
-		final String whereClause = "Processed = 'N' AND Processing = 'N'";
-		Query query = new Query(
-			Env.getCtx(),
-			I_C_BankStatement.Table_Name,
-			whereClause,
-			null
-		)
-			.setApplyAccessFilter(MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO)
-		;
-
-		//	Get page and count
-		int recordCount = query.count();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		//	Set page token
-		if (LimitUtil.isValidNextPageToken(recordCount, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		ListBankStatementsResponse.Builder builderList = ListBankStatementsResponse.newBuilder()
-			.setRecordCount(recordCount)
-			.setNextPageToken(
-				TextManager.getValidString(nexPageToken)
-			)
-		;
-
-		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.forEach(bankStatementId -> {
-				BankStatement.Builder builder = BankStatementMatchConvertUtil.convertBankStatement(bankStatementId);
-				builderList.addRecords(builder);
-			});
 
 		return builderList;
 	}
