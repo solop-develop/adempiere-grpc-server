@@ -104,7 +104,7 @@ public abstract class BankStatementMatchLogic {
 		int recordId = request.getId();
 		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), recordId, null);
 		if (bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
-			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+			throw new AdempiereException("@C_BankStatement_ID@ (" + recordId + ") @NotFound@");
 		}
 
 		return BankStatementMatchConvertUtil.convertBankStatement(bankStatement);
@@ -123,7 +123,7 @@ public abstract class BankStatementMatchLogic {
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
 				+ "UPPER(DocumentNo) LIKE UPPER(?) "
-				+ "OR UPPER(Name) LIKE UPPER(?)"
+				+ "OR UPPER(Name) LIKE UPPER(?) "
 				+ "OR UPPER(Description) LIKE UPPER(?)"
 				+ ")"
 			;
@@ -219,6 +219,28 @@ public abstract class BankStatementMatchLogic {
 		;
 		builderList.addRecords(lookupMatched);
 
+		// All
+		Struct.Builder valuesAll = Struct.newBuilder()
+			.putFields(
+				LookupUtil.VALUE_COLUMN_KEY,
+				NumberManager.getProtoValueFromInt(
+					MatchMode.MODE_ALL_VALUE
+				).build()
+			)
+			.putFields(
+				LookupUtil.DISPLAY_COLUMN_KEY,
+				TextManager.getProtoValueFromString(
+					Msg.translate(Env.getCtx(), "All")
+				).build()
+			)
+		;
+		LookupItem.Builder lookupAll = LookupItem.newBuilder()
+			.setValues(
+				valuesAll
+			)
+		;
+		builderList.addRecords(lookupAll);
+
 		return builderList;
 	}
 
@@ -274,28 +296,30 @@ public abstract class BankStatementMatchLogic {
 
 	public static ListPaymentsResponse.Builder listPayments(ListPaymentsRequest request) {
 		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
+			request.getBankAccountId()
+		);
 
-		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+		final int matchMode = request.getMatchModeValue();
 		//	Date Trx
-		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
 		Query query = BankStatementMatchUtil.buildPaymentQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
-			isMatchedMode,
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -341,33 +365,35 @@ public abstract class BankStatementMatchLogic {
 
 	public static ListImportedBankMovementsResponse.Builder listImportedBankMovements(ListImportedBankMovementsRequest request) {
 		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
+			request.getBankAccountId()
+		);
 
 		ArrayList<Object> filterParameters = new ArrayList<Object>();
 		filterParameters.add(bankAccount.getC_BankAccount_ID());
 
 		//	For parameters
-		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+		final int matchMode = request.getMatchModeValue();
 
 		//	Date Trx
-		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 		//	Amount
-		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
 		Query importMovementsQuery = BankStatementMatchUtil.buildBankMovementQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
-			isMatchedMode,
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -395,7 +421,9 @@ public abstract class BankStatementMatchLogic {
 
 	public static ListMatchingMovementsResponse.Builder listMatchingMovements(ListMatchingMovementsRequest request) {
 		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
+			request.getBankAccountId()
+		);
 
 		Properties context = Env.getCtx();
 		ListMatchingMovementsResponse.Builder builderList = ListMatchingMovementsResponse.newBuilder();
@@ -406,28 +434,28 @@ public abstract class BankStatementMatchLogic {
 		}
 
 		//	For parameters
-		boolean isMatchedMode = request.getMatchMode() == MatchMode.MODE_MATCHED;
+		final int matchMode = request.getMatchModeValue();
 
 		//	Date Trx
-		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
 		);
-		Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
+		final Timestamp dateTo = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateTo()
 		);
 
 		//	Amount
-		BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountFrom = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountFrom()
 		);
-		BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
+		final BigDecimal paymentAmountTo = NumberManager.getBigDecimalFromString(
 			request.getPaymentAmountTo()
 		);
 
 		Query paymentQuery = BankStatementMatchUtil.buildPaymentQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
-			isMatchedMode,
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -442,7 +470,7 @@ public abstract class BankStatementMatchLogic {
 		Query bankMovementQuery = BankStatementMatchUtil.buildBankMovementQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
-			isMatchedMode,
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -542,7 +570,9 @@ public abstract class BankStatementMatchLogic {
 
 	public static ListResultMovementsResponse.Builder listResultMovements(ListResultMovementsRequest request) {
 		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
+			request.getBankAccountId()
+		);
 
 		ArrayList<Object> filterParameters = new ArrayList<Object>();
 		filterParameters.add(bankAccount.getC_BankAccount_ID());
@@ -601,22 +631,22 @@ public abstract class BankStatementMatchLogic {
 
 		X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), request.getImportedMovementId(), null);
 		if (importedMovement == null || importedMovement.getI_BankStatement_ID() <= 0) {
-			throw new AdempiereException("@I_BankStatement_ID@ @NotFound@");
+			throw new AdempiereException("@I_BankStatement_ID@ (" + request.getImportedMovementId() + ") @NotFound@");
 		}
 		if (importedMovement.isProcessed()) {
-			throw new AdempiereException("@I_BankStatement_ID@ @IsProcessed@");
+			throw new AdempiereException("@I_BankStatement_ID@ (" + request.getImportedMovementId() + ") @IsProcessed@");
 		}
 
 		MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
 		if (payment == null || payment.getC_Payment_ID() <= 0) {
-			throw new AdempiereException("@C_Payment_ID@ @NotFound@");
+			throw new AdempiereException("@C_Payment_ID@ (" + request.getPaymentId() + ") @NotFound@");
 		}
 
 		// Validate same direction: receipt vs payment (receivable/payable)
 		boolean paymentIsReceipt = payment.isReceipt();
 		boolean importedIsReceipt = importedMovement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0;
 		if (paymentIsReceipt != importedIsReceipt) {
-			throw new AdempiereException("@IsReceipt@ @NotMatch@: "
+			throw new AdempiereException("@IsReceipt@ @BankStatementMatch.NoMatchedFound@: "
 				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + (paymentIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ") vs "
 				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + (importedIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ")"
 			);
@@ -625,18 +655,17 @@ public abstract class BankStatementMatchLogic {
 		// Validate same currency
 		if (payment.getC_Currency_ID() != importedMovement.getC_Currency_ID()) {
 			throw new AdempiereException(
-				"@C_Currency_ID@ @NotMatch@: "
+				"@C_Currency_ID@ @BankStatementMatch.NoMatchedFound@: "
 				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getCurrencyISO() + ") vs "
 				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedMovement.getC_Currency().getISO_Code() + ")"
 			);
 		}
 
-		// Validate matching amount: PayAmt vs abs(TrxAmt)
-		BigDecimal importedAmount = importedMovement.getTrxAmt().abs();
-		if (payment.getPayAmt().compareTo(importedAmount) != 0) {
-			throw new AdempiereException("@PayAmt@ @NotMatch@: "
+		// Validate sign: positive (receipt) with positive, negative (payment) with negative
+		if ((payment.getPayAmt().signum() < 0) != (importedMovement.getTrxAmt().signum() < 0)) {
+			throw new AdempiereException("@PayAmt@/@TrxAmt@ @BankStatementMatch.NoMatchedFound@: "
 				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getPayAmt() + ") vs "
-				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedAmount + ")"
+				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedMovement.getTrxAmt() + ")"
 			);
 		}
 
@@ -718,20 +747,22 @@ public abstract class BankStatementMatchLogic {
 		}
 		MBankStatement bankStatement = new MBankStatement(Env.getCtx(), request.getBankStatementId(), null);
 		if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
-			throw new AdempiereException("@C_BankStatement_ID@ @NotFound@");
+			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @NotFound@");
 		}
 		if(bankStatement.isProcessed()) {
-			throw new AdempiereException("@C_BankStatement_ID@ @IsProcessed@");
+			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @IsProcessed@");
 		}
 
 		// validate and get Bank Account
-		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(request.getBankAccountId());
+		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
+			request.getBankAccountId()
+		);
 
 		AtomicInteger processed = new AtomicInteger();
 		AtomicInteger lineNo = new AtomicInteger(10);
-		int defaultChargeId = DB.getSQLValue(null, "SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ?", Env.getAD_Client_ID(Env.getCtx()));
+		final int defaultChargeId = DB.getSQLValue(null, "SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ?", Env.getAD_Client_ID(Env.getCtx()));
 		if(defaultChargeId <= 0) {
-			throw new AdempiereException("@C_Charge_ID@ @NotFound@");
+			throw new AdempiereException("@C_Charge_ID@ (" + defaultChargeId + ") @NotFound@");
 		}
 
 		//	For parameters

@@ -85,14 +85,22 @@ service BankStatementMatch {
 	// process
 	rpc MatchPayments(MatchPaymentsRequest) returns (MatchPaymentsResponse) {
 		option (google.api.http) = {
-			post: "/forms/bank-statement-match/match-payments",
+			post: "/forms/bank-statement-match/match",
 			body: "*"
+			additional_bindings: {
+				post: "/forms/bank-statement-match/match-payments",
+				body: "*"
+			}
 		};
 	}
 	rpc UnmatchPayments(UnmatchPaymentsRequest) returns (UnmatchPaymentsResponse) {
 		option (google.api.http) = {
-			post: "/forms/bank-statement-match/unmatch-payments",
+			post: "/forms/bank-statement-match/match/unmatch",
 			body: "*"
+			additional_bindings: {
+				post: "/forms/bank-statement-match/unmatch-payments",
+				body: "*"
+			}
 		};
 	}
 	rpc ManualMatch(ManualMatchRequest) returns (ManualMatchResponse) {
@@ -244,6 +252,7 @@ message TenderType {
 enum MatchMode {
 	MODE_NOT_MATCHED = 0;
 	MODE_MATCHED = 1;
+	MODE_ALL = 2;
 }
 
 // Imported Bank Movements
