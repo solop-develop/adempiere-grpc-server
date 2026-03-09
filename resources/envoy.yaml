@@ -44,7 +44,6 @@ static_resources:
               proto_descriptor: "/data/adempiere-grpc-server.dsc"
               services:
                 # package.service
-                - bank_statement_match.BankStatementMatch
                 - core_functionality.CoreFunctionality
                 - data.BusinessData
                 - data.Store
@@ -62,6 +61,7 @@ static_resources:
                 - field.payment.PaymentInfoService
                 - field.product.ProductInfoService
                 - file_management.FileManagement
+                - form.bank_statement_match.BankStatementMatch
                 - form.express_shipment.ExpressShipmentService
                 - form.out_bound_order.OutBoundOrderService
                 - form.payment_allocation.PaymentAllocation
