@@ -42,7 +42,6 @@ import org.spin.backend.grpc.form.bank_statement_match.TenderType;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 /**
  * This class was created for add all convert methods for Issue Management form
@@ -211,7 +210,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setStatementDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					bankStatement.getStatementDate()
 				)
 			)
@@ -417,7 +416,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					payment.getDateTrx()
 				)
 			)
@@ -480,7 +479,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -558,7 +557,7 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					bankStatemet.getStatementLineDate()
 				)
 			)
@@ -600,7 +599,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueManager.getProtoTimestampFromTimestamp(
+					TimeManager.getProtoTimestampFromTimestamp(
 						payment.getDateTrx()
 					)
 				)
@@ -724,7 +723,7 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDate(
-					ValueManager.getProtoTimestampFromTimestamp(
+					TimeManager.getProtoTimestampFromTimestamp(
 						payment.getDateTrx()
 					)
 				)

@@ -259,28 +259,6 @@ public class BankStatementMatchService extends BankStatementMatchImplBase {
 
 
 	@Override
-	public void manualMatch(ManualMatchRequest request, StreamObserver<ManualMatchResponse> responseObserver) {
-		try {
-			if (request == null) {
-				throw new AdempiereException("Object Request Null");
-			}
-			ManualMatchResponse.Builder builder = BankStatementMatchLogic.manualMatch(request);
-			responseObserver.onNext(builder.build());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			log.warning(e.getLocalizedMessage());
-			e.printStackTrace();
-			responseObserver.onError(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)
-				.asRuntimeException()
-			);
-		}
-	}
-
-
-
-	@Override
 	public void matchPayments(MatchPaymentsRequest request, StreamObserver<MatchPaymentsResponse> responseObserver) {
 		try {
 			if (request == null) {
@@ -309,6 +287,28 @@ public class BankStatementMatchService extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			UnmatchPaymentsResponse.Builder builder = BankStatementMatchLogic.unmatchPayments(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void manualMatch(ManualMatchRequest request, StreamObserver<ManualMatchResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ManualMatchResponse.Builder builder = BankStatementMatchLogic.manualMatch(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

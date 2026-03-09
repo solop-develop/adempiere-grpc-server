@@ -24,9 +24,9 @@ import "google/protobuf/timestamp.proto";
 import "base_data_type.proto";
 
 // Base URL
-// /bank-statement-match/
+// /forms/bank-statement-match/
 
-package bank_statement_match;
+package form.bank_statement_match;
 
 // The Banck Statement Match form service definition.
 // - org.spin.apps.form.BankStatementMatchController
@@ -36,62 +36,62 @@ service BankStatementMatch {
 	// lists criteria
 	rpc GetBankStatement(GetBankStatementRequest) returns (BankStatement) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/bank-statements/{id}"
+			get: "/forms/bank-statement-match/bank-statements/{id}"
 		};
 	}
 	rpc ListBankStatements(ListBankStatementsRequest) returns (ListBankStatementsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/bank-statements"
+			get: "/forms/bank-statement-match/bank-statements"
 		};
 	}
 	rpc ListBankAccounts(ListBankAccountsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/accounts"
+			get: "/forms/bank-statement-match/accounts"
 		};
 	}
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/business-partners"
+			get: "/forms/bank-statement-match/business-partners"
 		};
 	}
 	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/search-modes"
+			get: "/forms/bank-statement-match/search-modes"
 		};
 	}
 
 	// results
 	rpc ListImportedBankMovements(ListImportedBankMovementsRequest) returns (ListImportedBankMovementsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/imported-movements"
+			get: "/forms/bank-statement-match/imported-movements"
 		};
 	}
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/payments"
+			get: "/forms/bank-statement-match/payments"
 		};
 	}
 	rpc ListMatchingMovements(ListMatchingMovementsRequest) returns (ListMatchingMovementsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/matching-movements"
+			get: "/forms/bank-statement-match/matching-movements"
 		};
 	}
 	rpc ListResultMovements(ListResultMovementsRequest) returns (ListResultMovementsResponse) {
 		option (google.api.http) = {
-			get: "/bank-statement-match/movements"
+			get: "/forms/bank-statement-match/movements"
 		};
 	}
 
 	// process
 	rpc MatchPayments(MatchPaymentsRequest) returns (MatchPaymentsResponse) {
 		option (google.api.http) = {
-			post: "/bank-statement-match/match-payments",
+			post: "/forms/bank-statement-match/match-payments",
 			body: "*"
 		};
 	}
 	rpc UnmatchPayments(UnmatchPaymentsRequest) returns (UnmatchPaymentsResponse) {
 		option (google.api.http) = {
-			post: "/bank-statement-match/unmatch-payments",
+			post: "/forms/bank-statement-match/unmatch-payments",
 			body: "*"
 		};
 	}
@@ -103,7 +103,7 @@ service BankStatementMatch {
 	}
 	rpc ProcessMovements(ProcessMovementsRequest) returns (ProcessMovementsResponse) {
 		option (google.api.http) = {
-			post: "/bank-statement-match/process-movements",
+			post: "/forms/bank-statement-match/process-movements",
 			body: "*"
 		};
 	}
