@@ -66,12 +66,14 @@ public class BankStatementMatchUtil {
 		;
 
 		if(bankStatementId > 0) {
-			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
+			whereClasuePayment += "AND NOT EXISTS("
+				+ "SELECT 1 FROM C_BankStatement AS bs "
 				+ "INNER JOIN C_BankStatementLine AS bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
 				+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
-				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
+				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
+			+ ") "
 			;
 		}
 
@@ -79,12 +81,18 @@ public class BankStatementMatchUtil {
 		paymentFilters.add(bankAccountId);
 
 		//	Match
-		if(matchMode == MatchMode.MODE_MATCHED.getNumber()) {
-			whereClasuePayment += "AND EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
-		} else if (matchMode == MatchMode.MODE_NOT_MATCHED.getNumber()) {
-			whereClasuePayment += "AND NOT EXISTS(SELECT 1 FROM I_BankStatement AS ibs "
-				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID) ";
+		if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
+			whereClasuePayment += "AND EXISTS("
+				+ "SELECT 1 "
+				+ "FROM I_BankStatement AS ibs "
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID"
+			+ ") ";
+		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
+			whereClasuePayment += "AND NOT EXISTS("
+				+ "SELECT 1 "
+				+ "FROM I_BankStatement AS ibs "
+				+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID"
+			+ ") ";
 		} else {
 			// all mode MatchMode.MODE_ALL
 		}
@@ -156,11 +164,11 @@ public class BankStatementMatchUtil {
 		}
 
 		//	Match
-		if(matchMode == MatchMode.MODE_MATCHED.getNumber()) {
+		if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
 			whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
 				+ "OR C_BPartner_ID IS NOT NULL "
 				+ "OR C_Invoice_ID IS NOT NULL) ";
-		} else if (matchMode == MatchMode.MODE_NOT_MATCHED.getNumber()) {
+		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
 			whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
 				+ "AND C_BPartner_ID IS NULL "
 				+ "AND C_Invoice_ID IS NULL) ";
@@ -215,13 +223,14 @@ public class BankStatementMatchUtil {
 		String whereClasueBankStatement = "C_BankAccount_ID = ? ";
 
 		if(bankStatementId > 0) {
-			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
+			whereClasueBankStatement += "AND NOT EXISTS("
+				+ "SELECT 1 FROM C_BankStatement AS bs "
 				+ "INNER JOIN C_BankStatementLine AS bsl "
 				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
 				+ "WHERE bsl.C_Payment_ID = I_BankStatement.C_Payment_ID "
 				+ "AND bs.DocStatus IN('CO', 'CL') "
-				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
-			;
+				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId 
+			+ ") ";
 		}
 
 		ArrayList<Object> filterParameters = new ArrayList<Object>();

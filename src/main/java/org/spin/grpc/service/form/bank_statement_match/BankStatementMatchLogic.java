@@ -647,8 +647,8 @@ public abstract class BankStatementMatchLogic {
 		boolean importedIsReceipt = importedMovement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0;
 		if (paymentIsReceipt != importedIsReceipt) {
 			throw new AdempiereException("@IsReceipt@ @BankStatementMatch.NoMatchedFound@: "
-				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + (paymentIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ") vs "
-				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + (importedIsReceipt ? Msg.translate(Env.getCtx(), "IsReceipt") : Msg.translate(Env.getCtx(), "IsPayment")) + ")"
+				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + (paymentIsReceipt ? "@IsReceipt@" : "@IsPayment@") + ") vs "
+				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + (importedIsReceipt ? "@IsReceipt@" : "@IsPayment@") + ")"
 			);
 		}
 
@@ -662,9 +662,10 @@ public abstract class BankStatementMatchLogic {
 		}
 
 		// Validate sign: positive (receipt) with positive, negative (payment) with negative
-		if ((payment.getPayAmt().signum() < 0) != (importedMovement.getTrxAmt().signum() < 0)) {
+		final BigDecimal paymentAmount = payment.getPayAmt(true);
+		if ((paymentAmount.signum() < 0) != (importedMovement.getTrxAmt().signum() < 0)) {
 			throw new AdempiereException("@PayAmt@/@TrxAmt@ @BankStatementMatch.NoMatchedFound@: "
-				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getPayAmt() + ") vs "
+				+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + paymentAmount + ") vs "
 				+ "@I_BankStatement_ID@ (" + importedMovement.getI_BankStatement_ID() + " = " + importedMovement.getTrxAmt() + ")"
 			);
 		}
@@ -758,9 +759,12 @@ public abstract class BankStatementMatchLogic {
 			request.getBankAccountId()
 		);
 
-		AtomicInteger processed = new AtomicInteger();
-		AtomicInteger lineNo = new AtomicInteger(10);
-		final int defaultChargeId = DB.getSQLValue(null, "SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ?", Env.getAD_Client_ID(Env.getCtx()));
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		final int defaultChargeId = DB.getSQLValue(
+			null,
+			"SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ?",
+			clientId
+		);
 		if(defaultChargeId <= 0) {
 			throw new AdempiereException("@C_Charge_ID@ (" + defaultChargeId + ") @NotFound@");
 		}
@@ -797,6 +801,8 @@ public abstract class BankStatementMatchLogic {
 			return builder;
 		}
 
+		AtomicInteger processed = new AtomicInteger();
+		AtomicInteger lineNo = new AtomicInteger(10);
 		importedPaymentsId
 			.stream()
 			.forEach(importedBankMovementId -> {

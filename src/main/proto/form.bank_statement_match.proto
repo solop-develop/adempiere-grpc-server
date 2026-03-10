@@ -82,7 +82,7 @@ service BankStatementMatch {
 		};
 	}
 
-	// process
+	// Autmatic match: match payments with imported bank movements based on the defined criteria
 	rpc MatchPayments(MatchPaymentsRequest) returns (MatchPaymentsResponse) {
 		option (google.api.http) = {
 			post: "/forms/bank-statement-match/match",
@@ -93,22 +93,21 @@ service BankStatementMatch {
 			}
 		};
 	}
+	// UnmatchPayments can be used for both unmatching and delete the match (if the payment is deleted)
 	rpc UnmatchPayments(UnmatchPaymentsRequest) returns (UnmatchPaymentsResponse) {
 		option (google.api.http) = {
-			post: "/forms/bank-statement-match/match/unmatch",
+			patch: "/forms/bank-statement-match/match/unmatch",
 			body: "*"
-			additional_bindings: {
-				post: "/forms/bank-statement-match/unmatch-payments",
-				body: "*"
-			}
 		};
 	}
+	// Manual Match: 1 payment <-> 1 imported movement with amount/currency/direction validation
 	rpc ManualMatch(ManualMatchRequest) returns (ManualMatchResponse) {
 		option (google.api.http) = {
 			post: "/forms/bank-statement-match/match/manual",
 			body: "*"
 		};
 	}
+	// process --- this will try to match the payments with imported bank movements based on the defined criteria
 	rpc ProcessMovements(ProcessMovementsRequest) returns (ProcessMovementsResponse) {
 		option (google.api.http) = {
 			post: "/forms/bank-statement-match/process-movements",
