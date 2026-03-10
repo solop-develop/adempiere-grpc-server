@@ -720,9 +720,6 @@ public abstract class BankStatementMatchLogic {
 
 		request.getImportedMovementsIdsList().stream().forEach(importedBankMovementId -> {
 			X_I_BankStatement bankStatement = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
-			if (bankStatement.isProcessed()) {
-				return;
-			}
 			bankStatement.setC_Payment_ID(0);
 			if (bankStatement.is_Changed() && bankStatement.save()) {
 				result.incrementAndGet();
