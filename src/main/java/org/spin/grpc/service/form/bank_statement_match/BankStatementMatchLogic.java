@@ -633,9 +633,9 @@ public abstract class BankStatementMatchLogic {
 		if (importedMovement == null || importedMovement.getI_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@I_BankStatement_ID@ (" + request.getImportedMovementId() + ") @NotFound@");
 		}
-		if (importedMovement.isProcessed()) {
-			throw new AdempiereException("@I_BankStatement_ID@ (" + request.getImportedMovementId() + ") @IsProcessed@");
-		}
+		// if (importedMovement.isProcessed()) {
+		// 	throw new AdempiereException("@I_BankStatement_ID@ (" + request.getImportedMovementId() + ") @Processed@");
+		// }
 
 		MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
 		if (payment == null || payment.getC_Payment_ID() <= 0) {
@@ -749,9 +749,9 @@ public abstract class BankStatementMatchLogic {
 		if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @NotFound@");
 		}
-		if(bankStatement.isProcessed()) {
-			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @IsProcessed@");
-		}
+		// if(bankStatement.isProcessed()) {
+		// 	throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @Processed@");
+		// }
 
 		// validate and get Bank Account
 		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
