@@ -98,27 +98,31 @@ public class KeycloakSessionHandler {
 		Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
 
 		int orgId = session.getAD_Org_ID();
-		int warehouseId = SessionManager.getDefaultWarehouseId(orgId);
-		if (warehouseId < 0) {
-			warehouseId = 0;
-		}
-		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 
-		// Load language from saved preferences (written by setSessionAttribute / runChangeRole)
+		// Load language and warehouse from saved preferences (written by setSessionAttribute / runChangeRole)
 		// Cannot rely on session.getCtx() because MSession has no AD_Language column —
 		// getCtx() returns the global context, not the session-specific one.
 		int userId = session.getCreatedBy();
 		String language = null;
+		int warehouseId = -1;
 		List<MPreference> preferences = PreferenceUtil.getSessionPreferences(userId);
 		for (MPreference pref : preferences) {
 			if (PreferenceUtil.P_LANGUAGE.equals(pref.getAttribute())) {
 				language = pref.getValue();
-				break;
+			} else if (PreferenceUtil.P_WAREHOUSE.equals(pref.getAttribute())) {
+				warehouseId = Integer.parseInt(pref.getValue());
 			}
 		}
 		if (Util.isEmpty(language, true)) {
 			language = SessionManager.getDefaultLanguage(null);
 		}
+		if (warehouseId < 0) {
+			warehouseId = SessionManager.getDefaultWarehouseId(orgId);
+		}
+		if (warehouseId < 0) {
+			warehouseId = 0;
+		}
+		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 		// Load preferences and defaults
 		SessionManager.loadDefaultSessionValues(context, language);
 
