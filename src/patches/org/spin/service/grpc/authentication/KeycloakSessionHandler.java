@@ -3,11 +3,14 @@ package org.spin.service.grpc.authentication;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MPreference;
 import org.compiere.model.MSession;
 import org.compiere.util.*;
+import org.spin.service.grpc.util.base.PreferenceUtil;
 
 import java.sql.Timestamp;
 import java.util.Base64;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -101,8 +104,22 @@ public class KeycloakSessionHandler {
 		}
 		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
 
+		// Load language from saved preferences (written by setSessionAttribute / runChangeRole)
+		// Cannot rely on session.getCtx() because MSession has no AD_Language column —
+		// getCtx() returns the global context, not the session-specific one.
+		int userId = session.getCreatedBy();
+		String language = null;
+		List<MPreference> preferences = PreferenceUtil.getSessionPreferences(userId);
+		for (MPreference pref : preferences) {
+			if (PreferenceUtil.P_LANGUAGE.equals(pref.getAttribute())) {
+				language = pref.getValue();
+				break;
+			}
+		}
+		if (Util.isEmpty(language, true)) {
+			language = SessionManager.getDefaultLanguage(null);
+		}
 		// Load preferences and defaults
-		String language = SessionManager.getDefaultLanguage(Env.getAD_Language(session.getCtx()));
 		SessionManager.loadDefaultSessionValues(context, language);
 
 		return context;
