@@ -3,11 +3,14 @@ package org.spin.service.grpc.authentication;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MPreference;
 import org.compiere.model.MSession;
 import org.compiere.util.*;
+import org.spin.service.grpc.util.base.PreferenceUtil;
 
 import java.sql.Timestamp;
 import java.util.Base64;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -55,20 +58,31 @@ public class KeycloakSessionHandler {
 			throw new AdempiereException("Keycloak JWT missing 'sid' claim");
 		}
 
-		// Check if we already have an ADempiere session for this Keycloak sid
+		// 1. Fast path: in-memory cache
 		Integer existingSessionId = keycloakSessionCache.get(claims.sessionId);
 		if (existingSessionId != null && existingSessionId > 0) {
 			Properties context = loadExistingSessionContext(existingSessionId);
 			if (context != null) {
-				log.fine("Reusing existing ADempiere session " + existingSessionId
+				log.fine("Reusing cached ADempiere session " + existingSessionId
 					+ " for Keycloak sid: " + claims.sessionId);
 				return context;
 			}
-			// Session was invalidated, remove from cache and create new one
 			keycloakSessionCache.remove(claims.sessionId);
 		}
 
-		// No existing session — create a new one
+		// 2. DB fallback: recover session after restart or cache eviction
+		int dbSessionId = findSessionIdByKeycloakSid(claims.sessionId);
+		if (dbSessionId > 0) {
+			Properties context = loadExistingSessionContext(dbSessionId);
+			if (context != null) {
+				keycloakSessionCache.put(claims.sessionId, dbSessionId); // re-warm cache
+				log.fine("Recovered ADempiere session " + dbSessionId
+					+ " from DB for Keycloak sid: " + claims.sessionId);
+				return context;
+			}
+		}
+
+		// 3. No valid session anywhere — create a new one
 		return createNewSessionContext(claims);
 	}
 
@@ -95,17 +109,50 @@ public class KeycloakSessionHandler {
 		Env.setContext(context, "#Date", new Timestamp(System.currentTimeMillis()));
 
 		int orgId = session.getAD_Org_ID();
-		int warehouseId = SessionManager.getDefaultWarehouseId(orgId);
+
+		// Load language and warehouse from saved preferences (written by setSessionAttribute / runChangeRole)
+		// Cannot rely on session.getCtx() because MSession has no AD_Language column —
+		// getCtx() returns the global context, not the session-specific one.
+		int userId = session.getCreatedBy();
+		String language = null;
+		int warehouseId = -1;
+		List<MPreference> preferences = PreferenceUtil.getSessionPreferences(userId);
+		for (MPreference pref : preferences) {
+			if (PreferenceUtil.P_LANGUAGE.equals(pref.getAttribute())) {
+				language = pref.getValue();
+			} else if (PreferenceUtil.P_WAREHOUSE.equals(pref.getAttribute())) {
+				warehouseId = Integer.parseInt(pref.getValue());
+			}
+		}
+		if (Util.isEmpty(language, true)) {
+			language = SessionManager.getDefaultLanguage(null);
+		}
+		if (warehouseId < 0) {
+			warehouseId = SessionManager.getDefaultWarehouseId(orgId);
+		}
 		if (warehouseId < 0) {
 			warehouseId = 0;
 		}
 		Env.setContext(context, "#M_Warehouse_ID", warehouseId);
-
 		// Load preferences and defaults
-		String language = SessionManager.getDefaultLanguage(Env.getAD_Language(session.getCtx()));
 		SessionManager.loadDefaultSessionValues(context, language);
 
 		return context;
+	}
+
+	/**
+	 * Query AD_Session by WebSession column for DB-backed recovery after server restart.
+	 * Returns the most recently created valid session ID, or -1 if not found.
+	 */
+	private static int findSessionIdByKeycloakSid(String keycloakSid) {
+		int result = DB.getSQLValue(
+			null,
+			"SELECT AD_Session_ID FROM AD_Session "
+				+ "WHERE WebSession = ? AND Processed = 'N' "
+				+ "ORDER BY Created DESC LIMIT 1",
+			"keycloak:" + keycloakSid
+		);
+		return result > 0 ? result : -1;
 	}
 
 	/**
