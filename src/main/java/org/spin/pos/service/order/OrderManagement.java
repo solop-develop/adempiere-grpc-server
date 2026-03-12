@@ -714,7 +714,7 @@ public class OrderManagement {
 	public static void processPayments(MOrder salesOrder, MPOS pos, boolean isOpenRefund, String transactionName) {
 		//	Get invoice if exists
 		int invoiceId = salesOrder.getC_Invoice_ID();
-		AtomicReference<BigDecimal> openAmount = new AtomicReference<BigDecimal>(OrderUtil.getTotalOpenAmount(salesOrder));
+		AtomicReference<BigDecimal> openAmount = new AtomicReference<BigDecimal>(salesOrder.getGrandTotal());
 		AtomicReference<BigDecimal> currentAmount = new AtomicReference<BigDecimal>(salesOrder.getGrandTotal());
 		List<Integer> paymentsIds = new ArrayList<Integer>();
 		//	Complete Payments
