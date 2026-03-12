@@ -68,34 +68,53 @@ public class BankStatementPayment extends BankStatementPaymentAbstract {
 			if(Util.isEmpty(transactionType)) {
 				throw new AdempiereException("@TrxType@ @NotFound@");
 			}
-			//	
+			//
 			int chargeId = getParameterAsInt("C_Charge_ID");
+			int selected = getSelectionKeys().size();
 			int created = 0;
+			int notCreated = 0;
+
 			for(int key : getSelectionKeys()) {
-				int bankStatementLineId = getSelectionAsInt(key, "BSL_C_BankStatementLine_ID");
-				MBankStatementLine bankStatementLine = new MBankStatementLine(getCtx(), bankStatementLineId, get_TrxName());
-				if(transactionType.equals("B")) {
-					MBank bank = MBank.get(getCtx(), bankStatementLine.getParent().getBankAccount().getC_Bank_ID());
-					if(bank.getC_BPartner_ID() == 0) {
-						throw new AdempiereException("@C_Bank_ID@ @C_BPartner_ID@ @NotFound@");
+				try {
+					int bankStatementLineId = getSelectionAsInt(key, "BSL_C_BankStatementLine_ID");
+					MBankStatementLine bankStatementLine = new MBankStatementLine(getCtx(), bankStatementLineId, get_TrxName());
+					if(transactionType.equals("B")) {
+						MBank bank = MBank.get(getCtx(), bankStatementLine.getParent().getBankAccount().getC_Bank_ID());
+						if(bank.getC_BPartner_ID() == 0) {
+							throw new AdempiereException("@C_Bank_ID@ @C_BPartner_ID@ @NotFound@");
+						}
+						bPartnerId = bank.getC_BPartner_ID();
+					} else if(transactionType.equals("U")) {
+						bPartnerId = MOrgInfo.get(getCtx(), bankStatementLine.getAD_Org_ID(), get_TrxName()).getUnidentifiedBPartner_ID();
+						if(bPartnerId == 0) {
+							throw new AdempiereException("@AD_Org_ID@ @UnidentifiedBPartner_ID@ @NotFound@");
+						}
 					}
-					bPartnerId = bank.getC_BPartner_ID();
-				} else if(transactionType.equals("U")) {
-					bPartnerId = MOrgInfo.get(getCtx(), bankStatementLine.getAD_Org_ID(), get_TrxName()).getUnidentifiedBPartner_ID();
-					if(bPartnerId == 0) {
-						throw new AdempiereException("@AD_Org_ID@ @UnidentifiedBPartner_ID@ @NotFound@");
+					if(bPartnerId != 0) {
+						bankStatementLine.setC_BPartner_ID(bPartnerId);
 					}
+					if(chargeId != 0) {
+						bankStatementLine.setC_Charge_ID(chargeId);
+					}
+					createPayment(bankStatementLine);
+					created++;
+				} catch (Exception e) {
+					notCreated++;
+					int bankStatementLineId = getSelectionAsInt(key, "BSL_C_BankStatementLine_ID");
+					MBankStatementLine errorLine = new MBankStatementLine(getCtx(), bankStatementLineId, get_TrxName());
+					String lineNo = String.valueOf(errorLine.getLine());
+					String documentNo = errorLine.getParent().getDocumentNo();
+					String description = errorLine.getDescription() != null ? errorLine.getDescription() : "";
+					StringBuilder errorLines = new StringBuilder().append(lineNo).append(" - ").append(documentNo)
+						.append(" - ").append(description).append("\n").append(e.getLocalizedMessage());
+					addLog(errorLines.toString());
 				}
-				if(bPartnerId != 0) {
-					bankStatementLine.setC_BPartner_ID(bPartnerId);
-				}
-				if(chargeId != 0) {
-					bankStatementLine.setC_Charge_ID(chargeId);
-				}
-				createPayment(bankStatementLine);
-				created++;
 			}
-			return "@Created@: " + created;
+			StringBuilder result = new StringBuilder();
+			result.append("@Selected@: ").append(selected).append("\n");
+			result.append("@Created@: ").append(created).append("\n");
+			result.append("@Errors@: ").append(notCreated);
+			return result.toString();
 		} else {
 			if (tableId == X_I_BankStatement.Table_ID) {
 				X_I_BankStatement statement = new X_I_BankStatement(getCtx(), recordId, get_TrxName());
