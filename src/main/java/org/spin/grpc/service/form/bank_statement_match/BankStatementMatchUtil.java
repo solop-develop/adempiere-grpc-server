@@ -139,7 +139,7 @@ public class BankStatementMatchUtil {
 	}
 
 
-	public static Query buildBankMovementQuery(
+	public static Query buildImportBankMovementQuery(
 		int bankStatementId,
 		int bankAccountId,
 		int matchMode,
@@ -154,24 +154,34 @@ public class BankStatementMatchUtil {
 		filterParameters.add(bankAccountId);
 
 		if(bankStatementId > 0) {
-			whereClasueBankStatement += "AND NOT EXISTS(SELECT 1 FROM C_BankStatement AS bs "
-				+ "INNER JOIN C_BankStatementLine AS bsl "
-				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
-				+ "WHERE bsl.C_BankStatementLine_ID = I_BankStatement.C_BankStatementLine_ID "
-				+ "AND bs.DocStatus IN('CO', 'CL') "
-				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId + ") "
+			whereClasueBankStatement += "AND NOT EXISTS("
+					+ "SELECT 1 FROM C_BankStatement AS bs "
+					+ "INNER JOIN C_BankStatementLine AS bsl "
+					+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
+					+ "WHERE bsl.C_BankStatementLine_ID = I_BankStatement.C_BankStatementLine_ID "
+					+ "AND bs.DocStatus IN('CO', 'CL') "
+					+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
+				+ ") "
 			;
 		}
 
 		//	Match
 		if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
-			whereClasueBankStatement += "AND (C_Payment_ID IS NOT NULL "
+			whereClasueBankStatement += "AND ("
+				+ "(IsManualMatch = 'Y' AND IsMatched = 'Y') "
+				+ "OR (C_Payment_ID IS NOT NULL "
 				+ "OR C_BPartner_ID IS NOT NULL "
-				+ "OR C_Invoice_ID IS NOT NULL) ";
+				+ "OR C_Invoice_ID IS NOT NULL) "
+				+ ") "
+			;
 		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
-			whereClasueBankStatement += "AND (C_Payment_ID IS NULL "
+			whereClasueBankStatement += "AND ("
+				+ "(IsManualMatch = 'Y' OR IsMatched = 'N') "
+				+ "OR (C_Payment_ID IS NULL "
 				+ "AND C_BPartner_ID IS NULL "
-				+ "AND C_Invoice_ID IS NULL) ";
+				+ "AND C_Invoice_ID IS NULL) "
+				+ ") "
+			;
 		} else {
 			// all mode MatchMode.MODE_ALL
 		}
@@ -196,7 +206,7 @@ public class BankStatementMatchUtil {
 			filterParameters.add(paymentAmountTo);
 		}
 
-		Query paymentQuery = new Query(
+		Query bankMovementQuery = new Query(
 			Env.getCtx(),
 			I_I_BankStatement.Table_Name,
 			whereClasueBankStatement,
@@ -208,13 +218,14 @@ public class BankStatementMatchUtil {
 			.setOrderBy(I_I_BankStatement.COLUMNNAME_StatementLineDate)
 		;
 
-		return paymentQuery;
+		return bankMovementQuery;
 	}
 
 
 	public static Query buildResultMovementsQuery(
 		int bankStatementId,
 		int bankAccountId,
+		int matchMode,
 		Timestamp dateFrom,
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
@@ -256,7 +267,7 @@ public class BankStatementMatchUtil {
 			filterParameters.add(paymentAmountTo);
 		}
 
-		Query paymentQuery = new Query(
+		Query resultMovementsQuery = new Query(
 			Env.getCtx(),
 			I_I_BankStatement.Table_Name,
 			whereClasueBankStatement,
@@ -268,7 +279,7 @@ public class BankStatementMatchUtil {
 			.setOrderBy(I_I_BankStatement.COLUMNNAME_StatementLineDate)
 		;
 
-		return paymentQuery;
+		return resultMovementsQuery;
 	}
 
 }

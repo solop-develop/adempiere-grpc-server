@@ -390,7 +390,7 @@ public abstract class BankStatementMatchLogic {
 			request.getPaymentAmountTo()
 		);
 
-		Query importMovementsQuery = BankStatementMatchUtil.buildBankMovementQuery(
+		Query importMovementsQuery = BankStatementMatchUtil.buildImportBankMovementQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			matchMode,
@@ -467,7 +467,7 @@ public abstract class BankStatementMatchLogic {
 			return builderList;
 		}
 
-		Query bankMovementQuery = BankStatementMatchUtil.buildBankMovementQuery(
+		Query bankMovementQuery = BankStatementMatchUtil.buildImportBankMovementQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			matchMode,
@@ -578,6 +578,8 @@ public abstract class BankStatementMatchLogic {
 		filterParameters.add(bankAccount.getC_BankAccount_ID());
 
 		//	For parameters
+		final int matchMode = request.getMatchModeValue();
+
 		//	Date Trx
 		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
@@ -596,6 +598,7 @@ public abstract class BankStatementMatchLogic {
 		Query importMovementsQuery = BankStatementMatchUtil.buildResultMovementsQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -672,6 +675,10 @@ public abstract class BankStatementMatchLogic {
 
 		// Assign and persist
 		importedMovement.setC_Payment_ID(payment.getC_Payment_ID());
+		importedMovement.set_ValueOfColumn(
+			"IsManualMatch",
+			true
+		);
 		importedMovement.saveEx();
 
 		MatchingMovement.Builder matchingMovementBuilder = BankStatementMatchConvertUtil.convertMatchMovement(importedMovement);
@@ -719,9 +726,13 @@ public abstract class BankStatementMatchLogic {
 		AtomicInteger result = new AtomicInteger(0);
 
 		request.getImportedMovementsIdsList().stream().forEach(importedBankMovementId -> {
-			X_I_BankStatement bankStatement = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
-			bankStatement.setC_Payment_ID(0);
-			if (bankStatement.is_Changed() && bankStatement.save()) {
+			X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
+			importedMovement.setC_Payment_ID(0);
+			importedMovement.set_ValueOfColumn(
+				"IsMatched",
+				false
+			);
+			if (importedMovement.is_Changed() && importedMovement.save()) {
 				result.incrementAndGet();
 			}
 		});
@@ -767,6 +778,8 @@ public abstract class BankStatementMatchLogic {
 		}
 
 		//	For parameters
+		final int matchMode = request.getMatchModeValue();
+
 		//	Date Trx
 		Timestamp dateFrom = TimeManager.getTimestampFromProtoTimestamp(
 			request.getTransactionDateFrom()
@@ -786,6 +799,7 @@ public abstract class BankStatementMatchLogic {
 		Query bankMovementQuery = BankStatementMatchUtil.buildResultMovementsQuery(
 			bankStatement.getC_BankStatement_ID(),
 			bankAccount.getC_BankAccount_ID(),
+			matchMode,
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
@@ -821,6 +835,7 @@ public abstract class BankStatementMatchLogic {
 					currentBankStatementImport.setC_BankStatementLine_ID(lineToImport.getC_BankStatementLine_ID());
 					currentBankStatementImport.setI_IsImported(true);
 					currentBankStatementImport.setProcessed(true);
+					currentBankStatementImport.set_ValueOfColumn("IsMatched", true);
 					currentBankStatementImport.saveEx();
 
 					lineNo.addAndGet(10);
@@ -846,7 +861,8 @@ public abstract class BankStatementMatchLogic {
 				currentBankStatementImport.saveEx();
 
 				processed.addAndGet(1);
-			});
+			})
+		;
 
 		builder.setMessage(
 			TextManager.getValidString(
