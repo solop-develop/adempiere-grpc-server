@@ -33,49 +33,56 @@ package form.bank_statement_match;
 // - org.spin.apps.form.VBankStatementMatch
 // - org.spin.apps.form.WBankStatementMatch
 service BankStatementMatch {
-	// lists criteria
+	// Get Bank Statement by id
 	rpc GetBankStatement(GetBankStatementRequest) returns (BankStatement) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/bank-statements/{id}"
 		};
 	}
+	// List Bank Statements with filters, sorting, grouping, selecting, and pagination
 	rpc ListBankStatements(ListBankStatementsRequest) returns (ListBankStatementsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/bank-statements"
 		};
 	}
+	// List Bank Accounts with filters, sorting, grouping, selecting, and pagination
 	rpc ListBankAccounts(ListBankAccountsRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/accounts"
 		};
 	}
+	// List Business Partners with filters, sorting, grouping, selecting, and pagination
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/business-partners"
 		};
 	}
+	// List Search Modes with filters, sorting, grouping, selecting, and pagination
 	rpc ListSearchModes(ListSearchModesRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/search-modes"
 		};
 	}
 
-	// results
+	// Imported Bank Movements, Payments, Matching Movements and Result Movements with filters, sorting, grouping, selecting, and pagination
 	rpc ListImportedBankMovements(ListImportedBankMovementsRequest) returns (ListImportedBankMovementsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/imported-movements"
 		};
 	}
+	// List Payments with filters, sorting, grouping, selecting, and pagination
 	rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/payments"
 		};
 	}
+	// List Matched beetween Bank Movements and Payments
 	rpc ListMatchingMovements(ListMatchingMovementsRequest) returns (ListMatchingMovementsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/matching-movements"
 		};
 	}
+	// List Result Movements after matching to process
 	rpc ListResultMovements(ListResultMovementsRequest) returns (ListResultMovementsResponse) {
 		option (google.api.http) = {
 			get: "/forms/bank-statement-match/movements"
@@ -154,11 +161,9 @@ message BankStatement {
 	string statement_difference = 13;
 	string ending_balance = 14;
 }
-
 message GetBankStatementRequest {
 	int32 id = 1;
 }
-
 message ListBankStatementsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -168,7 +173,6 @@ message ListBankStatementsRequest {
 	string page_token = 6;
 	string search_value = 7;
 }
-
 message ListBankStatementsResponse {
 	int64 record_count = 1;
 	repeated BankStatement records = 2;
@@ -199,7 +203,6 @@ message BusinessPartner {
 	string name = 5;
 	string description = 6;
 }
-
 message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -211,7 +214,6 @@ message ListBusinessPartnersRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
 message ListBusinessPartnersResponse {
 	int64 record_count = 1;
 	repeated BusinessPartner records = 2;
@@ -230,29 +232,12 @@ message ListSearchModesRequest {
 	string context_attributes = 8;
 	bool is_only_active_records = 9;
 }
-
-
-// Payment
-message Currency {
-	int32 id = 1;
-	string uuid = 2;
-	string iso_code = 3;
-	string description = 4;
-}
-
-message TenderType {
-	int32 id = 1;
-	string uuid = 2;
-	string value = 3;
-	string name = 4;
-	string description = 5;
-}
-
 enum MatchMode {
 	MODE_NOT_MATCHED = 0;
 	MODE_MATCHED = 1;
 	MODE_ALL = 2;
 }
+
 
 // Imported Bank Movements
 message ListImportedBankMovementsRequest {
@@ -271,7 +256,6 @@ message ListImportedBankMovementsRequest {
 	google.protobuf.Timestamp transaction_date_to = 13;
 	MatchMode match_mode = 14;
 }
-
 message ImportedBankMovement {
 	int32 id = 1;
 	string uuid = 2;
@@ -292,6 +276,7 @@ message ListImportedBankMovementsResponse {
 	string next_page_token = 3;
 }
 
+
 // Payments Movements
 message ListPaymentsRequest {
 	string filters = 1;
@@ -310,7 +295,19 @@ message ListPaymentsRequest {
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
 }
-
+message Currency {
+	int32 id = 1;
+	string uuid = 2;
+	string iso_code = 3;
+	string description = 4;
+}
+message TenderType {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string name = 4;
+	string description = 5;
+}
 message Payment {
 	int32 id = 1;
 	string uuid = 2;
@@ -323,7 +320,6 @@ message Payment {
 	string amount = 9;
 	string description = 10;
 }
-
 message ListPaymentsResponse {
 	int64 record_count = 1;
 	repeated Payment records = 2;
@@ -349,26 +345,27 @@ message ListMatchingMovementsRequest {
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
 }
-
 message MatchingMovement {
 	int32 id = 1;
 	string uuid = 2;
-	google.protobuf.Timestamp transaction_date = 3;
-	bool is_receipt = 4;
+	int32 payment_id = 3;
+	string payment_uuid = 4;
 	string document_no = 5;
-	BusinessPartner business_partner = 6;
-	TenderType tender_type = 7;
-	Currency currency = 8;
-	string amount = 9;
-	string description = 10;
-	string reference_no = 11;
-	string memo = 12;
-	int32 payment_id = 13;
-	bool is_automatic = 14;
+	string reference_no = 6;
+	google.protobuf.Timestamp transaction_date = 8;
+	google.protobuf.Timestamp payment_date = 9;
+	bool is_receipt = 10;
+	BusinessPartner business_partner = 11;
+	TenderType tender_type = 12;
+	Currency currency = 13;
+	string amount = 14;
 	string payment_amount = 15;
-	google.protobuf.Timestamp payment_date = 16;
+	string description = 16;
+	string memo = 17;
+	bool is_manual_match = 19;
+	bool is_matched = 20;
+	int32 bank_statement_line_id = 21;
 }
-
 message ListMatchingMovementsResponse {
 	int64 record_count = 1;
 	repeated MatchingMovement records = 2;
@@ -377,25 +374,6 @@ message ListMatchingMovementsResponse {
 
 
 // Result Movement
-message ResultMovement {
-	int32 id = 1;
-	string uuid = 2;
-	google.protobuf.Timestamp transaction_date = 3;
-	bool is_receipt = 4;
-	string document_no = 5;
-	BusinessPartner business_partner = 6;
-	TenderType tender_type = 7;
-	Currency currency = 8;
-	string amount = 9;
-	string description = 10;
-	string reference_no = 11;
-	string memo = 12;
-	int32 payment_id = 13;
-	bool is_automatic = 14;
-	string payment_amount = 15;
-	google.protobuf.Timestamp payment_date = 16;
-}
-
 message ListResultMovementsRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -406,12 +384,34 @@ message ListResultMovementsRequest {
 	string search_value = 7;
 	int32 bank_statement_id = 8;
 	int32 bank_account_id = 9;
-	string payment_amount_from = 10;
-	string payment_amount_to = 11;
-	google.protobuf.Timestamp transaction_date_from = 12;
-	google.protobuf.Timestamp transaction_date_to = 13;
+	int32 business_partner_id = 10;
+	string payment_amount_from = 11;
+	string payment_amount_to = 12;
+	google.protobuf.Timestamp transaction_date_from = 13;
+	google.protobuf.Timestamp transaction_date_to = 14;
+	MatchMode match_mode = 15;
 }
-
+message ResultMovement {
+	int32 id = 1;
+	string uuid = 2;
+	int32 payment_id = 3;
+	string payment_uuid = 4;
+	string document_no = 5;
+	string reference_no = 6;
+	google.protobuf.Timestamp transaction_date = 8;
+	google.protobuf.Timestamp payment_date = 9;
+	bool is_receipt = 10;
+	BusinessPartner business_partner = 11;
+	TenderType tender_type = 12;
+	Currency currency = 13;
+	string amount = 14;
+	string payment_amount = 15;
+	string description = 16;
+	string memo = 17;
+	bool is_manual_match = 19;
+	bool is_matched = 20;
+	int32 bank_statement_line_id = 21;
+}
 message ListResultMovementsResponse {
 	int64 record_count = 1;
 	repeated ResultMovement records = 2;
@@ -428,7 +428,6 @@ message KeyMatch {
 message MatchPaymentsRequest {
 	repeated KeyMatch key_matches = 1;
 }
-
 message MatchPaymentsResponse {
 	string message = 1;
 }
@@ -436,7 +435,6 @@ message MatchPaymentsResponse {
 message UnmatchPaymentsRequest {
 	repeated int32 imported_movements_ids = 1;
 }
-
 message UnmatchPaymentsResponse {
 	string message = 1;
 }
@@ -444,12 +442,14 @@ message UnmatchPaymentsResponse {
 message ProcessMovementsRequest {
 	int32 bank_statement_id = 1;
 	int32 bank_account_id = 2;
-	string payment_amount_from = 5;
-	string payment_amount_to = 6;
-	google.protobuf.Timestamp transaction_date_from = 7;
-	google.protobuf.Timestamp transaction_date_to = 8;
+	int32 business_partner_id = 3;
+	string payment_amount_from = 4;
+	string payment_amount_to = 5;
+	google.protobuf.Timestamp transaction_date_from = 6;
+	google.protobuf.Timestamp transaction_date_to = 7;
+	MatchMode match_mode = 8;
+	repeated KeyMatch selections = 9;
 }
-
 message ProcessMovementsResponse {
 	string message = 1;
 }
@@ -460,7 +460,6 @@ message ManualMatchRequest {
 	int32 payment_id = 1;
 	int32 imported_movement_id = 2;
 }
-
 message ManualMatchResponse {
 	MatchingMovement matched_movement = 1;
 }
