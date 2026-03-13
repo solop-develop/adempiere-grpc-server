@@ -131,6 +131,7 @@ message Bank {
 	string name = 3;
 	string routing_no = 4;
 	string swift_code = 5;
+	string display_value = 6;
 }
 
 //	Bank Account
@@ -140,9 +141,10 @@ message BankAccount {
 	string name = 3;
 	string account_no = 4;
 	string account_no_mask = 5;
-	Bank bank = 6;
-	Currency currency = 7;
-	string current_balance = 8;
+	string display_value = 6;
+	Bank bank = 7;
+	Currency currency = 8;
+	string current_balance = 9;
 }
 
 // Bank Statement
@@ -266,8 +268,9 @@ message ImportedBankMovement {
 	Currency currency = 7;
 	string amount = 8;
 	string memo = 9;
-	int32 payment_id = 10;
-	int32 bank_statement_line_id = 11;
+	string line_description = 10;
+	int32 payment_id = 11;
+	int32 bank_statement_line_id = 12;
 }
 
 message ListImportedBankMovementsResponse {
@@ -352,18 +355,19 @@ message MatchingMovement {
 	string payment_uuid = 4;
 	string document_no = 5;
 	string reference_no = 6;
-	google.protobuf.Timestamp transaction_date = 8;
-	google.protobuf.Timestamp payment_date = 9;
-	bool is_receipt = 10;
-	BusinessPartner business_partner = 11;
-	TenderType tender_type = 12;
-	Currency currency = 13;
-	string amount = 14;
-	string payment_amount = 15;
-	string description = 16;
-	string memo = 17;
-	bool is_manual_match = 19;
-	bool is_matched = 20;
+	google.protobuf.Timestamp transaction_date = 7;
+	google.protobuf.Timestamp payment_date = 8;
+	bool is_receipt = 9;
+	BusinessPartner business_partner = 10;
+	TenderType tender_type = 11;
+	Currency currency = 12;
+	string amount = 13;
+	string payment_amount = 14;
+	string description = 15;
+	string memo = 16;
+	string line_description = 17;
+	bool is_manual_match = 18;
+	bool is_matched = 19;
 	int32 bank_statement_line_id = 21;
 }
 message ListMatchingMovementsResponse {
@@ -398,19 +402,20 @@ message ResultMovement {
 	string payment_uuid = 4;
 	string document_no = 5;
 	string reference_no = 6;
-	google.protobuf.Timestamp transaction_date = 8;
-	google.protobuf.Timestamp payment_date = 9;
-	bool is_receipt = 10;
-	BusinessPartner business_partner = 11;
-	TenderType tender_type = 12;
-	Currency currency = 13;
-	string amount = 14;
-	string payment_amount = 15;
-	string description = 16;
-	string memo = 17;
-	bool is_manual_match = 19;
-	bool is_matched = 20;
-	int32 bank_statement_line_id = 21;
+	google.protobuf.Timestamp transaction_date = 7;
+	google.protobuf.Timestamp payment_date = 8;
+	bool is_receipt = 9;
+	BusinessPartner business_partner = 10;
+	TenderType tender_type = 11;
+	Currency currency = 12;
+	string amount = 13;
+	string payment_amount = 14;
+	string description = 15;
+	string memo = 16;
+	string line_description = 17;
+	bool is_manual_match = 18;
+	bool is_matched = 19;
+	int32 bank_statement_line_id = 20;
 }
 message ListResultMovementsResponse {
 	int64 record_count = 1;

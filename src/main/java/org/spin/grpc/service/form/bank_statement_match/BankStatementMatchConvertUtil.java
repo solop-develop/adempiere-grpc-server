@@ -74,6 +74,11 @@ public class BankStatementMatchConvertUtil {
 					bank.getName()
 				)
 			)
+			.setDisplayValue(
+				TextManager.getValidString(
+					bank.getDisplayValue()
+				)
+			)
 			.setRoutingNo(
 				TextManager.getValidString(
 					bank.getRoutingNo()
@@ -134,6 +139,11 @@ public class BankStatementMatchConvertUtil {
 			.setName(
 				TextManager.getValidString(
 					bankAccount.getName()
+				)
+			)
+			.setDisplayValue(
+				TextManager.getValidString(
+					bankAccount.getDisplayValue()
 				)
 			)
 			.setBank(
@@ -485,6 +495,11 @@ public class BankStatementMatchConvertUtil {
 					importBankStatement.getMemo()
 				)
 			)
+			.setLineDescription(
+				TextManager.getValidString(
+					importBankStatement.getLineDescription()
+				)
+			)
 			.setTransactionDate(
 				TimeManager.getProtoTimestampFromTimestamp(
 					importBankStatement.getStatementLineDate()
@@ -568,17 +583,22 @@ public class BankStatementMatchConvertUtil {
 					importBankStatement.getReferenceNo()
 				)
 			)
+			.setIsReceipt(
+				importBankStatement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
+			)
 			.setDescription(
 				TextManager.getValidString(
 					importBankStatement.getDescription()
 				)
 			)
-			.setIsReceipt(
-				importBankStatement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
-			)
 			.setMemo(
 				TextManager.getValidString(
 					importBankStatement.getMemo()
+				)
+			)
+			.setLineDescription(
+				TextManager.getValidString(
+					importBankStatement.getLineDescription()
 				)
 			)
 			.setTransactionDate(
@@ -710,11 +730,6 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setIsReceipt(
 				importBankStatement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0
-			)
-			.setReferenceNo(
-				TextManager.getValidString(
-					importBankStatement.getReferenceNo()
-				)
 			)
 			.setMemo(
 				TextManager.getValidString(
