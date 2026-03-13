@@ -15,6 +15,8 @@
 package org.spin.grpc.service.form.bank_statement_match;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_C_BankStatement;
@@ -437,6 +439,11 @@ public class BankStatementMatchConvertUtil {
 					payment.getDateTrx()
 				)
 			)
+			.setTransactionDateFormatted(
+				TimeManager.getDateDisplayValue(
+					payment.getDateTrx()
+				)
+			)
 			.setIsReceipt(isReceipt)
 			.setDocumentNo(
 				TextManager.getValidString(
@@ -461,6 +468,71 @@ public class BankStatementMatchConvertUtil {
 		return builder;
 	}
 
+
+	public static Payment.Builder convertPayment(ResultSet rs) throws SQLException {
+		Payment.Builder builder = Payment.newBuilder();
+		if (rs == null) {
+			return builder;
+		}
+
+		int businessPartnerId = rs.getInt("C_BPartner_ID");
+		BusinessPartner.Builder businessPartnerBuilder = convertBusinessPartner(businessPartnerId);
+
+		int currencyId = rs.getInt("C_Currency_ID");
+		Currency.Builder currencyBuilder = convertCurrency(currencyId);
+
+		String tenderType = rs.getString("TenderType");
+		TenderType.Builder tenderTypeBuilder = convertTenderType(tenderType);
+
+		boolean isReceipt = "Y".equals(rs.getString("IsReceipt"));
+		BigDecimal paymentAmount = rs.getBigDecimal("PayAmt");
+		if (!isReceipt) {
+			paymentAmount = paymentAmount.negate();
+		}
+
+		java.sql.Timestamp dateTrx = rs.getTimestamp("DateTrx");
+
+		builder.setId(
+				rs.getInt("C_Payment_ID")
+			)
+			.setTransactionDate(
+				TimeManager.getProtoTimestampFromTimestamp(dateTrx)
+			)
+			.setTransactionDateFormatted(
+				TimeManager.getDateDisplayValue(
+					dateTrx
+				)
+			)
+			.setIsReceipt(isReceipt)
+			.setDocumentNo(
+				TextManager.getValidString(
+					rs.getString("DocumentNo")
+				)
+			)
+			.setDescription(
+				TextManager.getValidString(
+					rs.getString("Description")
+				)
+			)
+			.setAmount(
+				NumberManager.getBigDecimalToString(paymentAmount)
+			)
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(paymentAmount, currencyId)
+			)
+			.setBusinessPartner(businessPartnerBuilder)
+			.setTenderType(tenderTypeBuilder)
+			.setCurrency(currencyBuilder)
+			.setIsMatched(
+				rs.getBoolean("IsMatched")
+			)
+			.setIsManualMatch(
+				rs.getBoolean("IsManualMatch")
+			)
+		;
+
+		return builder;
+	}
 
 
 	public static ImportedBankMovement.Builder convertImportedBankMovement(X_I_BankStatement importBankStatement) {
@@ -502,6 +574,11 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setTransactionDate(
 				TimeManager.getProtoTimestampFromTimestamp(
+					importBankStatement.getStatementLineDate()
+				)
+			)
+			.setTransactionDateFormatted(
+				TimeManager.getDateDisplayValue(
 					importBankStatement.getStatementLineDate()
 				)
 			)
@@ -559,6 +636,12 @@ public class BankStatementMatchConvertUtil {
 			}
 		}
 
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
+
 		return builder;
 	}
 
@@ -603,6 +686,11 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setTransactionDate(
 				TimeManager.getProtoTimestampFromTimestamp(
+					importBankStatement.getStatementLineDate()
+				)
+			)
+			.setTransactionDateFormatted(
+				TimeManager.getDateDisplayValue(
 					importBankStatement.getStatementLineDate()
 				)
 			)
@@ -672,6 +760,11 @@ public class BankStatementMatchConvertUtil {
 						payment.getDateTrx()
 					)
 				)
+				.setPaymentDateFormatted(
+					TimeManager.getDateDisplayValue(
+						payment.getDateTrx()
+					)
+				)
 				.setPaymentAmount(
 					NumberManager.getBigDecimalToString(
 						payment.getPayAmt()
@@ -704,6 +797,12 @@ public class BankStatementMatchConvertUtil {
 				builder.setCurrency(currencyBuilder);
 			}
 		}
+
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
 
 		return builder;
 	}
@@ -738,6 +837,11 @@ public class BankStatementMatchConvertUtil {
 			)
 			.setTransactionDate(
 				TimeManager.getProtoTimestampFromTimestamp(
+					importBankStatement.getStatementLineDate()
+				)
+			)
+			.setTransactionDateFormatted(
+				TimeManager.getDateDisplayValue(
 					importBankStatement.getStatementLineDate()
 				)
 			)
@@ -802,14 +906,24 @@ public class BankStatementMatchConvertUtil {
 						payment.getDocumentNo()
 					)
 				)
+				.setPaymentDate(
+					TimeManager.getProtoTimestampFromTimestamp(
+						payment.getDateTrx()
+					)
+				)
+				.setPaymentDateFormatted(
+					TimeManager.getDateDisplayValue(
+						payment.getDateTrx()
+					)
+				)
 				.setPaymentAmount(
 					NumberManager.getBigDecimalToString(
 						payment.getPayAmt()
 					)
 				)
-				.setPaymentDate(
-					TimeManager.getProtoTimestampFromTimestamp(
-						payment.getDateTrx()
+				.setDescription(
+					TextManager.getValidString(
+						payment.getDescription()
 					)
 				)
 			;
@@ -835,6 +949,12 @@ public class BankStatementMatchConvertUtil {
 				builder.setCurrency(currencyBuilder);
 			}
 		}
+
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
 
 		return builder;
 	}

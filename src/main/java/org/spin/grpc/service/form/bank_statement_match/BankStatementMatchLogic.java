@@ -15,6 +15,9 @@
 package org.spin.grpc.service.form.bank_statement_match;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_BankStatement;
@@ -37,6 +41,7 @@ import org.compiere.model.MMenu;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -88,6 +93,8 @@ import com.google.protobuf.Struct;
  * Service Logic for backend of Bank Statement Match form
  */
 public abstract class BankStatementMatchLogic {
+
+	private static CLogger log = CLogger.getCLogger(BankStatementMatchLogic.class);
 
 	public static final int FORM_ID = 53077;
 
@@ -316,7 +323,8 @@ public abstract class BankStatementMatchLogic {
 			request.getPaymentAmountTo()
 		);
 
-		Query query = BankStatementMatchUtil.buildPaymentQuery(
+		ArrayList<Object> parametersList = new ArrayList<Object>();
+		String sql = BankStatementMatchUtil.buildPaymentSQL(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
 			matchMode,
@@ -324,39 +332,33 @@ public abstract class BankStatementMatchLogic {
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getBusinessPartnerId()
+			request.getBusinessPartnerId(),
+			parametersList
 		);
 
-		int count = query.count();
-		String nexPageToken = "";
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		//	Set page token
-		if (LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				TextManager.getValidString(nexPageToken)
-			)
-		;
-
-		query.setLimit(limit, offset)
-			.getIDsAsList()
-			.forEach(paymentId -> {
-				MPayment payment = new MPayment(
-					Env.getCtx(),
-					paymentId,
-					null
-				);
-				Payment.Builder paymentBuilder = BankStatementMatchConvertUtil.convertPayment(payment);
-
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		ListPaymentsResponse.Builder builderList = ListPaymentsResponse.newBuilder();
+		try {
+			pstmt = DB.prepareStatement(sql, null);
+			DB.setParameters(pstmt, parametersList);
+			rs = pstmt.executeQuery();
+			int recordCount = 0;
+			while (rs.next()) {
+				recordCount++;
+				Payment.Builder paymentBuilder = BankStatementMatchConvertUtil.convertPayment(rs);
 				builderList.addRecords(paymentBuilder);
-			});
-		;
+			}
+			builderList.setRecordCount(recordCount);
+		}
+		catch (SQLException e) {
+			log.log(Level.SEVERE, sql, e);
+		}
+		finally {
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
 
 		return builderList;
 	}
@@ -643,6 +645,26 @@ public abstract class BankStatementMatchLogic {
 		MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
 		if (payment == null || payment.getC_Payment_ID() <= 0) {
 			throw new AdempiereException("@C_Payment_ID@ (" + request.getPaymentId() + ") @NotFound@");
+		}
+
+		// Validate that the payment is not already associated with another imported movement
+		final String sqlAlreadyMatch = "SELECT I_BankStatement_ID "
+			+ "FROM I_BankStatement "
+			+ "WHERE C_Payment_ID = ? "
+				+ "AND I_BankStatement_ID <> ? "
+				+ "AND (COALESCE(IsMatched, 'N') = 'Y' OR COALESCE(IsManualMatch, 'N') = 'Y')"
+		;
+		int existingImportId = DB.getSQLValue(
+			null,
+			sqlAlreadyMatch,
+			payment.getC_Payment_ID(),
+			importedMovement.getI_BankStatement_ID()
+		);
+		if (existingImportId > 0) {
+			throw new AdempiereException(
+				"@NotMatched@: *@C_Payment_ID@ (" + payment.getC_Payment_ID() + ") #" + payment.getDocumentNo() + "*"
+				+ "@AlreadyExists@ *@I_BankStatement_ID@ (" + existingImportId + ")*"
+			);
 		}
 
 		// Validate same direction: receipt vs payment (receivable/payable)

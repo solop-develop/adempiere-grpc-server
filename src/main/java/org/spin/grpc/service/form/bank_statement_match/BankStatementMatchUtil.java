@@ -17,6 +17,7 @@ package org.spin.grpc.service.form.bank_statement_match;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.core.domains.models.I_I_BankStatement;
@@ -68,14 +69,15 @@ public class BankStatementMatchUtil {
 		;
 
 		if(bankStatementId > 0) {
-			whereClasuePayment += "AND NOT EXISTS("
-				+ "SELECT 1 FROM C_BankStatement AS bs "
-				+ "INNER JOIN C_BankStatementLine AS bsl "
-				+ "ON(bsl.C_BankStatement_ID = bs.C_BankStatement_ID) "
-				+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
-				+ "AND bs.DocStatus IN('CO', 'CL') "
-				+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
-			+ ") "
+			whereClasuePayment +=
+				"AND NOT EXISTS("
+					+ "SELECT 1 FROM C_BankStatement AS bs "
+					+ "INNER JOIN C_BankStatementLine AS bsl "
+						+ "ON bsl.C_BankStatement_ID = bs.C_BankStatement_ID "
+					+ "WHERE bsl.C_Payment_ID = C_Payment.C_Payment_ID "
+						+ "AND bs.DocStatus IN('CO', 'CL') "
+						+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
+				+ ") "
 			;
 		}
 
@@ -148,6 +150,116 @@ public class BankStatementMatchUtil {
 		;
 
 		return paymentQuery;
+	}
+
+
+
+	public static String buildPaymentSQL(
+		int bankStatementId,
+		int bankAccountId,
+		int matchMode,
+		Timestamp dateFrom,
+		Timestamp dateTo,
+		BigDecimal paymentAmountFrom,
+		BigDecimal paymentAmountTo,
+		int businessPartnerId,
+		List<Object> parametersList
+	) {
+		StringBuffer sql = new StringBuffer(
+			"SELECT p.*, "
+				+ "EXISTS("
+					+ "SELECT 1 FROM I_BankStatement ibs "
+					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID"
+				+ ") AS IsMatched, "
+				+ "EXISTS("
+					+ "SELECT 1 FROM I_BankStatement ibs "
+					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
+					+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'Y'"
+				+ ") AS IsManualMatch "
+			+ "FROM C_Payment p "
+			+ "WHERE "
+				+ "p.C_BankAccount_ID = ? "
+				+ "AND p.DocStatus NOT IN('IP', 'DR') "
+				+ "AND p.IsReconciled = 'N' "
+		);
+
+		parametersList.add(bankAccountId);
+
+		if (bankStatementId > 0) {
+			sql.append(
+				"AND NOT EXISTS("
+					+ "SELECT 1 FROM C_BankStatement AS bs "
+					+ "INNER JOIN C_BankStatementLine AS bsl "
+						+ "ON bsl.C_BankStatement_ID = bs.C_BankStatement_ID "
+					+ "WHERE bsl.C_Payment_ID = p.C_Payment_ID "
+						+ "AND bs.DocStatus IN('CO', 'CL') "
+					+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
+				+ ") "
+			);
+		}
+
+		//	Match
+		if (matchMode == MatchMode.MODE_MATCHED_VALUE) {
+			sql.append(
+				"AND EXISTS("
+					+ "SELECT 1 "
+					+ "FROM I_BankStatement AS ibs "
+					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID"
+				+ ") "
+			);
+		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
+			sql.append(
+				"AND ("
+					+ "NOT EXISTS("
+						+ "SELECT 1 "
+						+ "FROM I_BankStatement AS ibs "
+						+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
+					+ ") "
+					+ "OR EXISTS("
+						+ "SELECT 1 "
+						+ "FROM I_BankStatement AS ibs "
+						+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
+						+ "AND (COALESCE(ibs.IsManualMatch, 'N') = 'Y' OR COALESCE(ibs.IsMatched, 'N') = 'N') "
+					+ ") "
+				+ ") "
+			);
+		}
+
+		//	Date Trx
+		if (dateFrom != null) {
+			sql.append("AND p.DateTrx >= ? ");
+			parametersList.add(dateFrom);
+		}
+		if (dateTo != null) {
+			sql.append("AND p.DateTrx <= ? ");
+			parametersList.add(dateTo);
+		}
+
+		//	Amount
+		if (paymentAmountFrom != null) {
+			sql.append("AND p.PayAmt >= ? ");
+			parametersList.add(paymentAmountFrom);
+		}
+		if (paymentAmountTo != null) {
+			sql.append("AND p.PayAmt <= ? ");
+			parametersList.add(paymentAmountTo);
+		}
+
+		// Business Partner
+		if (businessPartnerId > 0) {
+			sql.append("AND p.C_BPartner_ID = ? ");
+			parametersList.add(businessPartnerId);
+		}
+
+		sql.append("ORDER BY p.DateTrx ");
+
+		// role security
+		return MRole.getDefault(Env.getCtx(), false).addAccessSQL(
+			sql.toString(),
+			"p",
+			MRole.SQL_FULLYQUALIFIED,
+			MRole.SQL_RO
+		);
 	}
 
 
