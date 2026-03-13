@@ -170,16 +170,8 @@ public class MTimeExpense extends X_S_TimeExpense implements DocAction, Document
 			doctypeOptional.ifPresent(docType -> setC_DocType_ID(docType.getC_DocType_ID()));
 			if (getC_DocType_ID() <= 0)
 				throw new AdempiereException("@C_DocType_ID@ @FillMandatory@");
-
 		}
 
-		if (getS_Contract_ID() > 0) {
-			X_S_Contract contract = (X_S_Contract) getS_Contract();
-			setC_BPartner_ID(contract.getC_BPartner_ID());
-			if (contract.getBill_BPartner_ID() > 0) {
-				setC_BPartner_ID(contract.getBill_BPartner_ID());
-			}
-		}
 		return super.beforeSave(newRecord);
 	}
 
@@ -575,6 +567,7 @@ public class MTimeExpense extends X_S_TimeExpense implements DocAction, Document
 		}
 		setDocStatus(DOCSTATUS_Voided);
 		setDocAction(DOCACTION_None);
+		addDescription(Msg.getMsg(getCtx(), "Voided"));
 		saveEx();
 		return this;
 	}
