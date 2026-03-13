@@ -195,14 +195,6 @@ public class MTimeExpenseLine extends X_S_TimeExpenseLine
 		if (newRecord && getParent().isComplete()) {
 			throw new AdempiereException("Parent was Completed" + Msg.translate(getCtx(), "S_TimeExpenseLine"));
 		}
-		if (isInvoiced()){
-			MTimeExpense timeExpense = getParent();
-			MProductPricing productPricing = new MProductPricing(getM_Product_ID(),
-					getC_BPartner_ID(),getQty(), timeExpense.isSOTrx(), get_TrxName());
-			productPricing.setM_PriceList_ID(timeExpense.getM_PriceList_ID());
-			setExpenseAmt(productPricing.getPriceStd());
-			setC_BPartner_ID(timeExpense.getC_BPartner_ID());
-		}
 		//	Calculate Converted Amount
 		if (newRecord || is_ValueChanged("ExpenseAmt") || is_ValueChanged("C_Currency_ID"))
 		{
