@@ -636,6 +636,12 @@ public class BankStatementMatchConvertUtil {
 			}
 		}
 
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
+
 		return builder;
 	}
 
@@ -792,6 +798,12 @@ public class BankStatementMatchConvertUtil {
 			}
 		}
 
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
+
 		return builder;
 	}
 
@@ -937,6 +949,12 @@ public class BankStatementMatchConvertUtil {
 				builder.setCurrency(currencyBuilder);
 			}
 		}
+
+		builder
+			.setAmountFormatted(
+				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+			)
+		;
 
 		return builder;
 	}
