@@ -121,13 +121,13 @@ public class BankStatementMatchUtil {
 			paymentFilters.add(dateTo);
 		}
 
-		//	Amount
+		//	Amount (negate for payments IsReceipt='N' to match visual display)
 		if (paymentAmountFrom != null) {
-			whereClasuePayment += "PayAmt >= ? ";
+			whereClasuePayment += "AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) >= ? ";
 			paymentFilters.add(paymentAmountFrom);
 		}
 		if (paymentAmountTo != null) {
-			whereClasuePayment += "PayAmt <= ? ";
+			whereClasuePayment += "AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) <= ? ";
 			paymentFilters.add(paymentAmountTo);
 		}
 
@@ -235,13 +235,13 @@ public class BankStatementMatchUtil {
 			parametersList.add(dateTo);
 		}
 
-		//	Amount
+		//	Amount (negate for payments IsReceipt='N' to match visual display)
 		if (paymentAmountFrom != null) {
-			sql.append("AND p.PayAmt >= ? ");
+			sql.append("AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) >= ? ");
 			parametersList.add(paymentAmountFrom);
 		}
 		if (paymentAmountTo != null) {
-			sql.append("AND p.PayAmt <= ? ");
+			sql.append("AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) <= ? ");
 			parametersList.add(paymentAmountTo);
 		}
 
