@@ -590,6 +590,16 @@ public class BankStatementMatchConvertUtil {
 			.setBankStatementLineId(
 				importBankStatement.getC_BankStatementLine_ID()
 			)
+			.setIsManualMatch(
+				importBankStatement.get_ValueAsBoolean(
+					"IsManualMatch"
+				)
+			)
+			.setIsMatched(
+				importBankStatement.get_ValueAsBoolean(
+					"IsMatched"
+				)
+			)
 		;
 
 		if (importBankStatement.getC_Payment_ID() > 0) {
