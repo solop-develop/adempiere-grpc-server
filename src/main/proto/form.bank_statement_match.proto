@@ -145,6 +145,7 @@ message BankAccount {
 	Bank bank = 7;
 	Currency currency = 8;
 	string current_balance = 9;
+	string organization_name = 10;
 }
 
 // Bank Statement
@@ -153,11 +154,12 @@ message BankStatement {
 	string uuid = 2;
 	BankAccount bank_account = 3;
 	string document_no = 4;
-	string name = 5;
-	google.protobuf.Timestamp statement_date = 6;
-	string description = 7;
-	bool is_manual = 8;
-	string document_status = 9;
+	string display_value = 5;
+	string name = 6;
+	google.protobuf.Timestamp statement_date = 7;
+	string description = 8;
+	bool is_manual = 9;
+	string document_status = 10;
 	bool is_processed = 11;
 	string beginning_balance = 12;
 	string statement_difference = 13;
