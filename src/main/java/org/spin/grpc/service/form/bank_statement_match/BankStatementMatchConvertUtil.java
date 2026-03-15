@@ -529,7 +529,10 @@ public class BankStatementMatchConvertUtil {
 				NumberManager.getBigDecimalToString(paymentAmount)
 			)
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(paymentAmount, currencyId)
+				NumberManager.getAmountDisplayValueWithCurrency(
+					paymentAmount,
+					currencyId
+				)
 			)
 			.setBusinessPartner(businessPartnerBuilder)
 			.setTenderType(tenderTypeBuilder)
@@ -660,7 +663,10 @@ public class BankStatementMatchConvertUtil {
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+				NumberManager.getAmountDisplayValueWithCurrency(
+					importBankStatement.getTrxAmt(),
+					builder.getCurrency().getId()
+				)
 			)
 		;
 
@@ -819,11 +825,23 @@ public class BankStatementMatchConvertUtil {
 				);
 				builder.setCurrency(currencyBuilder);
 			}
+
+			builder
+				.setPaymentAmountFormatted(
+					NumberManager.getAmountDisplayValueWithCurrency(
+						payment.getPayAmt(),
+						builder.getCurrency().getId()
+					)
+				)
+			;
 		}
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+				NumberManager.getAmountDisplayValueWithCurrency(
+					importBankStatement.getTrxAmt(),
+					builder.getCurrency().getId()
+				)
 			)
 		;
 
@@ -976,7 +994,10 @@ public class BankStatementMatchConvertUtil {
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(importBankStatement.getTrxAmt(), builder.getCurrency().getId())
+				NumberManager.getAmountDisplayValueWithCurrency(
+					importBankStatement.getTrxAmt(),
+					builder.getCurrency().getId()
+				)
 			)
 		;
 
