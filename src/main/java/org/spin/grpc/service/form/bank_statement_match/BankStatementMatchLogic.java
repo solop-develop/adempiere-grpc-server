@@ -333,6 +333,7 @@ public abstract class BankStatementMatchLogic {
 			paymentAmountFrom,
 			paymentAmountTo,
 			request.getBusinessPartnerId(),
+			request.getSearchValue(),
 			parametersList
 		);
 
@@ -399,7 +400,8 @@ public abstract class BankStatementMatchLogic {
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
-			paymentAmountTo
+			paymentAmountTo,
+			request.getSearchValue()
 		);
 		List<Integer> importedBankMovementsId = importMovementsQuery
 			// .setLimit(0, 0)
@@ -430,7 +432,10 @@ public abstract class BankStatementMatchLogic {
 		Properties context = Env.getCtx();
 		ListMatchingMovementsResponse.Builder builderList = ListMatchingMovementsResponse.newBuilder();
 
-		List<MBankStatementMatcher> matchersList = MBankStatementMatcher.getMatchersList(Env.getCtx(), bankAccount.getC_Bank_ID());
+		List<MBankStatementMatcher> matchersList = MBankStatementMatcher.getMatchersList(
+			Env.getCtx(),
+			bankAccount.getC_Bank_ID()
+		);
 		if (matchersList == null || matchersList.isEmpty()) {
 			return builderList;
 		}
@@ -462,7 +467,8 @@ public abstract class BankStatementMatchLogic {
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getBusinessPartnerId()
+			request.getBusinessPartnerId(),
+			null
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
 		if (paymentsId == null || paymentsId.isEmpty()) {
@@ -476,7 +482,8 @@ public abstract class BankStatementMatchLogic {
 			dateFrom,
 			dateTo,
 			paymentAmountFrom,
-			paymentAmountTo
+			paymentAmountTo,
+			null
 		);
 		List<Integer> importedBankMovementsId = bankMovementQuery.getIDsAsList();
 		if (importedBankMovementsId == null || importedBankMovementsId.isEmpty()) {
@@ -495,11 +502,14 @@ public abstract class BankStatementMatchLogic {
 				//	put on hash
 				matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
 				// if (!(currentBankStatementImport.isProcessed() || currentBankStatementImport.isProcessing())) {
+				// Only set IsMatched for automatic matches, not manual ones
+				if (!currentBankStatementImport.get_ValueAsBoolean("IsManualMatch")) {
 					currentBankStatementImport.set_ValueOfColumn(
 						"IsMatched",
 						true
 					);
 					currentBankStatementImport.save();
+				}
 				// }
 				matched++;
 				continue;
@@ -512,14 +522,19 @@ public abstract class BankStatementMatchLogic {
 						paymentsId,
 						matchedPaymentHashMap.keySet().stream().collect(Collectors.toList())
 					);
-					if (info == null || !info.isMatched()) {
-						currentBankStatementImport.set_ValueOfColumn(
-							"IsMatched",
-							false
-						);
-						currentBankStatementImport.save();
-						continue;
-					}
+					// if (!currentBankStatementImport.get_ValueAsBoolean("IsManualMatch")) {
+						if (info == null || !info.isMatched()) {
+							// currentBankStatementImport.setC_Payment_ID(0);
+							currentBankStatementImport.set_ValueOfColumn(
+								"IsMatched",
+								false
+							);
+							currentBankStatementImport.save();
+							continue;
+						}
+					// } else {
+					// 	matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
+					// }
 
 					//	Duplicate match
 					if(matchedPaymentHashMap.containsKey(info.getC_Payment_ID())) {
@@ -539,6 +554,10 @@ public abstract class BankStatementMatchLogic {
 							"IsMatched",
 							true
 						);
+						// currentBankStatementImport.set_ValueOfColumn(
+						// 	"IsManualMatch",
+						// 	false
+						// );
 						currentBankStatementImport.save();
 					}
 
@@ -546,11 +565,16 @@ public abstract class BankStatementMatchLogic {
 					matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
 					matched++;
 				} else {
-					currentBankStatementImport.set_ValueOfColumn(
-						"IsMatched",
-						false
-					);
-					currentBankStatementImport.save();
+					// if (!currentBankStatementImport.get_ValueAsBoolean("IsManualMatch")) {
+						// currentBankStatementImport.setC_Payment_ID(0);
+						currentBankStatementImport.set_ValueOfColumn(
+							"IsMatched",
+							false
+						);
+						currentBankStatementImport.save();
+					// } else {
+					// 	matchedPaymentHashMap.put(currentBankStatementImport.getC_Payment_ID(), currentBankStatementImport);
+					// }
 				}
 			}	//	for all matchers
 		}
@@ -752,6 +776,10 @@ public abstract class BankStatementMatchLogic {
 			importedMovement.setC_Payment_ID(0);
 			importedMovement.set_ValueOfColumn(
 				"IsMatched",
+				false
+			);
+			importedMovement.set_ValueOfColumn(
+				"IsManualMatch",
 				false
 			);
 			if (importedMovement.is_Changed() && importedMovement.save()) {

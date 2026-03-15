@@ -26,6 +26,7 @@ import org.compiere.model.MBankAccount;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
 
 public class BankStatementMatchUtil {
@@ -61,7 +62,8 @@ public class BankStatementMatchUtil {
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
-		int businessPartnerId
+		int businessPartnerId,
+		String searchValue
 	) {
 		String whereClasuePayment = "C_BankAccount_ID = ? "
 			+ " AND DocStatus NOT IN('IP', 'DR') "
@@ -137,6 +139,17 @@ public class BankStatementMatchUtil {
 			paymentFilters.add(businessPartnerId);
 		}
 
+		// Search Value
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClasuePayment += "AND ("
+					+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
+					+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
+				+ ") "
+			;
+			paymentFilters.add(searchValue);
+			paymentFilters.add(searchValue);
+		}
+
 		Query paymentQuery = new Query(
 			Env.getCtx(),
 			I_C_Payment.Table_Name,
@@ -163,18 +176,20 @@ public class BankStatementMatchUtil {
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
 		int businessPartnerId,
+		String searchValue,
 		List<Object> parametersList
 	) {
 		StringBuffer sql = new StringBuffer(
 			"SELECT p.*, "
 				+ "EXISTS("
 					+ "SELECT 1 FROM I_BankStatement ibs "
-					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID"
+					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
+						// + "AND COALESCE(ibs.IsMatched, 'N') = 'Y' "
 				+ ") AS IsMatched, "
 				+ "EXISTS("
 					+ "SELECT 1 FROM I_BankStatement ibs "
 					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
-					+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'Y'"
+						+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'Y' "
 				+ ") AS IsManualMatch "
 			+ "FROM C_Payment p "
 			+ "WHERE "
@@ -237,11 +252,11 @@ public class BankStatementMatchUtil {
 
 		//	Amount (negate for payments IsReceipt='N' to match visual display)
 		if (paymentAmountFrom != null) {
-			sql.append("AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) >= ? ");
+			sql.append("AND (CASE WHEN p.IsReceipt = 'N' THEN -p.PayAmt ELSE p.PayAmt END) >= ? ");
 			parametersList.add(paymentAmountFrom);
 		}
 		if (paymentAmountTo != null) {
-			sql.append("AND (CASE WHEN IsReceipt = 'N' THEN -PayAmt ELSE PayAmt END) <= ? ");
+			sql.append("AND (CASE WHEN p.IsReceipt = 'N' THEN -p.PayAmt ELSE p.PayAmt END) <= ? ");
 			parametersList.add(paymentAmountTo);
 		}
 
@@ -249,6 +264,16 @@ public class BankStatementMatchUtil {
 		if (businessPartnerId > 0) {
 			sql.append("AND p.C_BPartner_ID = ? ");
 			parametersList.add(businessPartnerId);
+		}
+
+		// Search Value
+		if (!Util.isEmpty(searchValue, true)) {
+			sql.append("AND ("
+				+ "UPPER(p.DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(p.Description) LIKE '%' || UPPER(?) || '%' "
+			+ ") ");
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
 		}
 
 		sql.append("ORDER BY p.DateTrx ");
@@ -271,7 +296,8 @@ public class BankStatementMatchUtil {
 		Timestamp dateFrom,
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
-		BigDecimal paymentAmountTo
+		BigDecimal paymentAmountTo,
+		String searchValue
 	) {
 		String whereClasueBankStatement = "C_BankAccount_ID = ? ";
 
@@ -329,6 +355,16 @@ public class BankStatementMatchUtil {
 		if (paymentAmountTo != null) {
 			whereClasueBankStatement += "AND TrxAmt <= ? ";
 			filterParameters.add(paymentAmountTo);
+		}
+
+		// Search Value
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClasueBankStatement += "AND ("
+				+ "UPPER(ReferenceNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(LineDescription) LIKE '%' || UPPER(?) || '%' "
+			+ ") ";
+			filterParameters.add(searchValue);
+			filterParameters.add(searchValue);
 		}
 
 		Query importBankMovementQuery = new Query(

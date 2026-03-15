@@ -27,6 +27,7 @@ import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
 import org.compiere.model.MCurrency;
+import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
 import org.compiere.util.Env;
@@ -161,6 +162,11 @@ public class BankStatementMatchConvertUtil {
 					bankAccount.getCurrentBalance()
 				)
 			)
+			.setOrganizationName(
+				TextManager.getValidString(
+					MOrg.get(Env.getCtx(), bankAccount.getAD_Org_ID()).getName()
+				)
+			)
 		;
 
 		return builder;
@@ -199,6 +205,11 @@ public class BankStatementMatchConvertUtil {
 			.setDocumentNo(
 				TextManager.getValidString(
 					bankStatement.getDocumentNo()
+				)
+			)
+			.setDisplayValue(
+				TextManager.getValidString(
+					bankStatement.getDisplayValue()
 				)
 			)
 			.setName(
@@ -599,6 +610,7 @@ public class BankStatementMatchConvertUtil {
 				importBankStatement.get_ValueAsBoolean(
 					"IsMatched"
 				)
+				|| importBankStatement.getC_Payment_ID() > 0
 			)
 		;
 
@@ -721,6 +733,7 @@ public class BankStatementMatchConvertUtil {
 				importBankStatement.get_ValueAsBoolean(
 					"IsMatched"
 				)
+				|| importBankStatement.getC_Payment_ID() > 0
 			)
 		;
 
@@ -872,6 +885,7 @@ public class BankStatementMatchConvertUtil {
 				importBankStatement.get_ValueAsBoolean(
 					"IsMatched"
 				)
+				|| importBankStatement.getC_Payment_ID() > 0
 			)
 		;
 
