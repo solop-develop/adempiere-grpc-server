@@ -451,8 +451,10 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDateFormatted(
-				TimeManager.getDateDisplayValue(
-					payment.getDateTrx()
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(
+						payment.getDateTrx()
+					)
 				)
 			)
 			.setIsReceipt(isReceipt)
@@ -510,8 +512,10 @@ public class BankStatementMatchConvertUtil {
 				TimeManager.getProtoTimestampFromTimestamp(dateTrx)
 			)
 			.setTransactionDateFormatted(
-				TimeManager.getDateDisplayValue(
-					dateTrx
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(
+						dateTrx
+					)
 				)
 			)
 			.setIsReceipt(isReceipt)
@@ -529,9 +533,11 @@ public class BankStatementMatchConvertUtil {
 				NumberManager.getBigDecimalToString(paymentAmount)
 			)
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(
-					paymentAmount,
-					currencyId
+				TextManager.getValidString(
+					NumberManager.getAmountDisplayValueWithCurrency(
+						paymentAmount,
+						currencyId
+					)
 				)
 			)
 			.setBusinessPartner(businessPartnerBuilder)
@@ -592,8 +598,10 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDateFormatted(
-				TimeManager.getDateDisplayValue(
-					importBankStatement.getStatementLineDate()
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(
+						importBankStatement.getStatementLineDate()
+					)
 				)
 			)
 			.setAmount(
@@ -663,9 +671,11 @@ public class BankStatementMatchConvertUtil {
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(
-					importBankStatement.getTrxAmt(),
-					builder.getCurrency().getId()
+				TextManager.getValidString(
+					NumberManager.getAmountDisplayValueWithCurrency(
+						importBankStatement.getTrxAmt(),
+						builder.getCurrency().getId()
+					)
 				)
 			)
 		;
@@ -718,8 +728,10 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDateFormatted(
-				TimeManager.getDateDisplayValue(
-					importBankStatement.getStatementLineDate()
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(
+						importBankStatement.getStatementLineDate()
+					)
 				)
 			)
 			.setAmount(
@@ -790,8 +802,10 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDateFormatted(
-					TimeManager.getDateDisplayValue(
-						payment.getDateTrx()
+					TextManager.getValidString(
+						TimeManager.getDateDisplayValue(
+							payment.getDateTrx()
+						)
 					)
 				)
 				.setPaymentAmount(
@@ -828,9 +842,11 @@ public class BankStatementMatchConvertUtil {
 
 			builder
 				.setPaymentAmountFormatted(
-					NumberManager.getAmountDisplayValueWithCurrency(
-						payment.getPayAmt(),
-						builder.getCurrency().getId()
+					TextManager.getValidString(
+						NumberManager.getAmountDisplayValueWithCurrency(
+							payment.getPayAmt(),
+							builder.getCurrency().getId()
+						)
 					)
 				)
 			;
@@ -838,9 +854,11 @@ public class BankStatementMatchConvertUtil {
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(
-					importBankStatement.getTrxAmt(),
-					builder.getCurrency().getId()
+				TextManager.getValidString(
+					NumberManager.getAmountDisplayValueWithCurrency(
+						importBankStatement.getTrxAmt(),
+						builder.getCurrency().getId()
+					)
 				)
 			)
 		;
@@ -882,8 +900,10 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 			.setTransactionDateFormatted(
-				TimeManager.getDateDisplayValue(
-					importBankStatement.getStatementLineDate()
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(
+						importBankStatement.getStatementLineDate()
+					)
 				)
 			)
 			.setAmount(
@@ -954,8 +974,10 @@ public class BankStatementMatchConvertUtil {
 					)
 				)
 				.setPaymentDateFormatted(
-					TimeManager.getDateDisplayValue(
-						payment.getDateTrx()
+					TextManager.getValidString(
+						TimeManager.getDateDisplayValue(
+							payment.getDateTrx()
+						)
 					)
 				)
 				.setPaymentAmount(
@@ -994,9 +1016,11 @@ public class BankStatementMatchConvertUtil {
 
 		builder
 			.setAmountFormatted(
-				NumberManager.getAmountDisplayValueWithCurrency(
-					importBankStatement.getTrxAmt(),
-					builder.getCurrency().getId()
+				TextManager.getValidString(
+					NumberManager.getAmountDisplayValueWithCurrency(
+						importBankStatement.getTrxAmt(),
+						builder.getCurrency().getId()
+					)
 				)
 			)
 		;
