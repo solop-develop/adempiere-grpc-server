@@ -273,6 +273,19 @@ public class TimeManager {
 	 * Convert Timestamp to String
 	 * @param date
 	 * @param displayTypeId
+	 * @return
+	 */
+	public static String getDisplayValue(Object value, int displayTypeId) {
+		Timestamp date = TimeManager.getTimestampFromObject(value);
+		if(date == null) {
+			return null;
+		}
+		return getDisplayValue(date, displayTypeId, null);
+	}
+	/**
+	 * Convert Timestamp to String
+	 * @param date
+	 * @param displayTypeId
 	 * @param language
 	 * @return
 	 */
