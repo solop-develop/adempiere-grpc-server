@@ -92,6 +92,15 @@ public class BooleanManager {
 			booleanValue = BooleanManager.getBooleanFromInteger(
 				(Integer) value
 			);
+		} else if (value instanceof Value) {
+			booleanValue = BooleanManager.getBooleanFromProtoValue(
+				(Value) value
+			);
+		} else if (value instanceof Value.Builder) {
+			Value newValue = ((Value.Builder) value).build();
+			booleanValue = BooleanManager.getBooleanFromProtoValue(
+				newValue
+			);
 		}
 		return booleanValue;
 	}

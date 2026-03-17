@@ -1332,13 +1332,13 @@ public class DisplayDefinitionServiceLogic {
 			Object value = null;
 			if (!attribute.getValue().hasNullValue()) {
 				if (displayTypeId > 0) {
-					value = ValueManager.getProtoValueFromObject(
+					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue(),
 						displayTypeId
 					);
 				} 
 				if (value == null) {
-					value = ValueManager.getProtoValueFromObject(
+					value = ValueManager.getObjectFromProtoValue(
 						attribute.getValue()
 					);
 				}
@@ -1487,13 +1487,13 @@ public class DisplayDefinitionServiceLogic {
 				Value attributeValue = attributes.get(columnName);
 				if (attributeValue != null && !attributeValue.hasNullValue()) {
 					if (displayTypeId > 0) {
-						value = ValueManager.getProtoValueFromObject(
+						value = ValueManager.getObjectFromProtoValue(
 							attributeValue,
 							displayTypeId
 						);
 					} 
 					if (value == null) {
-						value = ValueManager.getProtoValueFromObject(
+						value = ValueManager.getObjectFromProtoValue(
 							attributeValue
 						);
 					}
@@ -1770,10 +1770,10 @@ public class DisplayDefinitionServiceLogic {
 				int displayTypeId = getReferenceId(entity.get_Table_ID(), key);
 				Object value = null;
 				if(displayTypeId > 0) {
-					value = ValueManager.getProtoValueFromObject(attribute, displayTypeId);
+					value = ValueManager.getObjectFromProtoValue(attribute, displayTypeId);
 				} 
 				if(value == null) {
-					value = ValueManager.getProtoValueFromObject(attribute);
+					value = ValueManager.getObjectFromProtoValue(attribute);
 				}
 				entity.set_ValueOfColumn(key, value);
 			});

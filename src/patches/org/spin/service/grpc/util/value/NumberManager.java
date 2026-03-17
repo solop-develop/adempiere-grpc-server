@@ -84,6 +84,15 @@ public class NumberManager {
 		} else if (value instanceof Long) {
 			long longValue = (long) value;
 			numberValue = BigDecimal.valueOf(longValue);
+		} else if (value instanceof Value) {
+			numberValue = NumberManager.getBigDecimalFromProtoValue(
+				(Value) value
+			);
+		} else if (value instanceof Value.Builder) {
+			Value newValue = ((Value.Builder) value).build();
+			numberValue = NumberManager.getBigDecimalFromProtoValue(
+				newValue
+			);
 		} else {
 			numberValue = (BigDecimal) value;
 		}
@@ -199,6 +208,15 @@ public class NumberManager {
 		} else if (value instanceof String) {
 			integerValue = getIntegerFromString(
 				(String) value
+			);
+		} else if (value instanceof Value) {
+			integerValue = NumberManager.getIntegerFromProtoValue(
+				(Value) value
+			);
+		} else if (value instanceof Value.Builder) {
+			Value newValue = ((Value.Builder) value).build();
+			integerValue = NumberManager.getIntegerFromProtoValue(
+				newValue
 			);
 		}
 		return integerValue;

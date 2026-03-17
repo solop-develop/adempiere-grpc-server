@@ -509,6 +509,12 @@ public class ValueManager {
 			// getEmptyValueByReference(displayTypeId);
 			return getProtoValueFromNull();
 		}
+		// if (value instanceof Value) {
+		// 	builderValue.mergeFrom((Value) value);
+		// 	return builderValue;
+		// } else if (value instanceof Value.Builder) {
+		// 	return (Value.Builder) value;
+		// }
 		if (displayTypeId <= 0) {
 			return getProtoValueFromObject(value);
 		}
