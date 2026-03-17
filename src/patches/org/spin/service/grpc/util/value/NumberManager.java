@@ -374,7 +374,7 @@ public class NumberManager {
 	 * @return formatted amount string (e.g. "1,234.56")
 	 */
 	public static String getAmountDisplayValue(BigDecimal value) {
-		return getDisplayValue(value, DisplayType.Amount);
+		return NumberManager.getDisplayValue(value, DisplayType.Amount);
 	}
 	/**
 	 * Get display value formatted as CostPrice (DisplayType.CostPrice)
@@ -382,7 +382,7 @@ public class NumberManager {
 	 * @return formatted cost/price string (e.g. "1,234.5600")
 	 */
 	public static String getCostPriceDisplayValue(BigDecimal value) {
-		return getDisplayValue(value, DisplayType.CostPrice);
+		return NumberManager.getDisplayValue(value, DisplayType.CostPrice);
 	}
 	/**
 	 * Get display value formatted as Quantity (DisplayType.Quantity)
@@ -390,7 +390,7 @@ public class NumberManager {
 	 * @return formatted quantity string (e.g. "1,234.56")
 	 */
 	public static String getQuantityDisplayValue(BigDecimal value) {
-		return getDisplayValue(value, DisplayType.Quantity);
+		return NumberManager.getDisplayValue(value, DisplayType.Quantity);
 	}
 	/**
 	 * Get display value formatted as Number (DisplayType.Number)
@@ -398,7 +398,7 @@ public class NumberManager {
 	 * @return formatted number string (e.g. "1,234.56")
 	 */
 	public static String getNumberDisplayValue(BigDecimal value) {
-		return getDisplayValue(value, DisplayType.Number);
+		return NumberManager.getDisplayValue(value, DisplayType.Number);
 	}
 	/**
 	 * Get display value formatted as Integer (DisplayType.Integer)
@@ -406,7 +406,7 @@ public class NumberManager {
 	 * @return formatted integer string (e.g. "1,234")
 	 */
 	public static String getIntegerDisplayValue(BigDecimal value) {
-		return getDisplayValue(value, DisplayType.Integer);
+		return NumberManager.getDisplayValue(value, DisplayType.Integer);
 	}
 
 	/**
@@ -416,7 +416,7 @@ public class NumberManager {
 	 * @return formatted amount with currency (e.g. "$ 1,234.56")
 	 */
 	public static String getAmountDisplayValueWithCurrency(BigDecimal value, int currencyId) {
-		return getDisplayValueWithCurrency(value, DisplayType.Amount, currencyId);
+		return NumberManager.getDisplayValueWithCurrency(value, DisplayType.Amount, currencyId);
 	}
 	/**
 	 * Get display value formatted as CostPrice with currency symbol
@@ -425,7 +425,7 @@ public class NumberManager {
 	 * @return formatted cost/price with currency (e.g. "$ 1,234.5600")
 	 */
 	public static String getCostPriceDisplayValueWithCurrency(BigDecimal value, int currencyId) {
-		return getDisplayValueWithCurrency(value, DisplayType.CostPrice, currencyId);
+		return NumberManager.getDisplayValueWithCurrency(value, DisplayType.CostPrice, currencyId);
 	}
 
 	/**
@@ -435,7 +435,17 @@ public class NumberManager {
 	 * @return formatted string value
 	 */
 	public static String getDisplayValue(BigDecimal value, int displayTypeId) {
-		return getDisplayValue(value, displayTypeId, null);
+		return NumberManager.getDisplayValue(value, displayTypeId, null);
+	}
+	/**
+	 * Get formatted display value from BigDecimal based on DisplayType
+	 * @param value
+	 * @param displayTypeId reference display type (Amount, CostPrice, Quantity, Number, Integer)
+	 * @return formatted string value
+	 */
+	public static String getDisplayValue(Object value, int displayTypeId) {
+		BigDecimal number = NumberManager.getBigDecimalFromObject(value);
+		return NumberManager.getDisplayValue(number, displayTypeId, null);
 	}
 	/**
 	 * Get formatted display value from BigDecimal based on DisplayType and format pattern
@@ -449,7 +459,7 @@ public class NumberManager {
 			return "";
 		}
 		if (!DisplayType.isNumeric(displayTypeId)) {
-			return getBigDecimalToString(value);
+			return NumberManager.getBigDecimalToString(value);
 		}
 		Language language = Language.getLoginLanguage();
 		DecimalFormat numberFormat = DisplayType.getNumberFormat(
@@ -468,8 +478,9 @@ public class NumberManager {
 	 * @param currencyId C_Currency_ID
 	 * @return formatted string value with currency symbol
 	 */
-	public static String getDisplayValueWithCurrency(BigDecimal value, int displayTypeId, int currencyId) {
-		return getDisplayValueWithCurrency(value, displayTypeId, currencyId, null);
+	public static String getDisplayValueWithCurrencyFromObject(Object value, int displayTypeId, int currencyId) {
+		BigDecimal number = NumberManager.getBigDecimalFromObject(value);
+		return NumberManager.getDisplayValueWithCurrency(number, displayTypeId, currencyId, null);
 	}
 	/**
 	 * Get formatted display value from BigDecimal with currency symbol
@@ -478,9 +489,25 @@ public class NumberManager {
 	 * @param currencyId C_Currency_ID
 	 * @return formatted string value with currency symbol
 	 */
+	public static String getDisplayValueWithCurrency(BigDecimal value, int displayTypeId, int currencyId) {
+		return NumberManager.getDisplayValueWithCurrency(value, displayTypeId, currencyId, null);
+	}
+	/**
+	 * Get formatted display value from BigDecimal with currency symbol
+	 * @param value
+	 * @param displayTypeId reference display type (Amount, CostPrice, Quantity, Number, Integer)
+	 * @param currencyIso C_Currency_ID
+	 * @return formatted string value with currency symbol
+	 */
 	public static String getDisplayValueWithCurrency(BigDecimal value, int displayTypeId, String currencyIso) {
-		MCurrency currency = MCurrency.get(Env.getCtx(), currencyIso);
-		return getDisplayValueWithCurrency(value, displayTypeId, currency.getC_Currency_ID(), null);
+		int currencyId = 0;
+		if (!Util.isEmpty(currencyIso, true)) {
+			MCurrency currency = MCurrency.get(Env.getCtx(), currencyIso);
+			if (currency != null && currency.getC_Currency_ID() > 0) {
+				currencyId = currency.getC_Currency_ID();
+			}
+		}
+		return NumberManager.getDisplayValueWithCurrency(value, displayTypeId, currencyId, null);
 	}
 	/**
 	 * Get formatted display value from BigDecimal with currency symbol and format pattern
@@ -507,7 +534,7 @@ public class NumberManager {
 				}
 			}
 		}
-		String displayValue = getDisplayValue(formattedValue, displayTypeId, formatPattern);
+		String displayValue = NumberManager.getDisplayValue(formattedValue, displayTypeId, formatPattern);
 		return currencySymbol + displayValue;
 	}
 

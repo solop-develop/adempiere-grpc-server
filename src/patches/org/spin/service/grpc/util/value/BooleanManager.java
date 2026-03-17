@@ -177,6 +177,36 @@ public class BooleanManager {
 	 * @param value
 	 * @return translated "Yes" / "No" based on login language
 	 */
+	public static String getDisplayValue(Object value) {
+		boolean bool = false;
+		if (value != null) {
+			bool = BooleanManager.getBooleanFromObject(value);
+		}
+		return getDisplayValue(
+			bool,
+			Env.getAD_Language(Env.getCtx())
+		);
+	}
+	/**
+	 * Get translated display value from boolean
+	 * @param value
+	 * @return translated "Yes" / "No" based on login language
+	 */
+	public static String getDisplayValue(Boolean value) {
+		boolean bool = false;
+		if (value != null) {
+			bool = value.booleanValue();
+		}
+		return getDisplayValue(
+			bool,
+			Env.getAD_Language(Env.getCtx())
+		);
+	}
+	/**
+	 * Get translated display value from boolean
+	 * @param value
+	 * @return translated "Yes" / "No" based on login language
+	 */
 	public static String getDisplayValue(boolean value) {
 		return getDisplayValue(
 			value,
