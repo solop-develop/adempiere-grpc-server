@@ -410,21 +410,20 @@ public class RecordUtil {
 						displayValueBuilder.build()
 					);
 				} else if (DisplayType.isNumeric(displayTypeId)) {
-					// if (ReferenceUtil.REFERENCES_CURRENCY.contains(displayTypeId)) {
-					// 	final String displayValue = NumberManager.getDisplayValueWithCurrencyFromObject(
-					// 		value,
-					// 		displayTypeId,
-					// 		recordCurrencyId
-					// 	);
-					// 	Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
-					// 		displayValue
-					// 	);
-					// 	rowValues.putFields(
-					// 		LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
-					// 		displayValueBuilder.build()
-					// 	);
-					// }
-					if (ReferenceUtil.REFERENCES_DECIMALS.contains(displayTypeId)) {
+					if (ReferenceUtil.REFERENCES_CURRENCY.contains(displayTypeId)) {
+						// final String displayValue = NumberManager.getDisplayValueWithCurrencyFromObject(
+						// 	value,
+						// 	displayTypeId,
+						// 	recordCurrencyId
+						// );
+						// Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
+						// 	displayValue
+						// );
+						// rowValues.putFields(
+						// 	LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+						// 	displayValueBuilder.build()
+						// );
+					} else if (ReferenceUtil.REFERENCES_DECIMALS.contains(displayTypeId)) {
 						final String displayValue = NumberManager.getDisplayValue(
 							value,
 							displayTypeId

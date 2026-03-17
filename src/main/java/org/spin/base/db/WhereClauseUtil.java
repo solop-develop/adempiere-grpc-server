@@ -991,6 +991,7 @@ public class WhereClauseUtil {
  		// Add browse field to map
 		List<MBrowseField> browseFieldsList = browser.getFields();
 		HashMap<String, MBrowseField> browseFields = new HashMap<>();
+		// TODO: Improve and verify with `BrowserLogic.fieldsMapCache`
 		for (MBrowseField browseField : browseFieldsList) {
 			String viewColumnName = browseField.getAD_View_Column().getColumnName();
 			if (browseFields.containsKey(viewColumnName)) {
