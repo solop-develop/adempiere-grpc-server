@@ -17,22 +17,16 @@ package org.spin.grpc.service.ui;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.adempiere.core.domains.models.I_AD_ChangeLog;
-import org.adempiere.core.domains.models.I_AD_Element;
-import org.adempiere.core.domains.models.I_AD_Table;
 import org.adempiere.core.domains.models.X_AD_Window;
 import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MMenu;
 import org.compiere.model.MQuery;
@@ -59,22 +53,18 @@ import org.spin.backend.grpc.user_interface.UpdateTabEntityRequest;
 import org.spin.base.db.OrderByUtil;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
-import org.spin.base.interim.ContextTemporaryWorkaround;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
 import org.spin.dictionary.util.DictionaryUtil;
-import org.spin.grpc.service.UserInterface;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.query.SortingManager;
-import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
-import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 
 public class TabEntityLogic {
@@ -223,18 +213,8 @@ public class TabEntityLogic {
 				table.getTableName()
 			)
 		;
-		CLogger log = CLogger.getCLogger(UserInterface.class);
 
 		try {
-			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<String, MColumn>();
-			//	Add field to map
-			for (MColumn column: table.getColumnsAsList()) {
-				columnsMap.put(
-					column.getColumnName().toUpperCase(),
-					column
-				);
-			}
-
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
 
@@ -244,98 +224,10 @@ public class TabEntityLogic {
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
-				Struct.Builder rowValues = Struct.newBuilder();
-				ResultSetMetaData metaData = rs.getMetaData();
-				for (int index = 1; index <= metaData.getColumnCount(); index++) {
-					try {
-						String columnName = metaData.getColumnName(index);
-						MColumn column = columnsMap.get(columnName.toUpperCase());
-						//	Display Columns
-						if(column == null) {
-							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(displayValue);
-
-							rowValues.putFields(
-								columnName,
-								displayValueBuilder.build()
-							);
-							continue;
-						}
-						if (column.isKey()) {
-							final int identifier = rs.getInt(index);
-							entityBuilder.setId(identifier);
-						}
-						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
-							final String uuid = rs.getString(index);
-							entityBuilder.setUuid(
-								TextManager.getValidString(uuid)
-							);
-						}
-						//	From field
-						String fieldColumnName = column.getColumnName();
-						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
-							value,
-							column.getAD_Reference_ID()
-						);
-						rowValues.putFields(
-							fieldColumnName,
-							valueBuilder.build()
-						);
-
-						// to add client uuid by record
-						if (fieldColumnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
-							final int clientId = NumberManager.getIntegerFromObject(value);
-							MClient clientEntity = MClient.get(
-								table.getCtx(),
-								clientId
-							);
-							if (clientEntity != null) {
-								final String clientUuid = clientEntity.get_UUID();
-								Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
-									clientUuid
-								);
-								rowValues.putFields(
-									LookupUtil.getUuidColumnName(
-										I_AD_Element.COLUMNNAME_AD_Client_ID
-									),
-									valueUuidBuilder.build()
-								);
-							}
-						} else if (fieldColumnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-							if (rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID) > 0) {
-								MTable tableRow = MTable.get(table.getCtx(), rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
-								if (tableRow != null) {
-									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
-									if (entityRow != null) {
-										final String recordIdDisplayValue = entityRow.getDisplayValue();
-										Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
-											recordIdDisplayValue
-										);
-										rowValues.putFields(
-											LookupUtil.getDisplayColumnName(
-												I_AD_ChangeLog.COLUMNNAME_Record_ID
-											),
-											recordIdDisplayBuilder.build()
-										);
-									}
-
-								}
-							}
-						}
-					} catch (Exception e) {
-						log.warning(e.getLocalizedMessage());
-						e.printStackTrace();
-					}
-				}
-
-				// TODO: Temporary Workaround
-				rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
-					table.getTableName(),
-					rowValues
+				entityBuilder = org.spin.base.util.RecordUtil.convertResultSetToStruct(
+					table,
+					rs
 				);
-
-				entityBuilder.setValues(rowValues);
 			}
 		} catch (Exception e) {
 			log.warning(e.getLocalizedMessage());
