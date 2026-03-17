@@ -15,6 +15,7 @@
  *************************************************************************************/
 package org.spin.base.util;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,33 @@ public class ReferenceUtil {
 	private Properties context;
 	/**	Local cache	*/
 	private Map<String, ReferenceInfo> referenceInfoMap;
+
+	public static final List<Integer> REFERENCES_DECIMALS = Arrays.asList(
+		DisplayType.Amount,
+		DisplayType.CostPrice,
+		DisplayType.Number,
+		DisplayType.Quantity
+	);
+
+	public static final List<Integer> REFERENCES_AMOUNT = Arrays.asList(
+		DisplayType.Amount,
+		DisplayType.CostPrice,
+		DisplayType.Number
+	);
+
+	public static final List<Integer> REFERENCES_QUANTITY = Arrays.asList(
+		DisplayType.Amount,
+		DisplayType.CostPrice,
+		DisplayType.Integer,
+		DisplayType.Number,
+		DisplayType.Quantity
+	);
+
+	public static final List<Integer> REFERENCES_CURRENCY = Arrays.asList(
+		DisplayType.Amount,
+		DisplayType.CostPrice
+	);
+
 	
 	public static ReferenceUtil getInstance(Properties context) {
 		if(instance == null) {

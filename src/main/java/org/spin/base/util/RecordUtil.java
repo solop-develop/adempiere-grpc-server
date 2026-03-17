@@ -18,6 +18,7 @@ package org.spin.base.util;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,8 +51,10 @@ import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.util.db.FromUtil;
 import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Struct;
@@ -69,6 +72,7 @@ public class RecordUtil {
 	/**	Reference cache	*/
 	public static CCache<String, MQuery> referenceWhereClauseCache = new CCache<String, MQuery>("Record_Reference_WhereClause", 30, 0);	//	no time-out
 
+	public static CCache<String, LinkedHashMap<String, MColumn>> columnsMapCache = new CCache<String, LinkedHashMap<String, MColumn>>("Table_Columns_Map", 30, 0);	//	no time-out
 
 
 	/**
@@ -333,6 +337,176 @@ public class RecordUtil {
 	}
 
 
+	public static Entity.Builder convertResultSetToStruct(MTable table, ResultSet resultSet) throws SQLException {
+		Entity.Builder entityBuilder = Entity.newBuilder()
+			.setTableName(
+				table.getTableName()
+			)
+		;
+		Struct.Builder rowValues = Struct.newBuilder();
+
+		LinkedHashMap<String, MColumn> columnsMap = org.spin.base.util.RecordUtil.columnsMapCache.get(table.getTableName());
+		if (columnsMap ==  null || columnsMap.isEmpty()) {
+			columnsMap = new LinkedHashMap<>();
+			//	Add field to map
+			for(MColumn column: table.getColumnsAsList()) {
+				columnsMap.put(
+					column.getColumnName().toUpperCase(),
+					column
+				);
+			}
+		}
+
+		ResultSetMetaData metaData = resultSet.getMetaData();
+		for (int index = 1; index <= metaData.getColumnCount(); index++) {
+			try {
+				final String columnNameMetadata = metaData.getColumnName(index);
+				MColumn column = columnsMap.get(columnNameMetadata.toUpperCase());
+				//	Display Columns
+				if(column == null) {
+					final String displayValue = resultSet.getString(index);
+					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(displayValue);
+
+					rowValues.putFields(
+						columnNameMetadata,
+						displayValueBuilder.build()
+					);
+					continue;
+				}
+				final int displayTypeId = column.getAD_Reference_ID();
+				if (column.isKey()) {
+					final int identifier = resultSet.getInt(index);
+					entityBuilder.setId(identifier);
+				}
+				if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnNameMetadata.toLowerCase())) {
+					final String uuid = resultSet.getString(index);
+					entityBuilder.setUuid(
+						TextManager.getValidString(uuid)
+					);
+				}
+				//	From Coumn
+				final String columnName = column.getColumnName();
+				Object value = resultSet.getObject(index);
+				Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
+					value,
+					displayTypeId
+				);
+				rowValues.putFields(
+					columnName,
+					valueBuilder.build()
+				);
+
+				// Add custom display values
+				if (DisplayType.isDate(displayTypeId)) {
+					final String displayValue = TimeManager.getDisplayValue(
+						value,
+						displayTypeId
+					);
+					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
+						displayValue
+					);
+					rowValues.putFields(
+						LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+						displayValueBuilder.build()
+					);
+				} else if (DisplayType.isNumeric(displayTypeId)) {
+					if (ReferenceUtil.REFERENCES_CURRENCY.contains(displayTypeId)) {
+						// final String displayValue = NumberManager.getDisplayValueWithCurrencyFromObject(
+						// 	value,
+						// 	displayTypeId,
+						// 	recordCurrencyId
+						// );
+						// Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
+						// 	displayValue
+						// );
+						// rowValues.putFields(
+						// 	LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+						// 	displayValueBuilder.build()
+						// );
+					} else if (ReferenceUtil.REFERENCES_DECIMALS.contains(displayTypeId)) {
+						final String displayValue = NumberManager.getDisplayValue(
+							value,
+							displayTypeId
+						);
+						Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
+							displayValue
+						);
+						rowValues.putFields(
+							LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+							displayValueBuilder.build()
+						);
+					}
+				} else if (DisplayType.YesNo == displayTypeId) {
+					final String displayValue = BooleanManager.getDisplayValue(
+						value
+					);
+					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
+						displayValue
+					);
+					rowValues.putFields(
+						LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
+						displayValueBuilder.build()
+					);
+				}
+
+				// to add client uuid by record
+				if (columnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
+					final int clientId = NumberManager.getIntegerFromObject(value);
+					MClient clientEntity = MClient.get(
+						table.getCtx(),
+						clientId
+					);
+					if (clientEntity != null) {
+						final String clientUuid = clientEntity.get_UUID();
+						Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
+							clientUuid
+						);
+						rowValues.putFields(
+							LookupUtil.getUuidColumnName(
+								I_AD_Element.COLUMNNAME_AD_Client_ID
+							),
+							valueUuidBuilder.build()
+						);
+					}
+				} else if (columnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
+					if (resultSet.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID) > 0) {
+						MTable tableRow = MTable.get(table.getCtx(), resultSet.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
+						if (tableRow != null) {
+							PO entityRow = tableRow.getPO(resultSet.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
+							if (entityRow != null) {
+								final String recordIdDisplayValue = entityRow.getDisplayValue();
+								Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
+									recordIdDisplayValue
+								);
+								rowValues.putFields(
+									LookupUtil.getDisplayColumnName(
+										I_AD_ChangeLog.COLUMNNAME_Record_ID
+									),
+									recordIdDisplayBuilder.build()
+								);
+							}
+
+						}
+					}
+				}
+			} catch (Exception e) {
+				log.warning(e.getLocalizedMessage());
+				e.printStackTrace();
+			}
+		}
+
+		// TODO: Temporary Workaround
+		rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
+			table.getTableName(),
+			rowValues
+		);
+		//	
+		entityBuilder.setValues(rowValues);
+
+		return entityBuilder;
+	}
+
+
 
 	/**
 	 * Convert Entities List
@@ -347,10 +521,13 @@ public class RecordUtil {
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
 		long recordCount = 0;
 		try {
-			LinkedHashMap<String, MColumn> columnsMap = new LinkedHashMap<>();
-			//	Add field to map
-			for(MColumn column: table.getColumnsAsList()) {
-				columnsMap.put(column.getColumnName().toUpperCase(), column);
+			LinkedHashMap<String, MColumn> columnsMap = columnsMapCache.get(table.getTableName());
+			if (columnsMap ==  null || columnsMap.isEmpty()) {
+				columnsMap = new LinkedHashMap<>();
+				//	Add field to map
+				for(MColumn column: table.getColumnsAsList()) {
+					columnsMap.put(column.getColumnName().toUpperCase(), column);
+				}
 			}
 			//	SELECT Key, Value, Name FROM ...
 			pstmt = DB.prepareStatement(sql, null);
@@ -359,100 +536,11 @@ public class RecordUtil {
 			//	Get from Query
 			rs = pstmt.executeQuery();
 			while(rs.next()) {
-				Entity.Builder entityBuilder = Entity.newBuilder()
-					.setTableName(table.getTableName())
-				;
-				Struct.Builder rowValues = Struct.newBuilder();
-				ResultSetMetaData metaData = rs.getMetaData();
-				for (int index = 1; index <= metaData.getColumnCount(); index++) {
-					try {
-						String columnName = metaData.getColumnName(index);
-						MColumn field = columnsMap.get(columnName.toUpperCase());
-						//	Display Columns
-						if(field == null) {
-							String displayValue = rs.getString(index);
-							Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(displayValue);
-
-							rowValues.putFields(
-								columnName,
-								displayValueBuilder.build()
-							);
-							continue;
-						}
-						if (field.isKey()) {
-							final int identifier = rs.getInt(index);
-							entityBuilder.setId(identifier);
-						}
-						if (I_AD_Element.COLUMNNAME_UUID.toLowerCase().equals(columnName.toLowerCase())) {
-							final String uuid = rs.getString(index);
-							entityBuilder.setUuid(
-								TextManager.getValidString(uuid)
-							);
-						}
-						//	From field
-						String fieldColumnName = field.getColumnName();
-						Object value = rs.getObject(index);
-						Value.Builder valueBuilder = ValueManager.getProtoValueFromObject(
-							value,
-							field.getAD_Reference_ID()
-						);
-						rowValues.putFields(
-							fieldColumnName,
-							valueBuilder.build()
-						);
-
-						// to add client uuid by record
-						if (fieldColumnName.equals(I_AD_Element.COLUMNNAME_AD_Client_ID)) {
-							final int clientId = NumberManager.getIntegerFromObject(value);
-							MClient clientEntity = MClient.get(
-								table.getCtx(),
-								clientId
-							);
-							if (clientEntity != null) {
-								final String clientUuid = clientEntity.get_UUID();
-								Value.Builder valueUuidBuilder = TextManager.getProtoValueFromString(
-									clientUuid
-								);
-								rowValues.putFields(
-									LookupUtil.getUuidColumnName(
-										I_AD_Element.COLUMNNAME_AD_Client_ID
-									),
-									valueUuidBuilder.build()
-								);
-							}
-						} else if (fieldColumnName.equals(I_AD_ChangeLog.COLUMNNAME_Record_ID)) {
-							if (rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID) > 0) {
-								MTable tableRow = MTable.get(table.getCtx(), rs.getInt(I_AD_Table.COLUMNNAME_AD_Table_ID));
-								if (tableRow != null) {
-									PO entityRow = tableRow.getPO(rs.getInt(I_AD_ChangeLog.COLUMNNAME_Record_ID), null);
-									if (entityRow != null) {
-										final String recordIdDisplayValue = entityRow.getDisplayValue();
-										Value.Builder recordIdDisplayBuilder = TextManager.getProtoValueFromString(
-											recordIdDisplayValue
-										);
-										rowValues.putFields(
-											LookupUtil.getDisplayColumnName(
-												I_AD_ChangeLog.COLUMNNAME_Record_ID
-											),
-											recordIdDisplayBuilder.build()
-										);
-									}
-
-								}
-							}
-						}
-					} catch (Exception e) {
-						log.warning(e.getLocalizedMessage());
-					}
-				}
-
-				// TODO: Temporary Workaround
-				rowValues = ContextTemporaryWorkaround.setContextAsUnknowColumn(
-					table.getTableName(),
-					rowValues
+				Entity.Builder entityBuilder = org.spin.base.util.RecordUtil.convertResultSetToStruct(
+					table,
+					rs
 				);
 				//	
-				entityBuilder.setValues(rowValues);
 				builder.addRecords(entityBuilder.build());
 				recordCount++;
 			}
