@@ -121,6 +121,27 @@ service BankStatementMatch {
 			body: "*"
 		};
 	}
+
+	// Multi-payment match: N payments <-> M imported movements (creates N*M C_BankStatementLineMatch records)
+	rpc MultiPaymentMatch(MultiPaymentMatchRequest) returns (MultiPaymentMatchResponse) {
+		option (google.api.http) = {
+			post: "/forms/bank-statement-match/match/multi-payment",
+			body: "*"
+		};
+	}
+	// Unmatch all payments from multi-payment match (deletes ALL C_BankStatementLineMatch for given movements)
+	rpc UnmatchMultiPayment(UnmatchMultiPaymentRequest) returns (UnmatchMultiPaymentResponse) {
+		option (google.api.http) = {
+			patch: "/forms/bank-statement-match/match/multi-payment/unmatch",
+			body: "*"
+		};
+	}
+	// List C_BankStatementLineMatch records for a given imported movement or bank statement line
+	rpc ListBankStatementLineMatches(ListBankStatementLineMatchesRequest) returns (ListBankStatementLineMatchesResponse) {
+		option (google.api.http) = {
+			get: "/forms/bank-statement-match/line-matches"
+		};
+	}
 }
 
 
@@ -277,6 +298,8 @@ message ImportedBankMovement {
 	int32 bank_statement_line_id = 14;
 	bool is_matched = 15;
 	bool is_manual_match = 16;
+	bool is_multi_payment_match = 17;
+	repeated BankStatementLineMatch line_matches = 18;
 }
 
 message ListImportedBankMovementsResponse {
@@ -383,6 +406,8 @@ message MatchingMovement {
 	bool is_manual_match = 22;
 	bool is_matched = 23;
 	int32 bank_statement_line_id = 24;
+	bool is_multi_payment_match = 25;
+	repeated BankStatementLineMatch line_matches = 26;
 }
 message ListMatchingMovementsResponse {
 	int64 record_count = 1;
@@ -434,6 +459,8 @@ message ResultMovement {
 	bool is_manual_match = 22;
 	bool is_matched = 23;
 	int32 bank_statement_line_id = 24;
+	bool is_multi_payment_match = 25;
+	repeated BankStatementLineMatch line_matches = 26;
 }
 message ListResultMovementsResponse {
 	int64 record_count = 1;
@@ -485,4 +512,46 @@ message ManualMatchRequest {
 }
 message ManualMatchResponse {
 	MatchingMovement matched_movement = 1;
+}
+
+
+// Bank Statement Line Match (C_BankStatementLineMatch)
+message BankStatementLineMatch {
+	int32 id = 1;
+	string uuid = 2;
+	int32 imported_movement_id = 3;
+	int32 bank_statement_line_id = 4;
+	Payment payment = 5;
+	Currency currency = 6;
+	bool is_manual_match = 7;
+	google.protobuf.Timestamp match_date = 8;
+	string match_date_formatted = 9;
+}
+
+// Multi-payment match: N payments x M imported movements -> N*M C_BankStatementLineMatch records
+message MultiPaymentMatchRequest {
+	repeated int32 payment_ids = 1;
+	repeated int32 imported_movement_ids = 2;
+}
+message MultiPaymentMatchResponse {
+	repeated BankStatementLineMatch line_matches = 1;
+	string message = 2;
+}
+
+// Unmatch multi-payment: pass list of imported movement IDs, deletes ALL associated C_BankStatementLineMatch
+message UnmatchMultiPaymentRequest {
+	repeated int32 imported_movement_ids = 1;
+}
+message UnmatchMultiPaymentResponse {
+	string message = 1;
+}
+
+// Query match records by imported movement or bank statement line
+message ListBankStatementLineMatchesRequest {
+	int32 imported_movement_id = 1;
+	int32 bank_statement_line_id = 2;
+}
+message ListBankStatementLineMatchesResponse {
+	int64 record_count = 1;
+	repeated BankStatementLineMatch records = 2;
 }
