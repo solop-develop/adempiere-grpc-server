@@ -151,6 +151,15 @@ public class TimeManager {
 			dateValue = TimeManager.getTimestampFromNumber(
 				(Number) value
 			);
+		} else if (value instanceof Value) {
+			dateValue = TimeManager.getTimestampFromProtoValue(
+				(Value) value
+			);
+		} else if (value instanceof Value.Builder) {
+			Value newValue = ((Value.Builder) value).build();
+			dateValue = TimeManager.getTimestampFromProtoValue(
+				newValue
+			);
 		}
 		return dateValue;
 	}
