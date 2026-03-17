@@ -24,17 +24,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.adempiere.core.domains.models.I_C_BankStatement;
+import org.adempiere.core.domains.models.I_C_BankStatementLineMatch;
 import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.impexp.BankStatementMatchInfo;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
 import org.compiere.model.MBankStatementLine;
+import org.compiere.model.MBankStatementLineMatch;
 import org.compiere.model.MBankStatementMatcher;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
@@ -49,9 +53,12 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatementLineMatch;
 import org.spin.backend.grpc.form.bank_statement_match.GetBankStatementRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankAccountsRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementLineMatchesRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementLineMatchesResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListBusinessPartnersRequest;
@@ -70,10 +77,14 @@ import org.spin.backend.grpc.form.bank_statement_match.MatchMode;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchingMovement;
+import org.spin.backend.grpc.form.bank_statement_match.MultiPaymentMatchRequest;
+import org.spin.backend.grpc.form.bank_statement_match.MultiPaymentMatchResponse;
 import org.spin.backend.grpc.form.bank_statement_match.Payment;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ResultMovement;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchMultiPaymentRequest;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchMultiPaymentResponse;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
 import org.spin.base.util.LookupUtil;
@@ -772,6 +783,9 @@ public abstract class BankStatementMatchLogic {
 		AtomicInteger result = new AtomicInteger(0);
 
 		request.getImportedMovementsIdsList().stream().forEach(importedBankMovementId -> {
+			// Delete associated C_BankStatementLineMatch records
+			BankStatementMatchUtil.deleteLineMatchesByImportedMovement(importedBankMovementId);
+
 			X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
 			importedMovement.setC_Payment_ID(0);
 			importedMovement.set_ValueOfColumn(
@@ -780,6 +794,10 @@ public abstract class BankStatementMatchLogic {
 			);
 			importedMovement.set_ValueOfColumn(
 				"IsManualMatch",
+				false
+			);
+			importedMovement.set_ValueOfColumn(
+				"IsMultiPaymentMatch",
 				false
 			);
 			if (importedMovement.is_Changed() && importedMovement.save()) {
@@ -878,7 +896,7 @@ public abstract class BankStatementMatchLogic {
 					currentBankStatementImport.setC_Charge_ID(defaultChargeId);
 				}
 				if(currentBankStatementImport.getC_BankStatementLine_ID() == 0) {
-					//	
+					//
 					MBankStatementLine lineToImport = new MBankStatementLine(bankStatement, currentBankStatementImport, lineNo.get());
 					lineToImport.saveEx();
 					currentBankStatementImport.setC_BankStatement_ID(bankStatement.getC_BankStatement_ID());
@@ -887,6 +905,18 @@ public abstract class BankStatementMatchLogic {
 					currentBankStatementImport.setProcessed(true);
 					currentBankStatementImport.set_ValueOfColumn("IsMatched", true);
 					currentBankStatementImport.saveEx();
+
+					// Migrate C_BankStatementLineMatch from I_BankStatement_ID to C_BankStatementLine_ID
+					if (currentBankStatementImport.get_ValueAsBoolean("IsMultiPaymentMatch")) {
+						List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+							currentBankStatementImport.getI_BankStatement_ID()
+						);
+						for (MBankStatementLineMatch lineMatch : lineMatches) {
+							lineMatch.setC_BankStatementLine_ID(lineToImport.getC_BankStatementLine_ID());
+							lineMatch.set_ValueOfColumn("I_BankStatement_ID", null);
+							lineMatch.saveEx();
+						}
+					}
 
 					lineNo.addAndGet(10);
 				} else {
@@ -925,6 +955,228 @@ public abstract class BankStatementMatchLogic {
 		);
 
 		return builder;
+	}
+
+
+
+	public static MultiPaymentMatchResponse.Builder multiPaymentMatch(MultiPaymentMatchRequest request) {
+		List<Integer> paymentIds = request.getPaymentIdsList();
+		List<Integer> importedMovementIds = request.getImportedMovementIdsList();
+
+		if (paymentIds == null || paymentIds.isEmpty()) {
+			throw new AdempiereException("@FillMandatory@ @C_Payment_ID@");
+		}
+		if (importedMovementIds == null || importedMovementIds.isEmpty()) {
+			throw new AdempiereException("@FillMandatory@ @I_BankStatement_ID@");
+		}
+
+		// V4 - No duplicates
+		Set<Integer> uniquePaymentIds = new HashSet<>(paymentIds);
+		if (uniquePaymentIds.size() != paymentIds.size()) {
+			throw new AdempiereException("@C_Payment_ID@ @AlreadyExists@");
+		}
+		Set<Integer> uniqueMovementIds = new HashSet<>(importedMovementIds);
+		if (uniqueMovementIds.size() != importedMovementIds.size()) {
+			throw new AdempiereException("@I_BankStatement_ID@ @AlreadyExists@");
+		}
+
+		// Load and validate imported movements
+		List<X_I_BankStatement> importedMovements = new ArrayList<>();
+		for (int movementId : importedMovementIds) {
+			X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), movementId, null);
+			if (importedMovement == null || importedMovement.getI_BankStatement_ID() <= 0) {
+				throw new AdempiereException("@I_BankStatement_ID@ (" + movementId + ") @NotFound@");
+			}
+			importedMovements.add(importedMovement);
+		}
+
+		// Load and validate payments
+		List<MPayment> payments = new ArrayList<>();
+		for (int paymentId : paymentIds) {
+			MPayment payment = new MPayment(Env.getCtx(), paymentId, null);
+			if (payment == null || payment.getC_Payment_ID() <= 0) {
+				throw new AdempiereException("@C_Payment_ID@ (" + paymentId + ") @NotFound@");
+			}
+			payments.add(payment);
+		}
+
+		// V1 - Same currency: all payments must share same currency
+		int firstPaymentCurrencyId = payments.get(0).getC_Currency_ID();
+		for (MPayment payment : payments) {
+			if (payment.getC_Currency_ID() != firstPaymentCurrencyId) {
+				throw new AdempiereException("@C_Currency_ID@ @BankStatementMatch.NoMatchedFound@: "
+					+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + " = " + payment.getCurrencyISO()
+					+ ") vs (" + payments.get(0).getC_Payment_ID() + " = " + payments.get(0).getCurrencyISO() + ")"
+				);
+			}
+		}
+		// V1 - Same currency: all movements must share same currency, and match payments
+		int firstMovementCurrencyId = importedMovements.get(0).getC_Currency_ID();
+		for (X_I_BankStatement movement : importedMovements) {
+			if (movement.getC_Currency_ID() != firstMovementCurrencyId) {
+				throw new AdempiereException("@C_Currency_ID@ @BankStatementMatch.NoMatchedFound@: "
+					+ "@I_BankStatement_ID@ (" + movement.getI_BankStatement_ID()
+					+ ") @C_Currency_ID@ @NotMatched@"
+				);
+			}
+		}
+		if (firstPaymentCurrencyId != firstMovementCurrencyId) {
+			throw new AdempiereException("@C_Currency_ID@ @BankStatementMatch.NoMatchedFound@: "
+				+ "@C_Payment_ID@ (" + payments.get(0).getCurrencyISO()
+				+ ") vs @I_BankStatement_ID@ (" + importedMovements.get(0).getC_Currency().getISO_Code() + ")"
+			);
+		}
+
+		// V2 - Same direction: all payments same sign, all movements same sign, both match
+		boolean firstPaymentIsReceipt = payments.get(0).isReceipt();
+		for (MPayment payment : payments) {
+			if (payment.isReceipt() != firstPaymentIsReceipt) {
+				throw new AdempiereException("@IsReceipt@ @BankStatementMatch.NoMatchedFound@: "
+					+ "@C_Payment_ID@ (" + payment.getC_Payment_ID() + ") @NotMatched@"
+				);
+			}
+		}
+		boolean firstMovementIsReceipt = importedMovements.get(0).getTrxAmt().compareTo(BigDecimal.ZERO) >= 0;
+		for (X_I_BankStatement movement : importedMovements) {
+			boolean movementIsReceipt = movement.getTrxAmt().compareTo(BigDecimal.ZERO) >= 0;
+			if (movementIsReceipt != firstMovementIsReceipt) {
+				throw new AdempiereException("@IsReceipt@ @BankStatementMatch.NoMatchedFound@: "
+					+ "@I_BankStatement_ID@ (" + movement.getI_BankStatement_ID() + ") @NotMatched@"
+				);
+			}
+		}
+		if (firstPaymentIsReceipt != firstMovementIsReceipt) {
+			throw new AdempiereException("@IsReceipt@ @BankStatementMatch.NoMatchedFound@: "
+				+ "@C_Payment_ID@ (" + (firstPaymentIsReceipt ? "@IsReceipt@" : "@IsPayment@")
+				+ ") vs @I_BankStatement_ID@ (" + (firstMovementIsReceipt ? "@IsReceipt@" : "@IsPayment@") + ")"
+			);
+		}
+
+		// V3 - Balance: Sum(PayAmt adjusted) == Sum(TrxAmt), tolerance 0.01
+		BigDecimal totalPayAmt = BigDecimal.ZERO;
+		for (MPayment payment : payments) {
+			BigDecimal payAmt = payment.getPayAmt();
+			if (!payment.isReceipt()) {
+				payAmt = payAmt.negate();
+			}
+			totalPayAmt = totalPayAmt.add(payAmt);
+		}
+		BigDecimal totalTrxAmt = BigDecimal.ZERO;
+		for (X_I_BankStatement movement : importedMovements) {
+			totalTrxAmt = totalTrxAmt.add(movement.getTrxAmt());
+		}
+		if (totalPayAmt.subtract(totalTrxAmt).abs().compareTo(new BigDecimal("0.01")) > 0) {
+			throw new AdempiereException("@PayAmt@/@TrxAmt@ @BankStatementMatch.NoMatchedFound@: "
+				+ "@PayAmt@ (" + totalPayAmt + ") vs @TrxAmt@ (" + totalTrxAmt + ")"
+			);
+		}
+
+		// Verify no existing matches for these payments/movements
+		for (MPayment payment : payments) {
+			List<MBankStatementLineMatch> existingMatches = new Query(
+				Env.getCtx(),
+				I_C_BankStatementLineMatch.Table_Name,
+				"C_Payment_ID = ?",
+				null
+			)
+				.setParameters(payment.getC_Payment_ID())
+				.setClient_ID()
+				.list()
+			;
+			if (existingMatches != null && !existingMatches.isEmpty()) {
+				throw new AdempiereException("@C_Payment_ID@ (" + payment.getC_Payment_ID()
+					+ ") #" + payment.getDocumentNo() + " @AlreadyExists@ @C_BankStatementLineMatch_ID@"
+				);
+			}
+		}
+
+		// Create N*M C_BankStatementLineMatch records
+		java.sql.Timestamp matchDate = new java.sql.Timestamp(System.currentTimeMillis());
+		MultiPaymentMatchResponse.Builder responseBuilder = MultiPaymentMatchResponse.newBuilder();
+		int recordCount = 0;
+
+		for (X_I_BankStatement movement : importedMovements) {
+			for (MPayment payment : payments) {
+				MBankStatementLineMatch lineMatch = new MBankStatementLineMatch(Env.getCtx(), 0, null);
+				lineMatch.setI_BankStatement_ID(movement.getI_BankStatement_ID());
+				lineMatch.setC_Payment_ID(payment.getC_Payment_ID());
+				lineMatch.setC_Currency_ID(payment.getC_Currency_ID());
+				lineMatch.setIsManualMatch(true);
+				lineMatch.setMatchDate(matchDate);
+				lineMatch.saveEx();
+
+				BankStatementLineMatch.Builder lineMatchBuilder = BankStatementMatchConvertUtil.convertBankStatementLineMatch(lineMatch);
+				responseBuilder.addLineMatches(lineMatchBuilder);
+				recordCount++;
+			}
+		}
+
+		// Update each imported movement flags
+		for (X_I_BankStatement movement : importedMovements) {
+			movement.setC_Payment_ID(payments.get(0).getC_Payment_ID());
+			movement.set_ValueOfColumn("IsMatched", true);
+			movement.set_ValueOfColumn("IsManualMatch", true);
+			movement.set_ValueOfColumn("IsMultiPaymentMatch", true);
+			movement.saveEx();
+		}
+
+		responseBuilder.setMessage(String.valueOf(recordCount));
+		return responseBuilder;
+	}
+
+
+
+	public static UnmatchMultiPaymentResponse.Builder unmatchMultiPayment(UnmatchMultiPaymentRequest request) {
+		List<Integer> importedMovementIds = request.getImportedMovementIdsList();
+		if (importedMovementIds == null || importedMovementIds.isEmpty()) {
+			throw new AdempiereException("@FillMandatory@ @I_BankStatement_ID@");
+		}
+
+		int totalDeleted = BankStatementMatchUtil.deleteLineMatchesByImportedMovements(importedMovementIds);
+
+		// Reset flags on each imported movement
+		for (int movementId : importedMovementIds) {
+			X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), movementId, null);
+			if (importedMovement == null || importedMovement.getI_BankStatement_ID() <= 0) {
+				continue;
+			}
+			importedMovement.setC_Payment_ID(0);
+			importedMovement.set_ValueOfColumn("IsMatched", false);
+			importedMovement.set_ValueOfColumn("IsManualMatch", false);
+			importedMovement.set_ValueOfColumn("IsMultiPaymentMatch", false);
+			importedMovement.saveEx();
+		}
+
+		return UnmatchMultiPaymentResponse.newBuilder()
+			.setMessage(String.valueOf(totalDeleted))
+		;
+	}
+
+
+
+	public static ListBankStatementLineMatchesResponse.Builder listBankStatementLineMatches(ListBankStatementLineMatchesRequest request) {
+		List<MBankStatementLineMatch> lineMatches;
+		if (request.getImportedMovementId() > 0) {
+			lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+				request.getImportedMovementId()
+			);
+		} else if (request.getBankStatementLineId() > 0) {
+			lineMatches = BankStatementMatchUtil.getLineMatchesByBankStatementLine(
+				request.getBankStatementLineId()
+			);
+		} else {
+			throw new AdempiereException("@FillMandatory@ @I_BankStatement_ID@ / @C_BankStatementLine_ID@");
+		}
+
+		ListBankStatementLineMatchesResponse.Builder builderList = ListBankStatementLineMatchesResponse.newBuilder()
+			.setRecordCount(lineMatches.size())
+		;
+		for (MBankStatementLineMatch lineMatch : lineMatches) {
+			builderList.addRecords(
+				BankStatementMatchConvertUtil.convertBankStatementLineMatch(lineMatch)
+			);
+		}
+		return builderList;
 	}
 
 }

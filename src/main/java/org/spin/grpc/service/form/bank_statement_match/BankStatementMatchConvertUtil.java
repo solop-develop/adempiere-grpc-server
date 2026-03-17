@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.List;
+
 import org.adempiere.core.domains.models.I_AD_Ref_List;
 import org.adempiere.core.domains.models.X_C_BankStatement;
 import org.adempiere.core.domains.models.X_C_Payment;
@@ -26,6 +28,7 @@ import org.compiere.model.MBPartner;
 import org.compiere.model.MBank;
 import org.compiere.model.MBankAccount;
 import org.compiere.model.MBankStatement;
+import org.compiere.model.MBankStatementLineMatch;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
@@ -35,6 +38,7 @@ import org.compiere.util.Util;
 import org.spin.backend.grpc.form.bank_statement_match.Bank;
 import org.spin.backend.grpc.form.bank_statement_match.BankAccount;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
+import org.spin.backend.grpc.form.bank_statement_match.BankStatementLineMatch;
 import org.spin.backend.grpc.form.bank_statement_match.BusinessPartner;
 import org.spin.backend.grpc.form.bank_statement_match.Currency;
 import org.spin.backend.grpc.form.bank_statement_match.ImportedBankMovement;
@@ -680,6 +684,18 @@ public class BankStatementMatchConvertUtil {
 			)
 		;
 
+		// Multi-payment match
+		boolean isMultiPaymentMatch = importBankStatement.get_ValueAsBoolean("IsMultiPaymentMatch");
+		builder.setIsMultiPaymentMatch(isMultiPaymentMatch);
+		if (isMultiPaymentMatch) {
+			List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+				importBankStatement.getI_BankStatement_ID()
+			);
+			for (MBankStatementLineMatch lineMatch : lineMatches) {
+				builder.addLineMatches(convertBankStatementLineMatch(lineMatch));
+			}
+		}
+
 		return builder;
 	}
 
@@ -863,6 +879,51 @@ public class BankStatementMatchConvertUtil {
 			)
 		;
 
+		// Multi-payment match
+		boolean isMultiPaymentMatch = importBankStatement.get_ValueAsBoolean("IsMultiPaymentMatch");
+		builder.setIsMultiPaymentMatch(isMultiPaymentMatch);
+		if (isMultiPaymentMatch) {
+			List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+				importBankStatement.getI_BankStatement_ID()
+			);
+			for (MBankStatementLineMatch lineMatch : lineMatches) {
+				builder.addLineMatches(convertBankStatementLineMatch(lineMatch));
+			}
+		}
+
+		return builder;
+	}
+
+
+
+	public static BankStatementLineMatch.Builder convertBankStatementLineMatch(MBankStatementLineMatch lineMatch) {
+		BankStatementLineMatch.Builder builder = BankStatementLineMatch.newBuilder();
+		if (lineMatch == null || lineMatch.getC_BankStatementLineMatch_ID() <= 0) {
+			return builder;
+		}
+		builder.setId(lineMatch.getC_BankStatementLineMatch_ID())
+			.setUuid(
+				TextManager.getValidString(lineMatch.getUUID())
+			)
+			.setImportedMovementId(lineMatch.getI_BankStatement_ID())
+			.setBankStatementLineId(lineMatch.getC_BankStatementLine_ID())
+			.setIsManualMatch(lineMatch.isManualMatch())
+			.setMatchDate(
+				TimeManager.getProtoTimestampFromTimestamp(lineMatch.getMatchDate())
+			)
+			.setMatchDateFormatted(
+				TextManager.getValidString(
+					TimeManager.getDateDisplayValue(lineMatch.getMatchDate())
+				)
+			)
+		;
+		// Payment
+		if (lineMatch.getC_Payment_ID() > 0) {
+			MPayment payment = new MPayment(Env.getCtx(), lineMatch.getC_Payment_ID(), null);
+			builder.setPayment(convertPayment(payment));
+		}
+		// Currency
+		builder.setCurrency(convertCurrency(lineMatch.getC_Currency_ID()));
 		return builder;
 	}
 
@@ -1024,6 +1085,18 @@ public class BankStatementMatchConvertUtil {
 				)
 			)
 		;
+
+		// Multi-payment match
+		boolean isMultiPaymentMatch = importBankStatement.get_ValueAsBoolean("IsMultiPaymentMatch");
+		builder.setIsMultiPaymentMatch(isMultiPaymentMatch);
+		if (isMultiPaymentMatch) {
+			List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+				importBankStatement.getI_BankStatement_ID()
+			);
+			for (MBankStatementLineMatch lineMatch : lineMatches) {
+				builder.addLineMatches(convertBankStatementLineMatch(lineMatch));
+			}
+		}
 
 		return builder;
 	}

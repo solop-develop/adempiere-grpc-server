@@ -20,6 +20,8 @@ import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatement;
 import org.spin.backend.grpc.form.bank_statement_match.BankStatementMatchGrpc.BankStatementMatchImplBase;
 import org.spin.backend.grpc.form.bank_statement_match.GetBankStatementRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementLineMatchesRequest;
+import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementLineMatchesResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankAccountsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ListBankStatementsResponse;
@@ -37,8 +39,12 @@ import org.spin.backend.grpc.form.bank_statement_match.ManualMatchRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ManualMatchResponse;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.MatchPaymentsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.MultiPaymentMatchRequest;
+import org.spin.backend.grpc.form.bank_statement_match.MultiPaymentMatchResponse;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.ProcessMovementsResponse;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchMultiPaymentRequest;
+import org.spin.backend.grpc.form.bank_statement_match.UnmatchMultiPaymentResponse;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsRequest;
 import org.spin.backend.grpc.form.bank_statement_match.UnmatchPaymentsResponse;
 
@@ -331,6 +337,72 @@ public class BankStatementMatchService extends BankStatementMatchImplBase {
 				throw new AdempiereException("Object Request Null");
 			}
 			ProcessMovementsResponse.Builder builder = BankStatementMatchLogic.processMovements(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void multiPaymentMatch(MultiPaymentMatchRequest request, StreamObserver<MultiPaymentMatchResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			MultiPaymentMatchResponse.Builder builder = BankStatementMatchLogic.multiPaymentMatch(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void unmatchMultiPayment(UnmatchMultiPaymentRequest request, StreamObserver<UnmatchMultiPaymentResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			UnmatchMultiPaymentResponse.Builder builder = BankStatementMatchLogic.unmatchMultiPayment(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+
+	@Override
+	public void listBankStatementLineMatches(ListBankStatementLineMatchesRequest request, StreamObserver<ListBankStatementLineMatchesResponse> responseObserver) {
+		try {
+			if (request == null) {
+				throw new AdempiereException("Object Request Null");
+			}
+			ListBankStatementLineMatchesResponse.Builder builder = BankStatementMatchLogic.listBankStatementLineMatches(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
