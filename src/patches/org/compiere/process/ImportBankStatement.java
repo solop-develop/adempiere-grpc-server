@@ -436,6 +436,7 @@ public class ImportBankStatement extends ImportBankStatementAbstract {
 				newMatch.setC_BankStatementLine_ID(statementLine.get_ID());
 				newMatch.setC_BankStatement_ID(statementLine.getC_BankStatement_ID());
 			}
+			statementLine.setIsMultiPaymentMatch(true);
 		}
 	}
 	
