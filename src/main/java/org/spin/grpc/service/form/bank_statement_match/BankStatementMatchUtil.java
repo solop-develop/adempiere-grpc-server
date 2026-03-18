@@ -66,7 +66,9 @@ public class BankStatementMatchUtil {
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
 		int businessPartnerId,
-		String searchValue
+		String searchValue,
+		String isReceipt,
+		boolean isMultiPaymentMatch
 	) {
 		String whereClasuePayment = "C_BankAccount_ID = ? "
 			+ " AND DocStatus NOT IN('IP', 'DR') "
@@ -146,6 +148,30 @@ public class BankStatementMatchUtil {
 			paymentFilters.add(businessPartnerId);
 		}
 
+		// Is Receipt (Y = receipts, N = payments)
+		if (!Util.isEmpty(isReceipt, true)) {
+			if ("Y".equalsIgnoreCase(isReceipt)) {
+				whereClasuePayment += "AND IsReceipt = 'Y' ";
+			} else if ("N".equalsIgnoreCase(isReceipt)) {
+				whereClasuePayment += "AND IsReceipt = 'N' ";
+			}
+		}
+
+		// // Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
+		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
+		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		whereClasuePayment += "AND EXISTS("
+		// 			+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+		// 			+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
+		// 		+ ") ";
+		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		whereClasuePayment += "AND NOT EXISTS("
+		// 			+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+		// 			+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
+		// 		+ ") ";
+		// 	}
+		// }
+
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClasuePayment += "AND ("
@@ -184,6 +210,8 @@ public class BankStatementMatchUtil {
 		BigDecimal paymentAmountTo,
 		int businessPartnerId,
 		String searchValue,
+		String isReceipt,
+		boolean isMultiPaymentMatch,
 		List<Object> parametersList
 	) {
 		StringBuffer sql = new StringBuffer(
@@ -197,7 +225,11 @@ public class BankStatementMatchUtil {
 					+ "SELECT 1 FROM I_BankStatement ibs "
 					+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
 						+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'Y' "
-				+ ") AS IsManualMatch "
+				+ ") AS IsManualMatch, "
+				+ "EXISTS("
+					+ "SELECT 1 FROM C_BankStatementLineMatch bslm "
+					+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+				+ ") AS IsMultiPaymentMatch "
 			+ "FROM C_Payment p "
 			+ "WHERE "
 				+ "p.C_BankAccount_ID = ? "
@@ -279,6 +311,34 @@ public class BankStatementMatchUtil {
 			parametersList.add(businessPartnerId);
 		}
 
+		// Is Receipt (Y = receipts, N = payments)
+		if (!Util.isEmpty(isReceipt, true)) {
+			if ("Y".equalsIgnoreCase(isReceipt)) {
+				sql.append("AND p.IsReceipt = 'Y' ");
+			} else if ("N".equalsIgnoreCase(isReceipt)) {
+				sql.append("AND p.IsReceipt = 'N' ");
+			}
+		}
+
+		// // Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
+		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
+		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		sql.append(
+		// 			"AND EXISTS("
+		// 				+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+		// 				+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+		// 			+ ") "
+		// 		);
+		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		sql.append(
+		// 			"AND NOT EXISTS("
+		// 				+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+		// 				+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+		// 			+ ") "
+		// 		);
+		// 	}
+		// }
+
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {
 			sql.append("AND ("
@@ -310,7 +370,9 @@ public class BankStatementMatchUtil {
 		Timestamp dateTo,
 		BigDecimal paymentAmountFrom,
 		BigDecimal paymentAmountTo,
-		String searchValue
+		String searchValue,
+		String isReceipt,
+		boolean isMultiPaymentMatch
 	) {
 		String whereClasueBankStatement = "C_BankAccount_ID = ? ";
 
@@ -371,6 +433,24 @@ public class BankStatementMatchUtil {
 			whereClasueBankStatement += "AND TrxAmt <= ? ";
 			filterParameters.add(paymentAmountTo);
 		}
+
+		// Is Receipt (Y = receipts/positive TrxAmt, N = payments/negative TrxAmt)
+		if (!Util.isEmpty(isReceipt, true)) {
+			if ("Y".equalsIgnoreCase(isReceipt)) {
+				whereClasueBankStatement += "AND TrxAmt >= 0 ";
+			} else if ("N".equalsIgnoreCase(isReceipt)) {
+				whereClasueBankStatement += "AND TrxAmt < 0 ";
+			}
+		}
+
+		// // Is Multi Payment Match
+		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
+		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		whereClasueBankStatement += "AND COALESCE(IsMultiPaymentMatch, 'N') = 'Y' ";
+		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
+		// 		whereClasueBankStatement += "AND COALESCE(IsMultiPaymentMatch, 'N') = 'N' ";
+		// 	}
+		// }
 
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {

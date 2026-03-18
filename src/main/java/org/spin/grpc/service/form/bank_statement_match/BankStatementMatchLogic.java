@@ -345,6 +345,8 @@ public abstract class BankStatementMatchLogic {
 			paymentAmountTo,
 			request.getBusinessPartnerId(),
 			request.getSearchValue(),
+			request.getIsReceipt(),
+			request.getIsMultiPaymentMatch(),
 			parametersList
 		);
 
@@ -412,7 +414,9 @@ public abstract class BankStatementMatchLogic {
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			request.getSearchValue()
+			request.getSearchValue(),
+			request.getIsReceipt(),
+			request.getIsMultiPaymentMatch()
 		);
 		List<Integer> importedBankMovementsId = importMovementsQuery
 			// .setLimit(0, 0)
@@ -479,7 +483,9 @@ public abstract class BankStatementMatchLogic {
 			paymentAmountFrom,
 			paymentAmountTo,
 			request.getBusinessPartnerId(),
-			null
+			null,
+			null,
+			false
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
 		if (paymentsId == null || paymentsId.isEmpty()) {
@@ -494,7 +500,9 @@ public abstract class BankStatementMatchLogic {
 			dateTo,
 			paymentAmountFrom,
 			paymentAmountTo,
-			null
+			null,
+			null,
+			false
 		);
 		List<Integer> importedBankMovementsId = bankMovementQuery.getIDsAsList();
 		if (importedBankMovementsId == null || importedBankMovementsId.isEmpty()) {
