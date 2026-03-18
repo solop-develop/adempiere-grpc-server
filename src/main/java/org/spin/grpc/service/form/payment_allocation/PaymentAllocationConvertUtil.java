@@ -411,7 +411,7 @@ public class PaymentAllocationConvertUtil {
 		);
 
 		boolean isReceipt = BooleanManager.getBooleanFromString(
-			resultSet.getString("IsReceipt")
+			resultSet.getString(I_C_Payment.COLUMNNAME_IsReceipt)
 		);
 		TransactionType.Builder transactionTypeBuilder = PaymentAllocationConvertUtil.convertTransactionType(
 			isReceipt ? X_T_InvoiceGL.APAR_ReceivablesOnly : X_T_InvoiceGL.APAR_PayablesOnly
