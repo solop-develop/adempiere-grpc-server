@@ -49,6 +49,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
 import org.compiere.model.MOrg;
+import org.compiere.model.MInvoice;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
@@ -932,6 +933,47 @@ public class PaymentAllocationLogic {
 	}
 
 
+	/**
+	 * Get the BPartner-specific conversion type ID
+	 */
+	private static int getBPartnerConversionTypeId(int businessPartnerId, String transactionName) {
+		MConversionType conversionType = new Query(
+			Env.getCtx(),
+			I_C_ConversionType.Table_Name,
+			"C_BPartner_ID = ?",
+			transactionName
+		)
+			.setParameters(businessPartnerId)
+			.setClient_ID()
+			.first()
+		;
+		if (conversionType != null && conversionType.getC_ConversionType_ID() > 0) {
+			return conversionType.getC_ConversionType_ID();
+		}
+		return 0;
+	}
+
+
+	/**
+	 * Get allocated amount for an invoice using a specific conversion type.
+	 * Mirrors MInvoice.getAllocatedAmt() but uses the specified conversion type
+	 * instead of COALESCE(i.C_ConversionType_ID, 0).
+	 */
+	private static BigDecimal getAllocatedAmtWithConversionType(
+		int invoiceId, int conversionTypeId, String transactionName
+	) {
+		String sql = "SELECT SUM(currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
+			+ "ah.C_Currency_ID, i.C_Currency_ID, ah.DateTrx, ?, al.AD_Client_ID, al.AD_Org_ID)) "
+			+ "FROM C_AllocationLine al"
+			+ " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID)"
+			+ " INNER JOIN C_Invoice i ON (al.C_Invoice_ID=i.C_Invoice_ID) "
+			+ "WHERE al.C_Invoice_ID=?"
+			+ " AND ah.IsActive='Y' AND al.IsActive='Y'"
+		;
+		return DB.getSQLValueBD(transactionName, sql, conversionTypeId, invoiceId);
+	}
+
+
 	public static ProcessResponse.Builder process(ProcessRequest request) {
 		// validate and get Organization
 		MOrg organization = validateAndGetOrganization(request.getTransactionOrganizationId());
@@ -946,6 +988,12 @@ public class PaymentAllocationLogic {
 
 		// validate and get Currency
 		MCurrency currency = validateAndGetCurrency(request.getCurrencyId());
+
+		// Validate empty list
+		if ((request.getPaymentSelectionsList() == null || request.getPaymentSelectionsList().size() == 0)
+			&& (request.getInvoiceSelectionsList() == null || request.getInvoiceSelectionsList().size() == 0)) {
+			throw new AdempiereException("@UpdateSelection@: @C_Invoice_ID@ | @C_Payment_ID@");
+		}
 
 		// Validate duplicate payment IDs
 		Set<Integer> seenPaymentIds = new HashSet<>();
@@ -995,7 +1043,7 @@ public class PaymentAllocationLogic {
 			MAllocationHdr allocation = saveData(
 				windowNo, businessPartner.getC_BPartner_ID(),
 				currency.getC_Currency_ID(),
-				// request.getIsMultiCurrency(),
+				request.getIsMultiCurrency(), request.getConversionTypeId(),
 				organization.getAD_Org_ID(), transactionDate,
 				request.getChargeId(), request.getDescription(),
 				totalDifference,
@@ -1037,7 +1085,7 @@ public class PaymentAllocationLogic {
 	private static MAllocationHdr saveData(
 		int windowNo, int businessPartnerId,
 		int currencyId,
-		// boolean isMultiCurrency,
+		boolean isMultiCurrency, int conversionTypeId,
 		int organizationId, Timestamp transactionDate,
 		int chargeId, String description,
 		BigDecimal totalDifference,
@@ -1238,24 +1286,65 @@ public class PaymentAllocationLogic {
 			alloc.saveEx();
 		}
 
+		// Determine the effective conversion type for multi-currency IsPaid check
+		int effectiveConvTypeId = conversionTypeId;
+		if (effectiveConvTypeId <= 0) {
+			effectiveConvTypeId = getBPartnerConversionTypeId(businessPartnerId, transactionName);
+		}
+
 		//  Test/Set IsPaid for Invoice - requires that allocation is posted
 		for (InvoiceSelection invoice : invoiceSelection) {
 			//  Invoice variables
 			final int C_Invoice_ID = invoice.getId();
-			String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
-				+ "FROM C_Invoice "
-				+ "WHERE C_Invoice_ID = ?"
-			;
-			BigDecimal open = DB.getSQLValueBD(transactionName, sql, C_Invoice_ID);
-			if (open != null && open.signum() == 0) {
-				sql = "UPDATE C_Invoice SET IsPaid='Y' "
-					+ "WHERE C_Invoice_ID=" + C_Invoice_ID
-				;
-				int no = DB.executeUpdate(sql, transactionName);
-				log.config("Invoice #" + C_Invoice_ID + " is paid - updated=" + no);
-			}
-			else {
-				log.config("Invoice #" + C_Invoice_ID + " is not paid - " + open);
+			MInvoice inv = new MInvoice(Env.getCtx(), C_Invoice_ID, transactionName);
+			// Determine the effective conversion type for multi-currency IsPaid check
+			if (isMultiCurrency && effectiveConvTypeId > 0 && currencyId != inv.getC_Currency_ID()) {
+				// Multi-currency: use BPartner/negotiated conversion type
+				BigDecimal allocatedAmt = getAllocatedAmtWithConversionType(
+					C_Invoice_ID, effectiveConvTypeId, transactionName
+				);
+				if (allocatedAmt == null) {
+					allocatedAmt = Env.ZERO;
+				}
+				BigDecimal total = inv.getGrandTotal();
+				if (!inv.isSOTrx()) {
+					total = total.negate();
+				}
+				if (inv.isCreditMemo()) {
+					total = total.negate();
+				}
+				if (total.compareTo(allocatedAmt) == 0 && !inv.isPaid()) {
+					inv.setIsPaid(true);
+					inv.saveEx(transactionName);
+					log.config("Invoice #" + C_Invoice_ID + " is paid (multi-currency)");
+				} else {
+					log.config("Invoice #" + C_Invoice_ID + " is not paid - allocated=" + allocatedAmt + ", total=" + total);
+				}
+			} else {
+				// String sql = "SELECT invoiceOpen(C_Invoice_ID, 0) "
+				// 	+ "FROM C_Invoice "
+				// 	+ "WHERE C_Invoice_ID = ?"
+				// ;
+				// BigDecimal open = DB.getSQLValueBD(transactionName, sql, C_Invoice_ID);
+				// if (open != null && open.signum() == 0) {
+				// 	sql = "UPDATE C_Invoice SET IsPaid='Y' "
+				// 		+ "WHERE C_Invoice_ID=" + C_Invoice_ID
+				// 	;
+				// 	int no = DB.executeUpdate(sql, transactionName);
+				// 	log.config("Invoice #" + C_Invoice_ID + " is paid - updated=" + no);
+				// }
+				// else {
+				// 	log.config("Invoice #" + C_Invoice_ID + " is not paid - " + open);
+				// }
+
+				// Single currency: use standard testAllocation
+				if (inv.testAllocation()) {
+					inv.saveEx(transactionName);
+					log.config("Invoice #" + C_Invoice_ID + " is paid");
+				}
+				else {
+					log.config("Invoice #" + C_Invoice_ID + " is not paid");
+				}
 			}
 		}
 
