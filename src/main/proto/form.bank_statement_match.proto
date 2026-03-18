@@ -280,6 +280,8 @@ message ListImportedBankMovementsRequest {
 	google.protobuf.Timestamp transaction_date_from = 12;
 	google.protobuf.Timestamp transaction_date_to = 13;
 	MatchMode match_mode = 14;
+	string is_receipt = 15;
+	bool is_multi_payment_match = 16;
 }
 message ImportedBankMovement {
 	int32 id = 1;
@@ -326,6 +328,8 @@ message ListPaymentsRequest {
 	google.protobuf.Timestamp transaction_date_from = 13;
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
+	string is_receipt = 16;
+	bool is_multi_payment_match = 17;
 }
 message Currency {
 	int32 id = 1;
@@ -355,6 +359,8 @@ message Payment {
 	string description = 12;
 	bool is_matched = 13;
 	bool is_manual_match = 14;
+	bool is_multi_payment_match = 15;
+	repeated BankStatementLineMatch line_matches = 16;
 }
 message ListPaymentsResponse {
 	int64 record_count = 1;

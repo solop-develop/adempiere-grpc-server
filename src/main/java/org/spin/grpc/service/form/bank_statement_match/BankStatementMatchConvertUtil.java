@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_BankStatementLineMatch;
 import org.adempiere.core.domains.models.X_C_BankStatement;
 import org.adempiere.core.domains.models.X_C_Payment;
 import org.adempiere.core.domains.models.X_I_BankStatement;
@@ -33,6 +34,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MOrg;
 import org.compiere.model.MPayment;
 import org.compiere.model.MRefList;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.form.bank_statement_match.Bank;
@@ -554,6 +556,31 @@ public class BankStatementMatchConvertUtil {
 				rs.getBoolean("IsManualMatch")
 			)
 		;
+
+		// Multi-payment match: populate line_matches
+		boolean isMultiPaymentMatch = rs.getBoolean("IsMultiPaymentMatch");
+		builder.setIsMultiPaymentMatch(isMultiPaymentMatch);
+		if (isMultiPaymentMatch) {
+			int paymentId = rs.getInt("C_Payment_ID");
+			if (paymentId > 0) {
+				List<MBankStatementLineMatch> lineMatches = new Query(
+					Env.getCtx(),
+					I_C_BankStatementLineMatch.Table_Name,
+					"C_Payment_ID = ?",
+					null
+				)
+					.setParameters(paymentId)
+					.setClient_ID()
+					.list()
+				;
+				for (MBankStatementLineMatch lineMatch : lineMatches) {
+					BankStatementLineMatch.Builder builderMatch = convertBankStatementLineMatch(lineMatch);
+					builder.addLineMatches(
+						builderMatch
+					);
+				}
+			}
+		}
 
 		return builder;
 	}
