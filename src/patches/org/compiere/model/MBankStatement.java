@@ -529,6 +529,8 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			}
 		}
 
+		reconcileMatchPayments(false);
+
 		// totals
 		calculateBalance();
 
@@ -629,6 +631,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 				line.saveEx();
 			}
 		}
+		reconcileMatchPayments(true);
 		addDescription(Msg.getMsg(getCtx(), "Voided"));
 		setStatementDifference(Env.ZERO);
 		
@@ -721,7 +724,20 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			return false;		
 		return false;
 	}	//	reActivateIt
-	
+
+	/**
+	 * Mark as Reconciled all payments assigned to this BankStatement in C_BankStatementLineMatch
+	 */
+	private void reconcileMatchPayments(boolean isReverse){
+		String whereClause = "EXISTS (SELECT 1 FROM C_BankStatementLineMatch lm WHERE lm.C_Payment_ID = C_Payment.C_Payment_ID AND lm.C_BankStatement_ID = ?)";
+		List<MPayment> payments = new Query(getCtx(), MPayment.Table_Name, whereClause, get_TrxName())
+			.setParameters(get_ID())
+			.list();
+		for (MPayment payment : payments) {
+			payment.setIsReconciled(!isReverse);
+			payment.saveEx();
+		}
+	}
 	
 	/*************************************************************************
 	 * 	Get Summary
