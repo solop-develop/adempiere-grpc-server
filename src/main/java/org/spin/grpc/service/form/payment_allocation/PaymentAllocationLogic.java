@@ -1142,6 +1142,12 @@ public class PaymentAllocationLogic {
 			alloc.setDescription(description);
 		}
 
+		// Set multi-currency fields on allocation header
+		if (isMultiCurrency && conversionTypeId > 0) {
+			alloc.set_ValueOfColumn("IsMultiCurrency", isMultiCurrency);
+			alloc.set_ValueOfColumn("C_ConversionType_ID", conversionTypeId);
+		}
+
 		if (!Util.isEmpty(tableName,true) && recordId > 0) {
 			String columnName = tableName + "_ID";
 			alloc.set_ValueOfColumn(columnName, recordId);
