@@ -22,7 +22,13 @@ import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_AD_PrintFormatItem;
@@ -30,6 +36,7 @@ import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
+import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
@@ -3549,6 +3556,7 @@ public class PointOfSalesForm extends StoreImplBase {
 			)
 		;
 
+		Map<Integer, Boolean> documentTypesMap = new HashMap<Integer, Boolean>();
 		query
 			.setLimit(limit, offset)
 			.list()
@@ -3558,14 +3566,27 @@ public class PointOfSalesForm extends StoreImplBase {
 					documentTypeId = availableDocumentType.get_ValueAsInt("POSReturnDocumentType_ID");
 				}
 				if (documentTypeId <= 0) {
-					// is empty, break loop
+					// is empty, skip
+					return;
+				}
+				if (documentTypesMap.containsKey(documentTypeId)) {
+					// already exists, skip
 					return;
 				}
 				MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
+				if (documentType == null || documentType.getC_DocType_ID() <= 0) {
+					// is empty, skip
+					return;
+				}
 
 				AvailableDocumentType.Builder builder = AvailableDocumentType.newBuilder()
 					.setId(
 						documentType.getC_DocType_ID()
+					)
+					.setUuid(
+						TextManager.getValidString(
+							documentType.getUUID()
+						)
 					)
 					.setKey(
 						TextManager.getValidString(
@@ -3574,7 +3595,9 @@ public class PointOfSalesForm extends StoreImplBase {
 					)
 					.setName(
 						TextManager.getValidString(
-							documentType.getPrintName()
+							documentType.get_Translation(
+								I_C_DocType.COLUMNNAME_PrintName
+							)
 						)
 					)
 					.setIsPosRequiredPin(
@@ -3588,6 +3611,8 @@ public class PointOfSalesForm extends StoreImplBase {
 				builderList.addDocumentTypes(
 					builder
 				);
+
+				documentTypesMap.put(documentTypeId, true);
 			})
 		;
 		//	

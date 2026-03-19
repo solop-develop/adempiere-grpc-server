@@ -95,6 +95,11 @@ public class ReverseSalesTransaction {
 	public static MOrder processReverseSalesOrder(MPOS pos, MOrder sourceOrder, MOrder returnOrder, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo,  String transactionName) {
 		CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
 
+		if (manualDocumentTypeId > 0) {
+			// To change IsManual on Order by Document type
+			returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
+			returnOrder.saveEx(transactionName);
+		}
 		final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
 		/*
 		final boolean isManualSalesOrder = sourceOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
@@ -110,9 +115,6 @@ public class ReverseSalesTransaction {
 			returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 			returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
 			// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
-			if (manualDocumentTypeId > 0) {
-				returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
-			}
 			returnOrder.saveEx(transactionName);
 		}
 
