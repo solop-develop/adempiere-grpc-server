@@ -934,6 +934,30 @@ public class PaymentAllocationLogic {
 
 
 	/**
+	 * Get the currency rate for the given conversion type and currencies.
+	 * Based on WAllocation.setCurrencyRate() / Allocation.getCurrencyRate()
+	 * @param currencyFromId source currency
+	 * @param currencyToId target currency
+	 * @param date conversion date
+	 * @param conversionTypeId conversion type to use
+	 * @return conversion rate, or ZERO if not found
+	 */
+	private static BigDecimal getCurrencyRate(int currencyFromId, int currencyToId, Timestamp date, int conversionTypeId) {
+		Properties ctx = Env.getCtx();
+		int clientId = Env.getAD_Client_ID(ctx);
+		BigDecimal rate = MConversionRate.getRate(
+			currencyFromId, currencyToId,
+			date, conversionTypeId,
+			clientId, 0
+		);
+		if (rate == null || rate.signum() == 0) {
+			return BigDecimal.ZERO;
+		}
+		return rate;
+	}
+
+
+	/**
 	 * Get the BPartner-specific conversion type ID
 	 */
 	private static int getBPartnerConversionTypeId(int businessPartnerId, String transactionName) {
@@ -1040,10 +1064,14 @@ public class PaymentAllocationLogic {
 			);
 			final String tableName =  request.getTableName();
 			final int recordId = request.getRecordId();
+			final BigDecimal currencyRate = NumberManager.getBigDecimalFromString(
+				request.getCurrencyRate()
+			);
 			MAllocationHdr allocation = saveData(
 				windowNo, businessPartner.getC_BPartner_ID(),
 				currency.getC_Currency_ID(),
 				request.getIsMultiCurrency(), request.getConversionTypeId(),
+				currencyRate,
 				organization.getAD_Org_ID(), transactionDate,
 				request.getChargeId(), request.getDescription(),
 				totalDifference,
@@ -1085,7 +1113,7 @@ public class PaymentAllocationLogic {
 	private static MAllocationHdr saveData(
 		int windowNo, int businessPartnerId,
 		int currencyId,
-		boolean isMultiCurrency, int conversionTypeId,
+		boolean isMultiCurrency, int conversionTypeId, BigDecimal currencyRate,
 		int organizationId, Timestamp transactionDate,
 		int chargeId, String description,
 		BigDecimal totalDifference,
@@ -1142,8 +1170,23 @@ public class PaymentAllocationLogic {
 			alloc.setDescription(description);
 		}
 
-		// Set multi-currency fields on allocation header
+		// Set multi-currency fields on allocation header (matching ZK Allocation.saveData behavior)
 		if (isMultiCurrency && conversionTypeId > 0) {
+			BigDecimal effectiveCurrencyRate = currencyRate;
+			if (effectiveCurrencyRate == null || effectiveCurrencyRate.signum() == 0) {
+				int schemaCurrencyId = MAcctSchema.get(
+					Env.getCtx(),
+					Env.getContextAsInt(Env.getCtx(), "$C_AcctSchema_ID")
+				).getC_Currency_ID();
+				effectiveCurrencyRate = getCurrencyRate(
+					currencyId, schemaCurrencyId,
+					transactionDate, conversionTypeId
+				);
+			}
+			if (effectiveCurrencyRate != null && effectiveCurrencyRate.signum() > 0) {
+				alloc.set_ValueOfColumn("CurrencyRate", effectiveCurrencyRate);
+			}
+
 			alloc.set_ValueOfColumn("IsMultiCurrency", isMultiCurrency);
 			alloc.set_ValueOfColumn("C_ConversionType_ID", conversionTypeId);
 		}
