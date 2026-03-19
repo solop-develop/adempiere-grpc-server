@@ -91,36 +91,38 @@ public class BankStatementMatchUtil {
 		ArrayList<Object> paymentFilters = new ArrayList<Object>();
 		paymentFilters.add(bankAccountId);
 
-		//	Match
-		if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
-			whereClasuePayment += "AND ("
-				+ "EXISTS("
-					+ "SELECT 1 "
-					+ "FROM I_BankStatement AS ibs "
-					+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID"
-				+ ") "
-				+ "OR EXISTS("
-					+ "SELECT 1 "
-					+ "FROM C_BankStatementLineMatch AS bslm "
-					+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
-				+ ") "
-			+ ") ";
-		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
-			whereClasuePayment += "AND ("
-				+ "NOT EXISTS("
-					+ "SELECT 1 "
-					+ "FROM I_BankStatement AS ibs "
-					+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID "
-						+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'N' "
-				+ ") "
-				+ "AND NOT EXISTS("
-					+ "SELECT 1 "
-					+ "FROM C_BankStatementLineMatch AS bslm "
-					+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
-				+ ") "
-			+ ") ";
-		} else {
-			// all mode MatchMode.MODE_ALL
+		//	Match (skipped when isMultiPaymentMatch=true; the EXISTS filter below covers it)
+		if (!isMultiPaymentMatch) {
+			if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
+				whereClasuePayment += "AND ("
+					+ "EXISTS("
+						+ "SELECT 1 "
+						+ "FROM I_BankStatement AS ibs "
+						+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID"
+					+ ") "
+					+ "OR EXISTS("
+						+ "SELECT 1 "
+						+ "FROM C_BankStatementLineMatch AS bslm "
+						+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
+					+ ") "
+				+ ") ";
+			} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
+				whereClasuePayment += "AND ("
+					+ "NOT EXISTS("
+						+ "SELECT 1 "
+						+ "FROM I_BankStatement AS ibs "
+						+ "WHERE ibs.C_Payment_ID = C_Payment.C_Payment_ID "
+							+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'N' "
+					+ ") "
+					+ "AND NOT EXISTS("
+						+ "SELECT 1 "
+						+ "FROM C_BankStatementLineMatch AS bslm "
+						+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
+					+ ") "
+				+ ") ";
+			} else {
+				// all mode MatchMode.MODE_ALL
+			}
 		}
 
 		//	Date Trx
@@ -158,20 +160,13 @@ public class BankStatementMatchUtil {
 			}
 		}
 
-		// // Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
-		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
-		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		whereClasuePayment += "AND EXISTS("
-		// 			+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
-		// 			+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
-		// 		+ ") ";
-		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		whereClasuePayment += "AND NOT EXISTS("
-		// 			+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
-		// 			+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
-		// 		+ ") ";
-		// 	}
-		// }
+		// Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
+		if (isMultiPaymentMatch) {
+			whereClasuePayment += "AND EXISTS("
+				+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+				+ "WHERE bslm.C_Payment_ID = C_Payment.C_Payment_ID"
+			+ ") ";
+		}
 
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {
@@ -253,38 +248,40 @@ public class BankStatementMatchUtil {
 			);
 		}
 
-		//	Match
-		if (matchMode == MatchMode.MODE_MATCHED_VALUE) {
-			sql.append(
-				"AND ("
-					+ "EXISTS("
-						+ "SELECT 1 "
-						+ "FROM I_BankStatement AS ibs "
-						+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID"
+		//	Match (skipped when isMultiPaymentMatch=true; the EXISTS filter below covers it)
+		if (!isMultiPaymentMatch) {
+			if (matchMode == MatchMode.MODE_MATCHED_VALUE) {
+				sql.append(
+					"AND ("
+						+ "EXISTS("
+							+ "SELECT 1 "
+							+ "FROM I_BankStatement AS ibs "
+							+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID"
+						+ ") "
+						+ "OR EXISTS("
+							+ "SELECT 1 "
+							+ "FROM C_BankStatementLineMatch AS bslm "
+							+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+						+ ") "
 					+ ") "
-					+ "OR EXISTS("
-						+ "SELECT 1 "
-						+ "FROM C_BankStatementLineMatch AS bslm "
-						+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+				);
+			} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
+				sql.append(
+					"AND ("
+						+ "NOT EXISTS("
+							+ "SELECT 1 "
+							+ "FROM I_BankStatement AS ibs "
+							+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
+								+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'N' "
+						+ ") "
+						+ "AND NOT EXISTS("
+							+ "SELECT 1 "
+							+ "FROM C_BankStatementLineMatch AS bslm "
+							+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+						+ ") "
 					+ ") "
-				+ ") "
-			);
-		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
-			sql.append(
-				"AND ("
-					+ "NOT EXISTS("
-						+ "SELECT 1 "
-						+ "FROM I_BankStatement AS ibs "
-						+ "WHERE ibs.C_Payment_ID = p.C_Payment_ID "
-							+ "AND COALESCE(ibs.IsManualMatch, 'N') = 'N' "
-					+ ") "
-					+ "AND NOT EXISTS("
-						+ "SELECT 1 "
-						+ "FROM C_BankStatementLineMatch AS bslm "
-						+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
-					+ ") "
-				+ ") "
-			);
+				);
+			}
 		}
 
 		//	Date Trx
@@ -322,24 +319,15 @@ public class BankStatementMatchUtil {
 			}
 		}
 
-		// // Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
-		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
-		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		sql.append(
-		// 			"AND EXISTS("
-		// 				+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
-		// 				+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
-		// 			+ ") "
-		// 		);
-		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		sql.append(
-		// 			"AND NOT EXISTS("
-		// 				+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
-		// 				+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
-		// 			+ ") "
-		// 		);
-		// 	}
-		// }
+		// Is Multi Payment Match (EXISTS against C_BankStatementLineMatch)
+		if (isMultiPaymentMatch) {
+			sql.append(
+				"AND EXISTS("
+					+ "SELECT 1 FROM C_BankStatementLineMatch AS bslm "
+					+ "WHERE bslm.C_Payment_ID = p.C_Payment_ID"
+				+ ") "
+			);
+		}
 
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {
@@ -393,27 +381,29 @@ public class BankStatementMatchUtil {
 			;
 		}
 
-		//	Match
-		if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
-			whereClasueBankStatement += "AND ("
-				+ "(COALESCE(IsManualMatch, 'N') = 'Y' AND COALESCE(IsMatched, 'N') = 'Y') "
-				+ "OR COALESCE(IsMultiPaymentMatch, 'N') = 'Y' "
-				+ "OR (C_Payment_ID IS NOT NULL "
-				+ "OR C_BPartner_ID IS NOT NULL "
-				+ "OR C_Invoice_ID IS NOT NULL) "
-				+ ") "
-			;
-		} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
-			whereClasueBankStatement += "AND ("
-				+ "(COALESCE(IsManualMatch, 'N') = 'Y' OR COALESCE(IsMatched, 'N') = 'N') "
-				+ "AND COALESCE(IsMultiPaymentMatch, 'N') = 'N' "
-				+ "OR (C_Payment_ID IS NULL "
-				+ "AND C_BPartner_ID IS NULL "
-				+ "AND C_Invoice_ID IS NULL) "
-				+ ") "
-			;
-		} else {
-			// all mode MatchMode.MODE_ALL
+		//	Match (skipped when isMultiPaymentMatch=true; the COALESCE filter below covers it)
+		if (!isMultiPaymentMatch) {
+			if(matchMode == MatchMode.MODE_MATCHED_VALUE) {
+				whereClasueBankStatement += "AND ("
+					+ "(COALESCE(IsManualMatch, 'N') = 'Y' AND COALESCE(IsMatched, 'N') = 'Y') "
+					+ "OR COALESCE(IsMultiPaymentMatch, 'N') = 'Y' "
+					+ "OR (C_Payment_ID IS NOT NULL "
+					+ "OR C_BPartner_ID IS NOT NULL "
+					+ "OR C_Invoice_ID IS NOT NULL) "
+					+ ") "
+				;
+			} else if (matchMode == MatchMode.MODE_NOT_MATCHED_VALUE) {
+				whereClasueBankStatement += "AND ("
+					+ "(COALESCE(IsManualMatch, 'N') = 'Y' OR COALESCE(IsMatched, 'N') = 'N') "
+					+ "AND COALESCE(IsMultiPaymentMatch, 'N') = 'N' "
+					+ "OR (C_Payment_ID IS NULL "
+					+ "AND C_BPartner_ID IS NULL "
+					+ "AND C_Invoice_ID IS NULL) "
+					+ ") "
+				;
+			} else {
+				// all mode MatchMode.MODE_ALL
+			}
 		}
 
 		//	Date Trx
@@ -445,14 +435,10 @@ public class BankStatementMatchUtil {
 			}
 		}
 
-		// // Is Multi Payment Match
-		// if (!Util.isEmpty(isMultiPaymentMatch, true)) {
-		// 	if ("Y".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		whereClasueBankStatement += "AND COALESCE(IsMultiPaymentMatch, 'N') = 'Y' ";
-		// 	} else if ("N".equalsIgnoreCase(isMultiPaymentMatch)) {
-		// 		whereClasueBankStatement += "AND COALESCE(IsMultiPaymentMatch, 'N') = 'N' ";
-		// 	}
-		// }
+		// Is Multi Payment Match
+		if (isMultiPaymentMatch) {
+			whereClasueBankStatement += "AND COALESCE(IsMultiPaymentMatch, 'N') = 'Y' ";
+		}
 
 		// Search Value
 		if (!Util.isEmpty(searchValue, true)) {

@@ -475,6 +475,8 @@ public abstract class BankStatementMatchLogic {
 			request.getPaymentAmountTo()
 		);
 
+		final boolean isMultiPaymentMatch = request.getIsMultiPaymentMatch();
+
 		Query paymentQuery = BankStatementMatchUtil.buildPaymentQuery(
 			request.getBankStatementId(),
 			bankAccount.getC_BankAccount_ID(),
@@ -486,7 +488,7 @@ public abstract class BankStatementMatchLogic {
 			request.getBusinessPartnerId(),
 			null,
 			null,
-			false
+			isMultiPaymentMatch
 		);
 		List<Integer> paymentsId = paymentQuery.getIDsAsList();
 		if (paymentsId == null || paymentsId.isEmpty()) {
@@ -503,7 +505,7 @@ public abstract class BankStatementMatchLogic {
 			paymentAmountTo,
 			null,
 			null,
-			false
+			isMultiPaymentMatch
 		);
 		List<Integer> importedBankMovementsId = bankMovementQuery.getIDsAsList();
 		if (importedBankMovementsId == null || importedBankMovementsId.isEmpty()) {
@@ -514,7 +516,16 @@ public abstract class BankStatementMatchLogic {
 		int matched = 0;
 		for (int bankStatementId: importedBankMovementsId) {
 			X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(context, bankStatementId, null);
-			
+
+			// Multi-payment match: use I_BankStatement_ID as key (negative) to avoid collision
+			// with C_Payment_ID keys from 1:1 matches. Ensures all M movements appear.
+			if (currentBankStatementImport.get_ValueAsBoolean("IsMultiPaymentMatch")) {
+				int mapKey = -currentBankStatementImport.getI_BankStatement_ID();
+				matchedPaymentHashMap.put(mapKey, currentBankStatementImport);
+				matched++;
+				continue;
+			}
+
 			if(currentBankStatementImport.getC_Payment_ID() > 0
 				// || currentBankStatementImport.getC_BPartner_ID() != 0
 				// || currentBankStatementImport.getC_Invoice_ID() != 0
@@ -1152,13 +1163,17 @@ public abstract class BankStatementMatchLogic {
 			}
 		}
 
-		// Update each imported movement flags
+		// Update each imported movement flags and build matching_movements
 		for (X_I_BankStatement movement : importedMovements) {
 			movement.setC_Payment_ID(payments.get(0).getC_Payment_ID());
-			movement.set_ValueOfColumn("IsMatched", true);
+			// movement.set_ValueOfColumn("IsMatched", true);
 			movement.set_ValueOfColumn("IsManualMatch", true);
 			movement.set_ValueOfColumn("IsMultiPaymentMatch", true);
 			movement.saveEx();
+
+			responseBuilder.addMatchingMovements(
+				BankStatementMatchConvertUtil.convertMatchMovement(movement)
+			);
 		}
 
 		responseBuilder.setMessage(String.valueOf(recordCount));
