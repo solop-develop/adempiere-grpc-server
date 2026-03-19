@@ -462,6 +462,7 @@ message ProcessRequest {
 	int32 conversion_type_id = 11;
 	string table_name = 12;
 	int32 record_id = 13;
+	string currency_rate = 14;
 }
 message ProcessResponse {
 	string message = 1;
