@@ -49,6 +49,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
@@ -834,9 +835,9 @@ public abstract class BankStatementMatchLogic {
 		if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
 			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @NotFound@");
 		}
-		// if(bankStatement.isProcessed()) {
-		// 	throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @Processed@");
-		// }
+		if(bankStatement.isProcessed()) {
+			throw new AdempiereException("@C_BankStatement_ID@ (" + request.getBankStatementId() + ") @Processed@");
+		}
 
 		// validate and get Bank Account
 		MBankAccount bankAccount = BankStatementMatchUtil.validateAndGetBankAccount(
@@ -890,67 +891,99 @@ public abstract class BankStatementMatchLogic {
 
 		AtomicInteger processed = new AtomicInteger();
 		AtomicInteger lineNo = new AtomicInteger(10);
-		importedPaymentsId
-			.stream()
-			.forEach(importedBankMovementId -> {
-				X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
+		Trx.run(transactionName -> {
+			bankStatement.set_TrxName(transactionName);
+			importedPaymentsId
+				.stream()
+				.forEach(importedBankMovementId -> {
+					X_I_BankStatement currentBankStatementImport = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, transactionName);
 
-				//	Set trx
-				// currentBankStatementImport.set_TrxName(null);
-				//	Save It
-				currentBankStatementImport.saveEx();
-				//	For Bank Statement
-				if(currentBankStatementImport.getC_Payment_ID() <= 0 && currentBankStatementImport.getC_Charge_ID() <= 0) {
-					currentBankStatementImport.setC_Charge_ID(defaultChargeId);
-				}
-				if(currentBankStatementImport.getC_BankStatementLine_ID() == 0) {
-					//
-					MBankStatementLine lineToImport = new MBankStatementLine(bankStatement, currentBankStatementImport, lineNo.get());
-					lineToImport.saveEx();
-					currentBankStatementImport.setC_BankStatement_ID(bankStatement.getC_BankStatement_ID());
-					currentBankStatementImport.setC_BankStatementLine_ID(lineToImport.getC_BankStatementLine_ID());
+					currentBankStatementImport.saveEx();
+					//	Validate that the charge exists
+					int chargeId = currentBankStatementImport.getC_Charge_ID();
+					if (chargeId > 0) {
+						int validChargeId = DB.getSQLValue(
+							transactionName,
+							"SELECT C_Charge_ID FROM C_Charge WHERE C_Charge_ID = ?",
+							chargeId
+						);
+						if (validChargeId <= 0) {
+							currentBankStatementImport.setC_Charge_ID(0);
+						}
+					}
+					//	Set default charge if no payment and no charge
+					if(currentBankStatementImport.getC_Payment_ID() <= 0 && currentBankStatementImport.getC_Charge_ID() <= 0) {
+						currentBankStatementImport.setC_Charge_ID(defaultChargeId);
+					}
+					MBankStatementLine statementLine = null;
+					if(currentBankStatementImport.getC_BankStatementLine_ID() > 0) {
+						statementLine = new MBankStatementLine(Env.getCtx(), currentBankStatementImport.getC_BankStatementLine_ID(), transactionName);
+						// Validate that the line actually exists in the database
+						if (statementLine == null || statementLine.getC_BankStatementLine_ID() <= 0) {
+							statementLine = null;
+						}
+					}
+					if(statementLine == null) {
+						statementLine = new MBankStatementLine(bankStatement, currentBankStatementImport, lineNo.get());
+						statementLine.saveEx();
+						currentBankStatementImport.setC_BankStatement_ID(bankStatement.getC_BankStatement_ID());
+						currentBankStatementImport.setC_BankStatementLine_ID(statementLine.getC_BankStatementLine_ID());
+						lineNo.addAndGet(10);
+					} else {
+						if(currentBankStatementImport.getC_Payment_ID() == 0) {
+							statementLine.setC_Payment_ID(-1);
+						} else {
+							statementLine.setC_Payment_ID(currentBankStatementImport.getC_Payment_ID());
+						}
+						if(currentBankStatementImport.getC_BPartner_ID() == 0) {
+							statementLine.setC_BPartner_ID(-1);
+						} else {
+							statementLine.setC_BPartner_ID(currentBankStatementImport.getC_BPartner_ID());
+						}
+						if(currentBankStatementImport.getC_Invoice_ID() == 0) {
+							statementLine.setC_Invoice_ID(-1);
+						} else {
+							statementLine.setC_Invoice_ID(currentBankStatementImport.getC_Invoice_ID());
+						}
+						if(currentBankStatementImport.getC_Charge_ID() > 0) {
+							statementLine.setC_Charge_ID(currentBankStatementImport.getC_Charge_ID());
+						}
+						statementLine.saveEx();
+					}
+
+					// Migrate C_BankStatementLineMatch from I_BankStatement_ID to C_BankStatementLine_ID
+					if (currentBankStatementImport.get_ValueAsBoolean("IsMultiPaymentMatch")) {
+						// Delete old matches linked by I_BankStatement_ID and recreate with C_BankStatementLine_ID
+						List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
+							currentBankStatementImport.getI_BankStatement_ID()
+						);
+						for (MBankStatementLineMatch lineMatch : lineMatches) {
+							final int paymentId = lineMatch.getC_Payment_ID();
+							final int currencyId = lineMatch.getC_Currency_ID();
+							final boolean isManualMatch = lineMatch.isManualMatch();
+							final Timestamp matchDate = lineMatch.getMatchDate();
+							lineMatch.deleteEx(true);
+							// Create new match with C_BankStatementLine_ID
+							MBankStatementLineMatch newMatch = new MBankStatementLineMatch(Env.getCtx(), 0, transactionName);
+							newMatch.setC_BankStatement_ID(statementLine.getC_BankStatement_ID());
+							newMatch.setC_BankStatementLine_ID(statementLine.getC_BankStatementLine_ID());
+							newMatch.setC_Payment_ID(paymentId);
+							newMatch.setC_Currency_ID(currencyId);
+							newMatch.setIsManualMatch(isManualMatch);
+							newMatch.setMatchDate(matchDate);
+							newMatch.saveEx();
+						}
+					}
+
 					currentBankStatementImport.setI_IsImported(true);
 					currentBankStatementImport.setProcessed(true);
 					currentBankStatementImport.set_ValueOfColumn("IsMatched", true);
 					currentBankStatementImport.saveEx();
 
-					// Migrate C_BankStatementLineMatch from I_BankStatement_ID to C_BankStatementLine_ID
-					if (currentBankStatementImport.get_ValueAsBoolean("IsMultiPaymentMatch")) {
-						List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(
-							currentBankStatementImport.getI_BankStatement_ID()
-						);
-						for (MBankStatementLineMatch lineMatch : lineMatches) {
-							lineMatch.setC_BankStatementLine_ID(lineToImport.getC_BankStatementLine_ID());
-							lineMatch.set_ValueOfColumn("I_BankStatement_ID", null);
-							lineMatch.saveEx();
-						}
-					}
-
-					lineNo.addAndGet(10);
-				} else {
-					MBankStatementLine currentStatementLine = new MBankStatementLine(Env.getCtx(), currentBankStatementImport.getC_BankStatementLine_ID(), null);
-					if(currentBankStatementImport.getC_Payment_ID() == 0) {
-						currentStatementLine.setC_Payment_ID(-1);
-					} else {
-						currentStatementLine.setC_Payment_ID(currentBankStatementImport.getC_Payment_ID());
-					}
-					if(currentBankStatementImport.getC_BPartner_ID() == 0) {
-						currentStatementLine.setC_BPartner_ID(-1);
-					} else {
-						currentStatementLine.setC_BPartner_ID(currentBankStatementImport.getC_BPartner_ID());
-					}
-					if(currentBankStatementImport.getC_Invoice_ID() == 0) {
-						currentStatementLine.setC_Invoice_ID(-1);
-					} else {
-						currentStatementLine.setC_Invoice_ID(currentBankStatementImport.getC_Invoice_ID());
-					}
-					currentStatementLine.saveEx();
-				}
-				currentBankStatementImport.saveEx();
-
-				processed.addAndGet(1);
-			})
-		;
+					processed.addAndGet(1);
+				})
+			;
+		});
 
 		builder.setMessage(
 			TextManager.getValidString(
