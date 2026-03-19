@@ -552,6 +552,8 @@ message UnmatchMultiPaymentRequest {
 }
 message UnmatchMultiPaymentResponse {
 	string message = 1;
+	repeated int32 imported_movement_ids = 2;
+	repeated int32 payment_ids = 3;
 }
 
 // Query match records by imported movement or bank statement line
