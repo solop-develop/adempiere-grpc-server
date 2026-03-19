@@ -1188,6 +1188,17 @@ public abstract class BankStatementMatchLogic {
 			throw new AdempiereException("@FillMandatory@ @I_BankStatement_ID@");
 		}
 
+		// Collect payment IDs before deleting
+		Set<Integer> paymentIds = new HashSet<>();
+		for (int movementId : importedMovementIds) {
+			List<MBankStatementLineMatch> lineMatches = BankStatementMatchUtil.getLineMatchesByImportedMovement(movementId);
+			for (MBankStatementLineMatch lineMatch : lineMatches) {
+				if (lineMatch.getC_Payment_ID() > 0) {
+					paymentIds.add(lineMatch.getC_Payment_ID());
+				}
+			}
+		}
+
 		int totalDeleted = BankStatementMatchUtil.deleteLineMatchesByImportedMovements(importedMovementIds);
 
 		// Reset flags on each imported movement
@@ -1205,6 +1216,8 @@ public abstract class BankStatementMatchLogic {
 
 		return UnmatchMultiPaymentResponse.newBuilder()
 			.setMessage(String.valueOf(totalDeleted))
+			.addAllImportedMovementIds(importedMovementIds)
+			.addAllPaymentIds(paymentIds)
 		;
 	}
 
