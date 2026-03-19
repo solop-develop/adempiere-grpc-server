@@ -386,6 +386,7 @@ message ListMatchingMovementsRequest {
 	google.protobuf.Timestamp transaction_date_from = 13;
 	google.protobuf.Timestamp transaction_date_to = 14;
 	MatchMode match_mode = 15;
+	bool is_multi_payment_match = 16;
 }
 message MatchingMovement {
 	int32 id = 1;
@@ -542,6 +543,7 @@ message MultiPaymentMatchRequest {
 message MultiPaymentMatchResponse {
 	repeated BankStatementLineMatch line_matches = 1;
 	string message = 2;
+	repeated MatchingMovement matching_movements = 3;
 }
 
 // Unmatch multi-payment: pass list of imported movement IDs, deletes ALL associated C_BankStatementLineMatch
