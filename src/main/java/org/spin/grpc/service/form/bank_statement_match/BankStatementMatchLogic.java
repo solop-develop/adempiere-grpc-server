@@ -750,6 +750,14 @@ public abstract class BankStatementMatchLogic {
 			);
 		}
 
+		// If there is a difference between TrxAmt and PayAmt, find and set default charge
+		BigDecimal difference = importedMovement.getTrxAmt().subtract(paymentAmount);
+		if (difference.compareTo(BigDecimal.ZERO) != 0) {
+			final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
+			importedMovement.setC_Charge_ID(defaultChargeId);
+			importedMovement.setChargeAmt(difference);
+		}
+
 		// Assign and persist
 		importedMovement.setC_Payment_ID(payment.getC_Payment_ID());
 		importedMovement.set_ValueOfColumn(
@@ -855,15 +863,7 @@ public abstract class BankStatementMatchLogic {
 			request.getBankAccountId()
 		);
 
-		final int clientId = Env.getAD_Client_ID(Env.getCtx());
-		final int defaultChargeId = DB.getSQLValue(
-			null,
-			"SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ?",
-			clientId
-		);
-		if(defaultChargeId <= 0) {
-			throw new AdempiereException("@C_Charge_ID@ (" + defaultChargeId + ") @NotFound@");
-		}
+		final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
 
 		//	For parameters
 		final int matchMode = request.getMatchModeValue();
