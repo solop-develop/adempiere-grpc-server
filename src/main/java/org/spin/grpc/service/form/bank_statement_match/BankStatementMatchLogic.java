@@ -810,24 +810,22 @@ public abstract class BankStatementMatchLogic {
 	public static UnmatchPaymentsResponse.Builder unmatchPayments(UnmatchPaymentsRequest request) {
 		AtomicInteger result = new AtomicInteger(0);
 
+		final int defaultChargeId = BankStatementMatchUtil.getDefaultChargeId();
+
 		request.getImportedMovementsIdsList().stream().forEach(importedBankMovementId -> {
 			// Delete associated C_BankStatementLineMatch records
 			BankStatementMatchUtil.deleteLineMatchesByImportedMovement(importedBankMovementId);
 
 			X_I_BankStatement importedMovement = new X_I_BankStatement(Env.getCtx(), importedBankMovementId, null);
 			importedMovement.setC_Payment_ID(0);
-			importedMovement.set_ValueOfColumn(
-				"IsMatched",
-				false
-			);
-			importedMovement.set_ValueOfColumn(
-				"IsManualMatch",
-				false
-			);
-			importedMovement.set_ValueOfColumn(
-				"IsMultiPaymentMatch",
-				false
-			);
+			importedMovement.set_ValueOfColumn("IsMatched", false);
+			importedMovement.set_ValueOfColumn("IsManualMatch", false);
+			importedMovement.set_ValueOfColumn("IsMultiPaymentMatch", false);
+			// Revert charge if it was the default charge set during manual match
+			if (importedMovement.getC_Charge_ID() > 0 && importedMovement.getC_Charge_ID() == defaultChargeId) {
+				importedMovement.setC_Charge_ID(0);
+				importedMovement.setChargeAmt(BigDecimal.ZERO);
+			}
 			if (importedMovement.is_Changed() && importedMovement.save()) {
 				result.incrementAndGet();
 			}
