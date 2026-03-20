@@ -4505,14 +4505,11 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 		log.fine( "CPOS.setC_BPartner_ID=" + businessPartner.getC_BPartner_ID());
 		businessPartner.set_TrxName(transactionName);
+		int oldPriceListId = salesOrder.getM_PriceList_ID();
 		salesOrder.setBPartner(businessPartner);
 		boolean isKeepPriceListCustomer = AccessManagement.getBooleanValueFromPOS(pos, businessPartnerId, ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer);
 		if(!isKeepPriceListCustomer && businessPartner.getM_PriceList_ID() > 0) {
-			MPriceList businesPartnerPriceList = MPriceList.get(salesOrder.getCtx(), businessPartner.getM_PriceList_ID(), transactionName);
-			MPriceList currentPriceList = MPriceList.get(salesOrder.getCtx(), pos.getM_PriceList_ID(), transactionName);
-			if(currentPriceList.getC_Currency_ID() != businesPartnerPriceList.getC_Currency_ID()) {
-				salesOrder.setM_PriceList_ID(currentPriceList.getM_PriceList_ID());
-			}
+			salesOrder.setM_PriceList_ID(oldPriceListId); //keeps original price List set by POS
 		}
 		//	
 		MBPartnerLocation [] partnerLocations = businessPartner.getLocations(true);
