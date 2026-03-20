@@ -750,11 +750,14 @@ public abstract class BankStatementMatchLogic {
 			);
 		}
 
-		// If there is a difference between TrxAmt and PayAmt, find and set default charge
+		// If there is a difference between TrxAmt and PayAmt, set charge amount
+		// Only assign default charge if the movement has no charge already set
 		BigDecimal difference = importedMovement.getTrxAmt().subtract(paymentAmount);
 		if (difference.compareTo(BigDecimal.ZERO) != 0) {
-			final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
-			importedMovement.setC_Charge_ID(defaultChargeId);
+			if (importedMovement.getC_Charge_ID() <= 0) {
+				final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
+				importedMovement.setC_Charge_ID(defaultChargeId);
+			}
 			importedMovement.setChargeAmt(difference);
 		}
 
@@ -810,7 +813,7 @@ public abstract class BankStatementMatchLogic {
 	public static UnmatchPaymentsResponse.Builder unmatchPayments(UnmatchPaymentsRequest request) {
 		AtomicInteger result = new AtomicInteger(0);
 
-		final int defaultChargeId = BankStatementMatchUtil.getDefaultChargeId();
+		// final int defaultChargeId = BankStatementMatchUtil.getDefaultChargeId();
 
 		request.getImportedMovementsIdsList().stream().forEach(importedBankMovementId -> {
 			// Delete associated C_BankStatementLineMatch records
@@ -821,11 +824,11 @@ public abstract class BankStatementMatchLogic {
 			importedMovement.set_ValueOfColumn("IsMatched", false);
 			importedMovement.set_ValueOfColumn("IsManualMatch", false);
 			importedMovement.set_ValueOfColumn("IsMultiPaymentMatch", false);
-			// Revert charge if it was the default charge set during manual match
-			if (importedMovement.getC_Charge_ID() > 0 && importedMovement.getC_Charge_ID() == defaultChargeId) {
-				importedMovement.setC_Charge_ID(0);
-				importedMovement.setChargeAmt(BigDecimal.ZERO);
-			}
+			// // Revert charge if it was the default charge set during manual match
+			// if (importedMovement.getC_Charge_ID() > 0 && importedMovement.getC_Charge_ID() == defaultChargeId) {
+			// 	importedMovement.setC_Charge_ID(0);
+			// }
+			importedMovement.setChargeAmt(BigDecimal.ZERO);
 			if (importedMovement.is_Changed() && importedMovement.save()) {
 				result.incrementAndGet();
 			}
