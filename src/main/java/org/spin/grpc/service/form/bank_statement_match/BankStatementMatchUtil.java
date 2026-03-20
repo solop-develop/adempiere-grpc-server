@@ -57,6 +57,21 @@ public class BankStatementMatchUtil {
 
 
 
+	public static int validateAndGetDefaultChargeId() {
+		final int clientId = Env.getAD_Client_ID(Env.getCtx());
+		final int defaultChargeId = DB.getSQLValue(
+			null,
+			"SELECT MAX(C_Charge_ID) FROM C_Charge WHERE AD_Client_ID = ? AND IsActive = 'Y' ",
+			clientId
+		);
+		if(defaultChargeId <= 0) {
+			throw new AdempiereException("@C_Charge_ID@ (" + defaultChargeId + ") @NotFound@");
+		}
+		return defaultChargeId;
+	}
+
+
+
 	public static Query buildPaymentQuery(
 		int bankStatementId,
 		int bankAccountId,
