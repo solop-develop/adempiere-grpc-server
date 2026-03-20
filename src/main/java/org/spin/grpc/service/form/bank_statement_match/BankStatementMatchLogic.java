@@ -959,6 +959,7 @@ public abstract class BankStatementMatchLogic {
 						}
 						if(currentBankStatementImport.getC_Charge_ID() > 0) {
 							statementLine.setC_Charge_ID(currentBankStatementImport.getC_Charge_ID());
+							statementLine.setChargeAmt(currentBankStatementImport.getChargeAmt());
 						}
 						statementLine.saveEx();
 					}
