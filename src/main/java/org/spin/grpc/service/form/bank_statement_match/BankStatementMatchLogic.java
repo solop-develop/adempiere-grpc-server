@@ -758,7 +758,7 @@ public abstract class BankStatementMatchLogic {
 				final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
 				importedMovement.setC_Charge_ID(defaultChargeId);
 			}
-			importedMovement.setChargeAmt(difference);
+			// importedMovement.setChargeAmt(difference);
 		}
 
 		// Assign and persist
@@ -828,7 +828,7 @@ public abstract class BankStatementMatchLogic {
 			// if (importedMovement.getC_Charge_ID() > 0 && importedMovement.getC_Charge_ID() == defaultChargeId) {
 			// 	importedMovement.setC_Charge_ID(0);
 			// }
-			importedMovement.setChargeAmt(BigDecimal.ZERO);
+			// importedMovement.setChargeAmt(BigDecimal.ZERO);
 			if (importedMovement.is_Changed() && importedMovement.save()) {
 				result.incrementAndGet();
 			}
