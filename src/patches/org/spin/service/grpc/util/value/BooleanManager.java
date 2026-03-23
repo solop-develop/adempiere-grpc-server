@@ -16,6 +16,7 @@
 package org.spin.service.grpc.util.value;
 
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 
@@ -253,6 +254,19 @@ public class BooleanManager {
 	 * @return translated "Yes" / "No"
 	 */
 	public static String getDisplayValue(String value, String language) {
+		String acceptedValue = getBooleanToString(value);
+		return Msg.getMsg(
+			language,
+			acceptedValue
+		);
+	}
+	/**
+	 * Get translated display value from String with specific language
+	 * @param value
+	 * @param language Language
+	 * @return translated "Yes" / "No"
+	 */
+	public static String getDisplayValue(String value, Language language) {
 		String acceptedValue = getBooleanToString(value);
 		return Msg.getMsg(
 			language,
