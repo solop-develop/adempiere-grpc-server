@@ -877,10 +877,6 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 			log.saveError("ParentComplete", Msg.translate(getCtx(), "C_OrderLine"));
 			return false;
 		}
-
-		MProduct product = getProduct();
-		MCharge charge = getCharge();
-
 		//	Get Defaults from Parent
 		if (getC_BPartner_ID() == 0 || getC_BPartner_Location_ID() == 0
 			|| getM_Warehouse_ID() == 0 
@@ -918,11 +914,8 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 		}	//	Product Changed
 		
 		//	Charge
-		if (getC_Charge_ID() != 0 && getM_Product_ID() != 0){
-			setM_Product_ID(0);
-			m_product = null;
-		}
-
+		if (getC_Charge_ID() != 0 && getM_Product_ID() != 0)
+				setM_Product_ID(0);
 		//	No Product
 		if (getM_Product_ID() == 0)
 			setM_AttributeSetInstance_ID(0);
@@ -931,6 +924,7 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 		{
 			//	Set UOM from Product
 			if(getC_UOM_ID() <= 0) {
+				MProduct product = MProduct.get(getCtx(), getM_Product_ID());
 				setC_UOM_ID(product.getC_UOM_ID());
 			}
 			//	Validate Quantity Ordered
@@ -972,6 +966,7 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 				if(!getParent().isReturnOrder()) {
 					setPriceList(m_productPrice.getPriceList());
 					setPriceLimit(m_productPrice.getPriceLimit());
+					MProduct product = MProduct.get(getCtx(), getM_Product_ID());
 					if(product.isWithoutDiscount()) {
 						setDiscount(Env.ZERO);
 					} else {
@@ -1028,6 +1023,7 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 				|| is_ValueChanged("M_AttributeSetInstance_ID")
 				|| is_ValueChanged("M_Warehouse_ID")))
 		{
+			MProduct product = getProduct();
 			if (product.isStocked())
 			{
 				int M_AttributeSet_ID = product.getM_AttributeSet_ID();
@@ -1080,10 +1076,10 @@ public class MOrderLine extends X_C_OrderLine implements IDocumentLine
 		setLineNetAmt();	//	extended Amount with or without tax
 		setDiscount();
 		String documentNote = null;
-		if (product != null) {
-			documentNote = product.get_Translation(MProduct.COLUMNNAME_DocumentNote);
-		} else if (charge != null) {
-			documentNote = charge.get_Translation(MCharge.COLUMNNAME_DocumentNote);
+		if ((newRecord || is_ValueChanged(getM_Product_ID())) && getM_Product_ID() > 0 ) {
+			documentNote = getProduct().get_Translation(MProduct.COLUMNNAME_DocumentNote);
+		} else if ((newRecord || is_ValueChanged(getC_Charge_ID())) && getC_Charge_ID() > 0 ) {
+			documentNote = getCharge().get_Translation(MCharge.COLUMNNAME_DocumentNote);
 		}
 		if (!Util.isEmpty(documentNote, true)) {
 			addDescription(documentNote);
