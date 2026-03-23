@@ -337,7 +337,7 @@ public class TrialBalanceDrillableLogic {
 		sql.append( " COALESCE(SUM(CASE WHEN (DateAcct  BETWEEN (? :: date) AND (? :: date)) AND PostingType = 'B' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total2,");
 		sql.append( " COALESCE(Sum(CASE WHEN ((DateAcct  >= (? :: date) OR ev.AccountType NOT IN ('E','R')) AND DateAcct  <= (? :: date)) AND PostingType='A' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total3,");
 		sql.append( " COALESCE(Sum(CASE WHEN ((DateAcct  >= (? :: date) OR ev.AccountType NOT IN ('E','R')) AND DateAcct  <= (? :: date)) AND PostingType='B' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total4,");
-		sql.append(" fs.User1_ID, ");
+		sql.append(" fs.User1_ID, "); // u1.User1_ID
 		sql.append(" u1.Value AS userlist1 ");
 		sql.append(" FROM  Fact_Acct_Summary fs"
 		+ " INNER JOIN C_ElementValue ev ON fs.Account_ID = ev.C_ElementValue_ID AND fs.AD_Client_ID = ev.AD_Client_ID ");
@@ -402,9 +402,10 @@ public class TrialBalanceDrillableLogic {
 			}
 		}
 		sql.append(" GROUP BY fs.Account_ID,ev.value,ev.name, u1.value ");
+		sql.append(", fs.User1_ID "); // u1.User1_ID
 		
 		// calculate prior year earnings if all accounts selected
-		if (accountingFromValue == null && accountingFromValue == null) {
+		if (accountingFromValue == null && accountingToValue == null) {
 			filterParametersList.add(yearFrom.getStartDate());
 			filterParametersList.add(yearFrom.getStartDate());
 
@@ -415,7 +416,7 @@ public class TrialBalanceDrillableLogic {
 			sql.append(" 0 AS total2,");
 			sql.append(" COALESCE(Sum(CASE WHEN DateAcct  < (? :: date) AND ev.AccountType IN ('E','R') AND PostingType='A' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total3,");
 			sql.append(" COALESCE(Sum(CASE WHEN DateAcct  < (? :: date) AND ev.AccountType IN ('E','R') AND PostingType='B' THEN (AmtacctDr-AmtacctCr) ELSE 0 END), 0) AS total4,");
-			// sql.append(" 0 AS User1_ID, ");
+			sql.append(" 0 AS User1_ID, ");
 			sql.append(" NULL AS userlist1 ");
 			sql.append(" FROM  Fact_Acct_Summary fs"
 				+ " INNER JOIN C_ElementValue ev ON fs.Account_ID = ev.C_ElementValue_ID AND fs.AD_Client_ID = ev.AD_Client_ID ");
