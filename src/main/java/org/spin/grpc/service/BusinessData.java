@@ -295,7 +295,7 @@ public class BusinessData extends BusinessDataImplBase {
 		}
 
 		//	Validate duplicate execution BEFORE the builder creates AD_PInstance via withRecordId()
-		checkDuplicateExecution(processId, recordId, request.getParameters().getFieldsMap());
+		checkDuplicateExecution(processId, tableId, recordId, request.getParameters().getFieldsMap());
 
 		//	Call process builder
 		ProcessBuilder builder = ProcessBuilder.create(Env.getCtx())
@@ -632,33 +632,37 @@ public class BusinessData extends BusinessDataImplBase {
 	 * @param recordId   Record_ID used for the process
 	 * @param requestParameters parameters map from the gRPC request
 	 */
-	private static void checkDuplicateExecution(int processId, int recordId, Map<String, Value> requestParameters) {
+	private static void checkDuplicateExecution(int processId, int tableId, int recordId, Map<String, Value> requestParameters) {
 		int userId = Env.getAD_User_ID(Env.getCtx());
 		if (userId <= 0) {
 			return;
 		}
 		Timestamp twoMinutesAgo = new Timestamp(System.currentTimeMillis() - (2L * 60 * 1000));
 
-		StringBuilder whereClause = new StringBuilder(
-			"AD_Process_ID = ? AND AD_User_ID = ? AND Record_ID = ? AND Created >= ?"
-		);
+		String whereClause = "AD_Process_ID = ? "
+			// + "AND AD_Table_ID = ? "
+			+ "AND Record_ID = ? "
+			+ "AND AD_User_ID = ? AND Created >= ? "
+			+ "AND IsProcessing = 'Y' "
+		;
 		List<Object> params = new ArrayList<>();
 		params.add(processId);
-		params.add(userId);
+		// params.add(tableId);
 		params.add(recordId);
+		params.add(userId);
 		params.add(twoMinutesAgo);
 
 		//	Filter by current session when available
 		MSession currentSession = MSession.get(Env.getCtx(), false);
 		if (currentSession != null && currentSession.getAD_Session_ID() > 0) {
-			whereClause.append(" AND AD_Session_ID = ?");
+			whereClause += " AND AD_Session_ID = ?";
 			params.add(currentSession.getAD_Session_ID());
 		}
 
 		List<MPInstance> recentInstances = new Query(
 			Env.getCtx(),
 			I_AD_PInstance.Table_Name,
-			whereClause.toString(),
+			whereClause,
 			null
 		)
 			.setParameters(params)
@@ -680,7 +684,7 @@ public class BusinessData extends BusinessDataImplBase {
 			MPInstancePara[] storedParams = recentInstance.getParameters();
 			TreeMap<String, String> storedFingerprint = buildStoredParametersFingerprint(storedParams);
 			if (currentFingerprint.equals(storedFingerprint)) {
-				throw new AdempiereException("@DuplicateProcess@");
+				throw new AdempiereException("@DuplicateProcessExecution@");
 			}
 		}
 	}
