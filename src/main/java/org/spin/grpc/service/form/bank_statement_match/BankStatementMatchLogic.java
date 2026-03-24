@@ -754,11 +754,13 @@ public abstract class BankStatementMatchLogic {
 		// Only assign default charge if the movement has no charge already set
 		BigDecimal difference = importedMovement.getTrxAmt().subtract(paymentAmount);
 		if (difference.compareTo(BigDecimal.ZERO) != 0) {
-			if (importedMovement.getC_Charge_ID() <= 0) {
-				final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
-				importedMovement.setC_Charge_ID(defaultChargeId);
-			}
-			// importedMovement.setChargeAmt(difference);
+			// if (importedMovement.getC_Charge_ID() <= 0) {
+			// 	final int defaultChargeId = BankStatementMatchUtil.validateAndGetDefaultChargeId();
+			// 	importedMovement.setC_Charge_ID(defaultChargeId);
+			// }
+			importedMovement.set_ValueOfColumn("SimulationChargeAmt", difference);
+		} else {
+			importedMovement.set_ValueOfColumn("SimulationChargeAmt", BigDecimal.ZERO);
 		}
 
 		// Assign and persist
@@ -828,7 +830,7 @@ public abstract class BankStatementMatchLogic {
 			// if (importedMovement.getC_Charge_ID() > 0 && importedMovement.getC_Charge_ID() == defaultChargeId) {
 			// 	importedMovement.setC_Charge_ID(0);
 			// }
-			// importedMovement.setChargeAmt(BigDecimal.ZERO);
+			importedMovement.set_ValueOfColumn("SimulationChargeAmt", BigDecimal.ZERO);
 			if (importedMovement.is_Changed() && importedMovement.save()) {
 				result.incrementAndGet();
 			}
