@@ -16,12 +16,17 @@ package org.spin.pos.service.pos;
 
 import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_ConversionType;
+import org.adempiere.core.domains.models.I_C_DocType;
+import org.adempiere.core.domains.models.I_C_POS;
 import org.compiere.model.MBankAccount;
+import org.compiere.model.MDocType;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MUser;
 import org.compiere.model.MWarehouse;
+import org.compiere.model.PO;
 import org.compiere.util.Env;
+import org.spin.backend.grpc.pos.AvailableDocumentType;
 import org.spin.backend.grpc.pos.PointOfSales;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
 import org.spin.pos.service.customer.CustomerConvertUtil;
@@ -324,6 +329,59 @@ public class POSConvertUtil {
 			);
 		}
 		
+		return builder;
+	}
+
+
+
+	public static AvailableDocumentType.Builder convertAvailableDocumentType(PO availableDocumentType, boolean isOnlyRMA) {
+		AvailableDocumentType.Builder builder = AvailableDocumentType.newBuilder();
+		if (availableDocumentType == null || availableDocumentType.get_ID() <= 0) {
+			return builder;
+		}
+		
+		int documentTypeId = availableDocumentType.get_ValueAsInt("C_DocType_ID");
+		if (isOnlyRMA) {
+			documentTypeId = availableDocumentType.get_ValueAsInt("POSReturnDocumentType_ID");
+		}
+		MDocType documentType = MDocType.get(Env.getCtx(), documentTypeId);
+		if (documentType == null || documentType.getC_DocType_ID() <= 0) {
+			// is empty, skip
+			return builder;
+		}
+
+		builder
+			.setId(
+				documentType.getC_DocType_ID()
+			)
+			.setUuid(
+				TextManager.getValidString(
+					documentType.getUUID()
+				)
+			)
+			.setKey(
+				TextManager.getValidString(
+					documentType.getName()
+				)
+			)
+			.setName(
+				TextManager.getValidString(
+					documentType.get_Translation(
+						I_C_DocType.COLUMNNAME_PrintName
+					)
+				)
+			)
+			.setIsPosRequiredPin(
+				availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
+			)
+			.setIsActive(
+				documentType.isActive() && availableDocumentType.get_ValueAsBoolean("IsActive")
+			)
+			.setIsReturnDocument(isOnlyRMA)
+			.setIsGenerateManualDocument(
+				documentType.get_ValueAsBoolean("IsGenerateManualDocument")
+			)
+		;
 		return builder;
 	}
 

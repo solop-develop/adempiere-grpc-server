@@ -36,7 +36,6 @@ import org.adempiere.core.domains.models.I_AD_Process;
 import org.adempiere.core.domains.models.I_C_BP_BankAccount;
 import org.adempiere.core.domains.models.I_C_ConversionType;
 import org.adempiere.core.domains.models.I_C_Currency;
-import org.adempiere.core.domains.models.I_C_DocType;
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
@@ -118,7 +117,11 @@ import org.spin.pos.service.pos.POS;
 import org.spin.pos.service.product.ProductServiceLogic;
 import org.spin.pos.service.pos.AccessManagement;
 import org.spin.pos.service.seller.SellerServiceLogic;
-import org.spin.pos.util.*;
+import org.spin.pos.util.ColumnsAdded;
+import org.spin.pos.util.OrderConverUtil;
+import org.spin.pos.util.POSConvertUtil;
+import org.spin.pos.util.TicketHandler;
+import org.spin.pos.util.TicketResult;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
@@ -3579,35 +3582,10 @@ public class PointOfSalesForm extends StoreImplBase {
 					return;
 				}
 
-				AvailableDocumentType.Builder builder = AvailableDocumentType.newBuilder()
-					.setId(
-						documentType.getC_DocType_ID()
-					)
-					.setUuid(
-						TextManager.getValidString(
-							documentType.getUUID()
-						)
-					)
-					.setKey(
-						TextManager.getValidString(
-							documentType.getName()
-						)
-					)
-					.setName(
-						TextManager.getValidString(
-							documentType.get_Translation(
-								I_C_DocType.COLUMNNAME_PrintName
-							)
-						)
-					)
-					.setIsPosRequiredPin(
-						availableDocumentType.get_ValueAsBoolean(I_C_POS.COLUMNNAME_IsPOSRequiredPIN)
-					)
-					.setIsActive(
-						documentType.isActive() && availableDocumentType.get_ValueAsBoolean("IsActive")
-					)
-					.setIsReturnDocument(isOnlyRMA)
-				;
+				AvailableDocumentType.Builder builder = org.spin.pos.service.pos.POSConvertUtil.convertAvailableDocumentType(
+					availableDocumentType,
+					isOnlyRMA
+				);
 				builderList.addDocumentTypes(
 					builder
 				);
