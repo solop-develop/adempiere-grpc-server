@@ -51,7 +51,6 @@ import org.spin.pos.service.payment.PaymentConvertUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.model.MCPaymentMethod;
 
 /**
@@ -130,12 +129,12 @@ public class POSConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					campaign.getStartDate()
 				)
 			)
 			.setEndDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					campaign.getEndDate()
 				)
 			)
@@ -282,14 +281,14 @@ public class POSConvertUtil {
 				)
 			)
 			.setDateDoc(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromObject(
 						giftCard.get_Value("DateDoc")
 					)
 				)
 			)
 			.setValidTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					TimeManager.getTimestampFromObject(
 						giftCard.get_Value("ValidTo")
 					)
