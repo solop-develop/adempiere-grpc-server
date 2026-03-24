@@ -38,7 +38,7 @@ public class X_I_BankStatement extends PO implements I_I_BankStatement, I_Persis
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20260317L;
+	private static final long serialVersionUID = 20260324L;
 
     /** Standard Constructor */
     public X_I_BankStatement (Properties ctx, int I_BankStatement_ID, String trxName)
@@ -1012,6 +1012,23 @@ public class X_I_BankStatement extends PO implements I_I_BankStatement, I_Persis
 	public String getRoutingNo () 
 	{
 		return (String)get_Value(COLUMNNAME_RoutingNo);
+	}
+
+	/** Set Simulation Charge Amt.
+		@param SimulationChargeAmt Simulation Charge Amt	  */
+	public void setSimulationChargeAmt (BigDecimal SimulationChargeAmt)
+	{
+		set_Value (COLUMNNAME_SimulationChargeAmt, SimulationChargeAmt);
+	}
+
+	/** Get Simulation Charge Amt.
+		@return Simulation Charge Amt	  */
+	public BigDecimal getSimulationChargeAmt () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_SimulationChargeAmt);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
 	}
 
 	/** Set Statement date.

@@ -140,7 +140,11 @@ import java.util.concurrent.atomic.AtomicReference;
 			setC_Charge_ID(imp.getC_Charge_ID());
 		}
 		setInterestAmt(imp.getInterestAmt());
-		setChargeAmt(imp.getChargeAmt());
+		BigDecimal chargeAmt = imp.getChargeAmt();
+		if (chargeAmt.compareTo(BigDecimal.ZERO) == 0) {
+			chargeAmt = imp.getSimulationChargeAmt();
+		}
+		setChargeAmt(chargeAmt);
 		setMemo(imp.getMemo());
 		if (imp.getC_Payment_ID() != 0) {
 			setC_Payment_ID(imp.getC_Payment_ID());
