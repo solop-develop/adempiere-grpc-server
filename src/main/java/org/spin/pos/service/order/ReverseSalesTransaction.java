@@ -40,7 +40,7 @@ public class ReverseSalesTransaction {
 	 * @param description
 	 * @return
 	 */
-	public static MOrder returnSalesOrder(MPOS pos, int sourceOrderId, String description, boolean processDocuments, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
+	public static MOrder returnSalesOrder(MPOS pos, int sourceOrderId, String description, boolean processDocuments, boolean isManualDocument, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo) {
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
@@ -64,7 +64,7 @@ public class ReverseSalesTransaction {
 			}
 			returnOrder.saveEx();
 			RMAUtil.createReturnOrderLines(sourceOrder, returnOrder, transactionName);
-			RMAUtil.createReversedPayments(pos, sourceOrder, returnOrder, transactionName);
+			RMAUtil.createReversedPayments(pos, sourceOrder, returnOrder, isManualDocument, transactionName);
 
 			//	Process return Order
 			if (processDocuments) {
