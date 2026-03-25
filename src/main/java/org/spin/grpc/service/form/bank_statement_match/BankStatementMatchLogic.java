@@ -959,10 +959,22 @@ public abstract class BankStatementMatchLogic {
 						} else {
 							statementLine.setC_Invoice_ID(currentBankStatementImport.getC_Invoice_ID());
 						}
+
 						if(currentBankStatementImport.getC_Charge_ID() > 0) {
 							statementLine.setC_Charge_ID(currentBankStatementImport.getC_Charge_ID());
-							statementLine.setChargeAmt(currentBankStatementImport.getChargeAmt());
 						}
+						statementLine.setChargeAmt(currentBankStatementImport.getChargeAmt());
+						BigDecimal chargeAmt = currentBankStatementImport.getChargeAmt();
+						if (BigDecimal.ZERO.compareTo(currentBankStatementImport.getSimulationChargeAmt()) != 0) {
+							BigDecimal newTrxAmt = currentBankStatementImport.getStmtAmt().subtract(
+								currentBankStatementImport.getSimulationChargeAmt()
+							);
+							statementLine.setTrxAmt(newTrxAmt);
+							chargeAmt = currentBankStatementImport.getSimulationChargeAmt();
+							statementLine.setInterestAmt(BigDecimal.ZERO);
+						}
+						statementLine.setChargeAmt(chargeAmt);
+
 						statementLine.saveEx();
 					}
 
