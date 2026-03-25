@@ -249,7 +249,6 @@ public class UnrealizedExchangeDiff extends SvrProcess
         final String whereClause = "AD_PInstance_ID=?";
         List <X_T_InvoiceGL> list = new Query(getCtx(), X_T_InvoiceGL.Table_Name, whereClause, get_TrxName())
                 .setParameters(getAD_PInstance_ID())
-                .setLimit(10)
                 .setOrderBy("AD_Org_ID")
                 .list();
 
