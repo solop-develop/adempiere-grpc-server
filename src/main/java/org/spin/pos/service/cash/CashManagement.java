@@ -432,7 +432,7 @@ public class CashManagement {
 		;
 		if (bankStatement == null || bankStatement.get_ID() <= 0) {
 			if(pos.get_ValueAsBoolean("IsValidatePOSCashOpening") && validate) {
-				throw new AdempiereException("@POS.CashClosingNotFound@");
+				throw new AdempiereException("@CashOpeningValidationError@");
 			}
 		}
 		return bankStatement;
