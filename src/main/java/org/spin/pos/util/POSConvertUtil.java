@@ -26,7 +26,6 @@ import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
 import org.adempiere.core.domains.models.I_C_POS;
 import org.adempiere.core.domains.models.I_C_PaymentMethod;
-import org.compiere.model.MBank;
 import org.compiere.model.MCampaign;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MOrderLine;
@@ -39,7 +38,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.pos.AvailableOrderLine;
 import org.spin.backend.grpc.pos.AvailablePaymentMethod;
-import org.spin.backend.grpc.pos.Bank;
 import org.spin.backend.grpc.pos.Campaign;
 import org.spin.backend.grpc.pos.CommandShortcut;
 import org.spin.backend.grpc.pos.GiftCard;
@@ -59,48 +57,6 @@ import org.spin.store.model.MCPaymentMethod;
  */
 public class POSConvertUtil {
 
-	public static Bank.Builder convertBank(int bankId) {
-		if (bankId <= 0) {
-			return Bank.newBuilder();
-		}
-		MBank bank = MBank.get(Env.getCtx(), bankId);
-		return convertBank(bank);
-	}
-
-	public static Bank.Builder convertBank(MBank bank) {
-		Bank.Builder builder = Bank.newBuilder();
-		if (bank == null) {
-			return builder;
-		}
-		builder.setId(
-				bank.getC_Bank_ID()
-			)
-			.setName(
-				TextManager.getValidString(
-					bank.getName()
-				)
-			)
-			.setDescription(
-				TextManager.getValidString(
-					bank.getDescription()
-				)
-			)
-			.setRoutingNo(
-				TextManager.getValidString(
-					bank.getRoutingNo()
-				)
-			)
-			.setSwiftCode(
-				TextManager.getValidString(
-					bank.getSwiftCode()
-				)
-			)
-		;
-
-		return builder;
-	}
-
-
 	public static Campaign.Builder convertCampaign(int campaignId) {
 		Campaign.Builder builder = Campaign.newBuilder();
 		if (campaignId <= 0) {
@@ -109,7 +65,6 @@ public class POSConvertUtil {
 		MCampaign campaign = MCampaign.getById(Env.getCtx(), campaignId, null);
 		return convertCampaign(campaign);
 	}
-
 	public static Campaign.Builder convertCampaign(MCampaign campaign) {
 		Campaign.Builder builder = Campaign.newBuilder();
 		if (campaign == null || campaign.getC_Campaign_ID() <= 0) {

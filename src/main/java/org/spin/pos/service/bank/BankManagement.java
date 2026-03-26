@@ -36,7 +36,6 @@ import org.spin.backend.grpc.pos.ListBankAccountsResponse;
 import org.spin.backend.grpc.pos.ListBanksRequest;
 import org.spin.backend.grpc.pos.ListBanksResponse;
 import org.spin.grpc.service.core_functionality.CoreFunctionalityConvert;
-import org.spin.pos.util.POSConvertUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TextManager;
@@ -99,7 +98,7 @@ public class BankManagement {
 		;
 
 		banksIdsList.parallelStream().forEach(tableId -> {
-			Bank.Builder accountingDocument = POSConvertUtil.convertBank(tableId);
+			Bank.Builder accountingDocument = BankConvertUtil.convertBank(tableId);
 			builderList.addRecords(accountingDocument);
 		});
 
