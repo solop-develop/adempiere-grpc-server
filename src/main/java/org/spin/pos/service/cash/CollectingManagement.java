@@ -101,7 +101,6 @@ public class CollectingManagement {
 			pointOfSalesDefinition.get_ValueAsInt(I_C_ConversionType.COLUMNNAME_C_ConversionType_ID),
 			TimeManager.getDate()
 		);
-		//	
 		MPayment payment = new MPayment(Env.getCtx(), 0, transactionName);
 		payment.setIsReceipt(!request.getIsRefund());
 		payment.setC_BankAccount_ID(pointOfSalesDefinition.getC_BankAccount_ID());
@@ -280,6 +279,8 @@ public class CollectingManagement {
 		if(paymentTypeAllocation.get_ValueAsInt(I_C_Payment.COLUMNNAME_C_CardProvider_ID) > 0) {
 			payment.setC_CardProvider_ID(paymentTypeAllocation.get_ValueAsInt(I_C_Payment.COLUMNNAME_C_CardProvider_ID));
 		}
+		//	Set order organization before save
+		payment.setAD_Org_ID(salesOrder.getAD_Org_ID());
 		payment.saveEx(transactionName);
 		return payment;
 	}

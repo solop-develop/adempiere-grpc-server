@@ -196,10 +196,12 @@ public class CashManagement {
 		if(request.getReferenceBankAccountId() > 0) {
 			payment.set_ValueOfColumn("POSReferenceBankAccount_ID", request.getReferenceBankAccountId());
 		}
+		//	Set POS organization before save
+		payment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
 		payment.saveEx(transactionName);
 		return payment;
 	}
-	
+
 	/**
 	 * Process Payment
 	 * @param pos
@@ -251,7 +253,7 @@ public class CashManagement {
 		}
 		MPayment relatedPayment = new MPayment(Env.getCtx(), 0, transactionName);
 		PO.copyValues(sourcePayment, relatedPayment);
-		//	
+		//
 		relatedPayment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
 		relatedPayment.set_ValueOfColumn("POSReferenceBankAccount_ID", null);
 		relatedPayment.setC_BankAccount_ID(sourcePayment.get_ValueAsInt("POSReferenceBankAccount_ID"));
@@ -267,6 +269,8 @@ public class CashManagement {
 		} else {
 			relatedPayment.setC_DocType_ID(!sourcePayment.isReceipt());
 		}
+		//	Set POS organization before save
+		relatedPayment.setAD_Org_ID(pointOfSalesDefinition.getAD_Org_ID());
 		relatedPayment.saveEx();
 		sourcePayment.setRelatedPayment_ID(relatedPayment.getC_Payment_ID());
 		sourcePayment.saveEx();
@@ -457,10 +461,11 @@ public class CashManagement {
 			bankStatement.setC_BankAccount_ID(pos.getC_BankAccount_ID());
 			bankStatement.setStatementDate(payment.getDateAcct());
 			bankStatement.setC_DocType_ID(cashClosingDocumentTypeId);
-			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
 			bankStatement.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
 			bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@C_POS_ID@: " + pos.getName() + " @DateDoc@: " + format.format(System.currentTimeMillis())));
+			//	Set POS organization before save
+			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
 			bankStatement.saveEx();
 		}
 		return bankStatement;
