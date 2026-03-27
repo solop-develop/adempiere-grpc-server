@@ -232,6 +232,10 @@ public class CashManagementUtil {
 		if(isReconciled) {
 			MBankStatementLine bsl = MBankStatement.addPayment(paymentBankFrom);
 			if(bsl != null) {
+				//	Set POS organization on bank statement line and its bank statement
+				if(posOrgId > 0) {
+					updateBankStatementOrg(bsl, posOrgId);
+				}
 				log.fine("@C_Payment_ID@: " + paymentBankFrom.getDocumentNo()
 						+ " @Added@ @to@ [@AccountNo@ " + paymentBankFrom.getC_BankAccount().getAccountNo()
 						+ " @C_BankStatement_ID@ " + bsl.getC_BankStatement().getName() + "]");
@@ -254,6 +258,10 @@ public class CashManagementUtil {
 		if(isReconciled) {
 			MBankStatementLine bsl = MBankStatement.addPayment(paymentBankTo);
 			if(bsl != null) {
+				//	Set POS organization on bank statement line and its bank statement
+				if(posOrgId > 0) {
+					updateBankStatementOrg(bsl, posOrgId);
+				}
 				log.fine("@C_Payment_ID@: " + paymentBankTo.getDocumentNo()
 						+ " @Added@ @to@ [@AccountNo@ " + paymentBankTo.getC_BankAccount().getAccountNo()
 						+ " @C_BankStatement_ID@ " + bsl.getC_BankStatement().getName() + "]");
@@ -261,6 +269,21 @@ public class CashManagementUtil {
 		}
 		//	Return
 		log.fine("@Created@ (1) @From@ " + mBankFrom.getAccountNo()+ " @To@ " + mBankTo.getAccountNo() + " @Amt@ " + DisplayType.getNumberFormat(DisplayType.Amount).format(amount));
+	}
+
+	/**
+	 * Update bank statement line and its parent bank statement with the POS organization
+	 * @param bankStatementLine
+	 * @param orgId
+	 */
+	private static void updateBankStatementOrg(MBankStatementLine bankStatementLine, int orgId) {
+		bankStatementLine.setAD_Org_ID(orgId);
+		bankStatementLine.saveEx();
+		MBankStatement parentBankStatement = new MBankStatement(bankStatementLine.getCtx(), bankStatementLine.getC_BankStatement_ID(), bankStatementLine.get_TrxName());
+		if(parentBankStatement.getAD_Org_ID() != orgId) {
+			parentBankStatement.setAD_Org_ID(orgId);
+			parentBankStatement.saveEx();
+		}
 	}
 
 	/**
