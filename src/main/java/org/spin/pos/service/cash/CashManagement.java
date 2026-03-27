@@ -302,6 +302,8 @@ public class CashManagement {
 			bankStatementLine.setPayment(payment);
 			bankStatementLine.setStatementLineDate(payment.getDateAcct());
 			bankStatementLine.setDateAcct(payment.getDateAcct());
+			//	Set POS organization before save
+			bankStatementLine.setAD_Org_ID(pos.getAD_Org_ID());
 			bankStatementLine.saveEx();
 		}
 	}
@@ -457,10 +459,11 @@ public class CashManagement {
 			bankStatement.setC_BankAccount_ID(pos.getC_BankAccount_ID());
 			bankStatement.setStatementDate(payment.getDateAcct());
 			bankStatement.setC_DocType_ID(cashClosingDocumentTypeId);
-			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
 			bankStatement.set_ValueOfColumn("C_POS_ID", pos.getC_POS_ID());
 			SimpleDateFormat format = DisplayType.getDateFormat(DisplayType.Date);
 			bankStatement.setName(Msg.parseTranslation(payment.getCtx(), "@C_POS_ID@: " + pos.getName() + " @DateDoc@: " + format.format(System.currentTimeMillis())));
+			//	Set POS organization before save
+			bankStatement.setAD_Org_ID(pos.getAD_Org_ID());
 			bankStatement.saveEx();
 		}
 		return bankStatement;
