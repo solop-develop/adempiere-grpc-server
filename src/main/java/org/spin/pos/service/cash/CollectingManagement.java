@@ -122,6 +122,7 @@ public class CollectingManagement {
 			pointOfSalesDefinition,
 			payment,
 			paymentTypeAllocation,
+			false,
 			transactionName
 		);
 

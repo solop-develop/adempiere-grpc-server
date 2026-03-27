@@ -82,8 +82,11 @@ public class PaymentManagement {
 	}
 
 
-	public static void setDocumentType(MPOS pointOfSalesDefinition, MPayment payment, PO paymentTypeAllocation, String transactionName) {
+	public static void setDocumentType(MPOS pointOfSalesDefinition, MPayment payment, PO paymentTypeAllocation, boolean isReverse, String transactionName) {
 		String documentTypeColumnName = payment.isReceipt() ? "POSCollectingDocumentType_ID" : "POSRefundDocumentType_ID";
+		if (isReverse){
+			documentTypeColumnName = payment.isReceipt() ? "POSReverseReceiptDocType_ID" : "POSReversePaymentDocType_ID";
+		}
 		int documentTypeId = pointOfSalesDefinition.get_ValueAsInt(documentTypeColumnName);
 
 		if (paymentTypeAllocation == null) {
@@ -93,7 +96,8 @@ public class PaymentManagement {
 				transactionName
 			);
 		}
-		if (paymentTypeAllocation != null) {
+		//TODO:Validate if PaymentTypeAllocation should have revere docTypes like hte POS
+		if (paymentTypeAllocation != null && !isReverse) {
 			if (payment.isReceipt()) {
 				// TODO: Rename this column as `POSCollectingDocumentType_ID`
 				if(paymentTypeAllocation.get_ValueAsInt("C_DocTypeTarget_ID") > 0) {

@@ -301,6 +301,7 @@ public class RMAUtil {
 				pos,
 				returnPayment,
 				null,
+				true,
 				transactionName
 			);
 
