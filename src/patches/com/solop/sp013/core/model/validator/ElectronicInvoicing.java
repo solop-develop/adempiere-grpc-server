@@ -181,9 +181,11 @@ public class ElectronicInvoicing implements ModelValidator {
 				if(inOut.isSOTrx()) {
 
 					if ((TYPE_BEFORE_NEW == type
-							|| inOut.is_ValueChanged(MInOut.COLUMNNAME_C_Order_ID)) && inOut.getC_Order_ID() > 0) {
-						MOrder order = (MOrder) inOut.getC_Order();
-						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_FiscalComment, order.getDocumentNo());
+						|| inOut.is_ValueChanged(MInOut.COLUMNNAME_C_Order_ID)) && inOut.getC_Order_ID() > 0) {
+						if (inOut.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument)) {
+							MOrder order = (MOrder) inOut.getC_Order();
+							inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_FiscalComment, order.getDocumentNo());
+						}
 					}
 					//	TODO: To Shipment not setup the fiscal document type
 //					if(type == TYPE_BEFORE_NEW || inOut.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_BPartner_ID)) {
