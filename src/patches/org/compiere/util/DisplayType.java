@@ -290,7 +290,7 @@ public final class DisplayType
 				s_log.log(Level.WARNING, "Invalid number format: " + pattern);
 			}
 		}
-		else if (displayType == Integer)
+		else if (displayType == Integer || displayType == ID)
 		{
 			format.setParseIntegerOnly(true);
 			format.setMaximumIntegerDigits(INTEGER_DIGITS);
