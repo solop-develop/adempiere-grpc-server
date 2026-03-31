@@ -1,6 +1,7 @@
 package com.solop.sp013.luy.support.documents;
 
 import com.solop.sp013.core.documents.IFiscalDocument;
+import com.solop.sp013.core.util.ElectronicInvoicingChanges;
 import com.solop.sp013.luy.cfe.dto.invoicy.CFEInvoiCyType;
 import com.solop.sp013.luy.util.StringUtil;
 import org.adempiere.exceptions.AdempiereException;
@@ -166,17 +167,17 @@ public class E_DeliveryNote implements ICFEDocument {
         totals.setTotMntIVAOtra(Env.ZERO);
         totals.setTotMontoNF(Env.ZERO);
         document.getFiscalDocumentTaxes().forEach(tax -> {
-            if(tax.getTaxValue().equals("1")) {
+            if (tax.getTaxValue().equals(ElectronicInvoicingChanges.Tax_Exempt)) {
                 totals.setTotMntNoGrv(totals.getTotMntNoGrv().add(tax.getTaxBaseAmount()));
-            } else if(tax.getTaxValue().equals("2")) {
+            } else if (tax.getTaxValue().equals(ElectronicInvoicingChanges.Tax_Minimum)) {
                 totals.setTotMntNetoIvaTasaMin(totals.getTotMntNetoIvaTasaMin().add(tax.getTaxBaseAmount()));
                 totals.setTotMntIVATasaMin(totals.getTotMntIVATasaMin().add(tax.getTaxAmount()));
-            } else if(tax.getTaxValue().equals("3")) {
+            } else if (tax.getTaxValue().equals(ElectronicInvoicingChanges.Tax_Basic)) {
                 totals.setTotMntNetoIVATasaBasica(totals.getTotMntNetoIVATasaBasica().add(tax.getTaxBaseAmount()));
                 totals.setTotMntIVATasaBasica(totals.getTotMntIVATasaBasica().add(tax.getTaxAmount()));
-            } else if(tax.getTaxValue().equals("10")) {
+            } else if (tax.getTaxValue().equals(ElectronicInvoicingChanges.Tax_Export)) {
                 totals.setTotMntExpoyAsim(totals.getTotMntExpoyAsim().add(tax.getTaxBaseAmount()));
-            } else if(tax.getTaxValue().equals("6")) {
+            } else if (tax.getTaxValue().equals(ElectronicInvoicingChanges.Tax_ProductNotInvoiceable)) {
                 totals.setTotMontoNF(totals.getTotMontoNF().add(tax.getTaxBaseAmount()));
             } else {
                 totals.setTotMntNetoIVAOtra(totals.getTotMntNetoIVAOtra().add(tax.getTaxBaseAmount()));
@@ -194,12 +195,12 @@ public class E_DeliveryNote implements ICFEDocument {
             CFEInvoiCyType.Detalle.Item invoicyItem = new CFEInvoiCyType.Detalle.Item();
             CFEInvoiCyType.Detalle.Item.CodItem codItem = new CFEInvoiCyType.Detalle.Item.CodItem();
             CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem codItemItem = new CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem();
-            codItemItem.setIteCodiTpoCod("INT1");
+            codItemItem.setIteCodiTpoCod(ElectronicInvoicingChanges.ProductCode_Internal);
             codItemItem.setIteCodiCod(documentLine.getProductValue());
             codItem.getCodItemItem().add(codItemItem);
             if(documentLine.getProductBarCode() != null) {
                 CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem codItemItemBarcode = new CFEInvoiCyType.Detalle.Item.CodItem.CodItemItem();
-                codItemItemBarcode.setIteCodiTpoCod("EAN");
+                codItemItemBarcode.setIteCodiTpoCod(ElectronicInvoicingChanges.ProductCode_EAN);
                 codItemItemBarcode.setIteCodiCod(documentLine.getProductBarCode());
                 codItem.getCodItemItem().add(codItemItemBarcode);
             }
