@@ -148,9 +148,8 @@ public class MOrder extends X_C_Order implements DocAction
 		to.setProcessed (false);
 		if (counter){
 			to.setRef_Order_ID(from.getC_Order_ID());
-			if (Util.isEmpty(to.getPOReference(), true)){
-				to.setPOReference(from.getDocumentNo());
-			}
+			to.setPOReference(from.getDocumentNo());
+
 		}
 		else {
 			to.setRef_Order_ID(0);
@@ -159,9 +158,6 @@ public class MOrder extends X_C_Order implements DocAction
 		to.saveEx(trxName);
 		if (counter){
 			from.setRef_Order_ID(to.getC_Order_ID());
-			if (Util.isEmpty(from.getPOReference(), true)){
-				from.setPOReference(from.getDocumentNo());
-			}
 		}
 
 
@@ -2372,6 +2368,9 @@ public class MOrder extends X_C_Order implements DocAction
 				counter.processIt(counterDT.getDocAction());
 				counter.saveEx(get_TrxName());
 			}
+		}
+		if (Util.isEmpty(getPOReference(), true)){
+			setPOReference(counter.getDocumentNo());
 		}
 		return counter;
 	}	//	createCounterDoc
