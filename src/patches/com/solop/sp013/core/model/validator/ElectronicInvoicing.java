@@ -179,14 +179,28 @@ public class ElectronicInvoicing implements ModelValidator {
 			} else if (po.get_TableName().equals(MInOut.Table_Name)) {
 				MInOut inOut = (MInOut) po;
 				if(inOut.isSOTrx()) {
-
-					if ((TYPE_BEFORE_NEW == type
-						|| inOut.is_ValueChanged(MInOut.COLUMNNAME_C_Order_ID)) && inOut.getC_Order_ID() > 0) {
-						if (inOut.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument)) {
+					boolean isElectronicInOut = false;
+					if(type == TYPE_BEFORE_NEW || inOut.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)) {
+						MDocType documentType = MDocType.get(inOut.getCtx(), inOut.getC_DocType_ID());
+						isElectronicInOut = documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument);
+						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsElectronicDocument, isElectronicInOut);
+						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsAllowsReverse, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsAllowsReverse));
+					}
+					if (isElectronicInOut) {
+						if ((TYPE_BEFORE_NEW == type
+							|| inOut.is_ValueChanged(MInOut.COLUMNNAME_C_Order_ID)) && inOut.getC_Order_ID() > 0) {
 							MOrder order = (MOrder) inOut.getC_Order();
-							inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_FiscalComment, order.getDocumentNo());
+							String fiscalComment = inOut.get_ValueAsString(ElectronicInvoicingChanges.SP013_FiscalComment);
+							if (Util.isEmpty(fiscalComment)) {
+								fiscalComment = order.getDocumentNo();
+							} else {
+								fiscalComment += " | " + order.getDocumentNo();
+							}
+							inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_FiscalComment, fiscalComment);
+
 						}
 					}
+
 					//	TODO: To Shipment not setup the fiscal document type
 //					if(type == TYPE_BEFORE_NEW || inOut.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_BPartner_ID)) {
 //						MBPartner customer = MBPartner.get(inOut.getCtx(), inOut.getC_BPartner_ID());
@@ -209,11 +223,7 @@ public class ElectronicInvoicing implements ModelValidator {
 //							inOut.set_ValueOfColumn("SP013_BillingCriteria", mbPartner.get_ValueAsString("SP013_BillingCriteria"));
 //						}
 //					}
-					if(type == TYPE_BEFORE_NEW || inOut.is_ValueChanged(I_C_Invoice.COLUMNNAME_C_DocTypeTarget_ID)) {
-						MDocType documentType = MDocType.get(inOut.getCtx(), inOut.getC_DocType_ID());
-						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsElectronicDocument, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsElectronicDocument));
-						inOut.set_ValueOfColumn(ElectronicInvoicingChanges.SP013_IsAllowsReverse, documentType.get_ValueAsBoolean(ElectronicInvoicingChanges.SP013_IsAllowsReverse));
-					}
+
 				}
 			} else if (po.get_TableName().equals("C_AllocateInvoice")) {
 				if (type == TYPE_BEFORE_NEW
