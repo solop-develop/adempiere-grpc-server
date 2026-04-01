@@ -152,8 +152,9 @@ public class MOrder extends X_C_Order implements DocAction
 				to.setPOReference(from.getDocumentNo());
 			}
 		}
-		else
+		else {
 			to.setRef_Order_ID(0);
+		}
 		//
 		to.saveEx(trxName);
 		if (counter){
@@ -2025,7 +2026,9 @@ public class MOrder extends X_C_Order implements DocAction
 			if (msg != null && msg.length() > 0)
 				info.append(" (").append(msg).append(")");
 		}	//	Invoice
-		
+
+		// Set the definite document number after completed (if needed)
+		setDefiniteDocumentNo();
 		//	Counter Documents
 		MOrder counter = createCounterDoc();
 		if (counter != null)
@@ -2042,9 +2045,6 @@ public class MOrder extends X_C_Order implements DocAction
 		}
 		createDropShipmentOrder();
 		processRecognitionPlans();
-
-		// Set the definite document number after completed (if needed)
-		setDefiniteDocumentNo();
 
 		setProcessed(true);
 		m_processMsg = info.toString();
