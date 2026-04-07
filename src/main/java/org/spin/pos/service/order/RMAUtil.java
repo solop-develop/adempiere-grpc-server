@@ -41,7 +41,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.util.ColumnsAdded;
-import org.spin.store.model.MCPaymentMethod;
 
 /**
  * A util class for change values for documents
