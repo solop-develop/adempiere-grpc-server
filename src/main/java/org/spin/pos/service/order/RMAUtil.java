@@ -41,6 +41,7 @@ import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.spin.pos.service.payment.PaymentManagement;
 import org.spin.pos.util.ColumnsAdded;
+import org.spin.store.model.MCPaymentMethod;
 
 /**
  * A util class for change values for documents
@@ -281,6 +282,15 @@ public class RMAUtil {
 				returnPayment.setR_Result(null);
 				returnPayment.setTenderType(MPayment.TENDERTYPE_Cash);
 				returnPayment.setC_BankAccount_ID(pos.getC_BankAccount_ID());
+				String whereClause = "TenderType = ?";
+				int paymentMethodId = new Query(returnPayment.getCtx(), MCPaymentMethod.Table_Name, whereClause, transactionName)
+					.setParameters(MPayment.TENDERTYPE_Cash)
+					.setOnlyActiveRecords(true)
+					.setClient_ID()
+					.firstId();
+				if (paymentMethodId > 0) {
+					returnPayment.setC_PaymentMethod_ID(paymentMethodId);
+				}
 			} else if (sourcePayment.isOnline()) {
 				returnPayment.setIsOnline(true);
 				returnPayment.setR_PnRef_DC(sourcePayment.getR_PnRef_DC());
@@ -302,6 +312,7 @@ public class RMAUtil {
 				returnPayment,
 				null,
 				true,
+				isManualDocument,
 				transactionName
 			);
 

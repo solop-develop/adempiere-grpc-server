@@ -123,6 +123,7 @@ public class CollectingManagement {
 			payment,
 			paymentTypeAllocation,
 			false,
+			false,
 			transactionName
 		);
 
