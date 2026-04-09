@@ -1530,8 +1530,18 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 				if (isSOTrx()							//	PO is done by Matching
 					|| inOutLine.getM_Product_ID() == 0)	//	PO Charges, empty lines
 				{
-					if (isSOTrx())
+					if (isSOTrx()) {
 						orderLine.setQtyDelivered(orderLine.getQtyDelivered().subtract(quantity));
+						if (!orderLine.getParent().isReturnOrder() && !isReversal()) {
+							if (product == null || !product.isBulk()) {
+								if (orderLine.getQtyDelivered().compareTo(orderLine.getQtyOrdered()) > 0) {
+									processMsg = "@QtyDelivered@ > @QtyOrdered@ - @Line@: " + inOutLine.getLine()
+											+ (product != null ? " @M_Product_ID@: " + product.getValue() : "");
+									return DocAction.STATUS_Invalid;
+								}
+							}
+						}
+					}
 					else
 						orderLine.setQtyDelivered(orderLine.getQtyDelivered().add(quantity));
 				}

@@ -2051,6 +2051,16 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 				|| invoiceLine.getM_Product_ID() == 0) {
 					BigDecimal qtyInvoiced = invoiceLine.getQtyInvoiced().multiply(multiplier);
 					orderLine.setQtyInvoiced(orderLine.getQtyInvoiced().add(qtyInvoiced));
+					//	Validate QtyInvoiced does not exceed QtyOrdered (skip for bulk products)
+					if (isSOTrx() && !orderLine.getParent().isReturnOrder() && !isReversal()) {
+						MProduct lineProduct = invoiceLine.getProduct();
+						if (lineProduct == null || !lineProduct.isBulk()) {
+							if (orderLine.getQtyInvoiced().compareTo(orderLine.getQtyOrdered()) > 0) {
+								throw new AdempiereException("@QtyInvoiced@ > @QtyOrdered@ - @Line@: " + invoiceLine.getLine()
+										+ (lineProduct != null ? " @M_Product_ID@: " + lineProduct.getValue() : ""));
+							}
+						}
+					}
 					orderLine.saveEx();
 				}
 				//	Order Invoiced Qty updated via Matching Inv-PO
