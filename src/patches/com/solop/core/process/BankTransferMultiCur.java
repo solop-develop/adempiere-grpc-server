@@ -25,6 +25,7 @@ import org.compiere.model.MCurrency;
 import org.compiere.model.MPayment;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -255,7 +256,7 @@ public class BankTransferMultiCur extends SvrProcess {
 				curFrom.getISO_Code() + " " + paymentBankFrom.getPayAmt().setScale(2, RoundingMode.HALF_UP) +
 					" - @C0028.Destination@: " + descriptionTo + ", @C0028.Receipt@ " + paymentBankTo.getDocumentNo() + " " + curTo.getISO_Code() + " " +
 				paymentBankTo.getPayAmt().setScale(2, RoundingMode.HALF_UP);
-
+		description = Msg.parseTranslation(getCtx(), description);
 		if(paymentBankFrom.getDescription() != null && !paymentBankFrom.getDescription().equalsIgnoreCase("")){
 			paymentBankFrom.setDescription(paymentBankFrom.getDescription() + " " + description);
 		} else paymentBankFrom.setDescription(description);
