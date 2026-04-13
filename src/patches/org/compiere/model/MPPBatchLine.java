@@ -21,7 +21,7 @@ public class MPPBatchLine extends X_C_PPBatchLine {
     @Override
     protected boolean beforeSave(boolean newRecord) {
         setTotalAmt(getPayAmt().subtract(getDiscountAmt().add(getTaxAmt()).add(getFeeAmt())));
-        if (getWithdrawal_ID() <= 0) {
+        if (isManual()) {
             MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getC_PaymentProcessorBatch_ID(), get_TrxName());
             batch.updateTotals();
         }
