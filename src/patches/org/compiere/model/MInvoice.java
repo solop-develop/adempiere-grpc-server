@@ -727,6 +727,7 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 					invoiceLineTo.setA_Asset_ID(0);
 					invoiceLineTo.setM_AttributeSetInstance_ID(0);
 					invoiceLineTo.setS_ResourceAssignment_ID(0);
+					invoiceLineTo.setWM_InOutBoundLine_ID(0);
 					//	New Tax
 					if (getC_BPartner_ID() != invoiceFrom.getC_BPartner_ID())
 						invoiceLineTo.setTax();    //	recalculate
