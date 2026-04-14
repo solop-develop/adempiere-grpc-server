@@ -23,7 +23,7 @@ public class MPPBatchLine extends X_C_PPBatchLine {
     protected boolean beforeSave(boolean newRecord) {
         boolean shouldUpdateParent = false;
 
-        if (isManual()) {
+        if (isManual() && newRecord) {
             shouldUpdateParent = true;
             MPayment payment = null;
             if (BigDecimal.ZERO.compareTo(getPayAmt()) == 0) {
