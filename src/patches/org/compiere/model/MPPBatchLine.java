@@ -1,6 +1,7 @@
 package org.compiere.model;
 import org.adempiere.core.domains.models.X_C_PPBatchLine;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.util.Properties;
 
@@ -20,8 +21,35 @@ public class MPPBatchLine extends X_C_PPBatchLine {
 
     @Override
     protected boolean beforeSave(boolean newRecord) {
-        setTotalAmt(getPayAmt().subtract(getDiscountAmt().add(getTaxAmt()).add(getFeeAmt())));
+        boolean shouldUpdateParent = false;
+
         if (isManual()) {
+            shouldUpdateParent = true;
+            MPayment payment = null;
+            if (BigDecimal.ZERO.compareTo(getPayAmt()) == 0) {
+                payment = (MPayment) getC_Payment();
+                BigDecimal multiplier = BigDecimal.ONE;
+                if (!payment.isReceipt()){
+                    multiplier = multiplier.negate();
+                }
+                setPayAmt(payment.getPayAmt().multiply(multiplier));
+                setTaxAmt(payment.getTaxAmt().multiply(multiplier));
+                setDiscountAmt(payment.getDiscountAmt().multiply(multiplier));
+            }
+            if (getWithdrawal_ID() <= 0) {
+                if (payment == null) {
+                    payment = (MPayment) getC_Payment();
+                }
+                if(payment.getWithdrawal_ID() > 0) {
+                    setWithdrawal_ID(payment.getWithdrawal_ID());
+                }
+                if(payment.getDeposit_ID() > 0) {
+                    setDeposit_ID(payment.getDeposit_ID());
+                }
+            }
+        }
+        setTotalAmt(getPayAmt().subtract(getDiscountAmt().add(getTaxAmt()).add(getFeeAmt())));
+        if (shouldUpdateParent){
             MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getC_PaymentProcessorBatch_ID(), get_TrxName());
             batch.updateTotals();
         }
