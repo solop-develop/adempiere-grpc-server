@@ -21,10 +21,8 @@ public class MPPBatchLine extends X_C_PPBatchLine {
 
     @Override
     protected boolean beforeSave(boolean newRecord) {
-        boolean shouldUpdateParent = false;
 
         if (isManual() && newRecord) {
-            shouldUpdateParent = true;
             MPayment payment = null;
             if (BigDecimal.ZERO.compareTo(getPayAmt()) == 0) {
                 payment = (MPayment) getC_Payment();
@@ -49,11 +47,16 @@ public class MPPBatchLine extends X_C_PPBatchLine {
             }
         }
         setTotalAmt(getPayAmt().subtract(getDiscountAmt().add(getTaxAmt()).add(getFeeAmt())));
-        if (shouldUpdateParent){
+        return super.beforeSave(newRecord);
+    }
+
+    @Override
+    protected boolean afterSave(boolean newRecord, boolean success) {
+        if (isManual() && newRecord && success) {
             MPaymentProcessorBatch batch = new MPaymentProcessorBatch(getCtx(), getC_PaymentProcessorBatch_ID(), get_TrxName());
             batch.updateTotals();
         }
-        return super.beforeSave(newRecord);
+        return super.afterSave(newRecord, success);
     }
 
     @Override
