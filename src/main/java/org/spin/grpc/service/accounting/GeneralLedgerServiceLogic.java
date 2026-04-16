@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -70,11 +71,14 @@ import org.compiere.model.MTable;
 import org.compiere.model.M_Element;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
+import org.compiere.process.DocumentEngine;
+// import org.compiere.acct.Doc;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -98,6 +102,8 @@ import org.spin.backend.grpc.general_ledger.ListAccountingSchemasRequest;
 import org.spin.backend.grpc.general_ledger.ListConversionTypesRequest;
 import org.spin.backend.grpc.general_ledger.ListConversionTypesResponse;
 import org.spin.backend.grpc.general_ledger.ListPostingTypesRequest;
+import org.spin.backend.grpc.general_ledger.StartRePostRequest;
+import org.spin.backend.grpc.general_ledger.StartRePostResponse;
 import org.spin.base.db.QueryUtil;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceUtil;
@@ -978,6 +984,57 @@ public class GeneralLedgerServiceLogic {
 			workBook.write(outputStream);
 		}
 		workBook.close();
+	}
+
+
+
+	public static StartRePostResponse.Builder startRePost(StartRePostRequest request) {
+		// validate and get table
+		final MTable table = RecordUtil.validateAndGetTable(
+			request.getTableName()
+		);
+
+		// Validate ID
+		final int recordId = request.getRecordId();
+		RecordUtil.validateRecordId(recordId, table.getAccessLevel());
+		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
+
+		Properties context = Env.getCtx();
+		final int clientId = Env.getAD_Client_ID(context);
+		
+		log.config("AD_Table_ID=" + table.getAD_Table_ID() + "/" + recordId
+			+ ", Force=" + request.getIsForce());
+
+		// Use Doc.postImmediate directly to bypass MClient.isClientAccounting() check,
+		// so re-posting works even when AccountingConfiguration is not Immediate/Queue.
+		// MAcctSchema[] acctSchemas = MAcctSchema.getClientAcctSchema(context, clientId, null);
+		// String errorMessage = Doc.postImmediate(
+		// 	acctSchemas,
+		String errorMessage = DocumentEngine.postImmediate(
+			context, clientId,
+			table.getAD_Table_ID(),
+			recordId,
+			request.getIsForce(),
+			null
+		);
+
+		if (!MClient.isClientAccounting()) {
+			if (Util.isEmpty(errorMessage, true)) {
+				errorMessage = "ClientAccountingNotEnabled";
+			}
+		}
+		if (!Util.isEmpty(errorMessage, true)) {
+			errorMessage = Msg.getMsg(
+				context,
+				errorMessage
+			);
+			rePostBuilder.setErrorMsg(
+				TextManager.getValidString(errorMessage)
+			);
+			log.warning(errorMessage);
+		}
+
+		return rePostBuilder;
 	}
 
 

@@ -798,7 +798,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			if(request == null) {
 				throw new AdempiereException("StartRePostRequest Null");
 			}
-			StartRePostResponse.Builder builder = startRePost(request);
+			StartRePostResponse.Builder builder = GeneralLedgerServiceLogic.startRePost(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
@@ -811,39 +811,6 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 					.asRuntimeException()
 			);
 		}
-	}
-
-	private StartRePostResponse.Builder startRePost(StartRePostRequest request) {
-		// validate and get table
-		final MTable table = RecordUtil.validateAndGetTable(
-			request.getTableName()
-		);
-
-		// Validate ID
-		final int recordId = request.getRecordId();
-		RecordUtil.validateRecordId(recordId, table.getAccessLevel());
-		StartRePostResponse.Builder rePostBuilder = StartRePostResponse.newBuilder();
-
-		int clientId = Env.getAD_Client_ID(Env.getCtx());
-
-		String errorMessage = DocumentEngine.postImmediate(
-			Env.getCtx(), clientId,
-			table.getAD_Table_ID(),
-			recordId,
-			request.getIsForce(),
-			null
-		);
-		if (!Util.isEmpty(errorMessage, true)) {
-			errorMessage = Msg.getMsg(
-				Env.getCtx(),
-				errorMessage
-			);
-			rePostBuilder.setErrorMsg(
-				TextManager.getValidString(errorMessage)
-			);
-		}
-
-		return rePostBuilder;
 	}
 
 
