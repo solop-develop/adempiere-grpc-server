@@ -48,7 +48,7 @@ public class MProductPO extends X_M_Product_PO
 	 * @param trxName
 	 * @return
 	 */
-	public static List<MProductPO> getByPartner(Properties ctx , Integer partnerId, Integer productId, String trxName)
+	public static List<MProductPO> getByPartnerAndOrg(Properties ctx , Integer partnerId, Integer productId, Integer orgId, String trxName)
 	{
 		List<Object> parameters = new ArrayList<>();
 		StringBuilder whereClause = new StringBuilder();
@@ -59,12 +59,13 @@ public class MProductPO extends X_M_Product_PO
 					parameters.add(Id);
 				});
 
-		whereClause.append(MProductPO.COLUMNNAME_M_Product_ID).append("=?");
+		whereClause.append(MProductPO.COLUMNNAME_M_Product_ID).append("=? AND AD_Org_ID IN (0, ?)");
 		parameters.add(productId);
+		parameters.add(orgId);
 		List<MProductPO> purchaseProducts = new Query(ctx, MProductPO.Table_Name, whereClause.toString() , trxName)
 				.setClient_ID()
 				.setParameters(parameters)
-				.setOrderBy(MProductPO.COLUMNNAME_IsCurrentVendor)
+				.setOrderBy(MProductPO.COLUMNNAME_IsCurrentVendor + ", " + MProductPO.COLUMNNAME_AD_Org_ID + " DESC")
 				.list();
 		if (purchaseProducts == null)
 			return new ArrayList<>();
@@ -72,6 +73,25 @@ public class MProductPO extends X_M_Product_PO
 			return purchaseProducts;
 
 	}
+
+	/**
+	 * 	Get current PO of Product
+	 * 	@param ctx context
+	 *	@param M_Product_ID product
+	 *	@param trxName transaction
+	 *	@return PO - current vendor first
+	 */
+	public static MProductPO[] getOfProductAndOrg (Properties ctx, int M_Product_ID, int orgId,String trxName)
+	{
+		final String whereClause = "M_Product_ID=? AND AD_Org_ID IN (0, ?)";
+		List<MProductPO> list = new Query(ctx, Table_Name, whereClause, trxName)
+									.setParameters(M_Product_ID, orgId)
+									.setOnlyActiveRecords(true)
+									.setOrderBy("IsCurrentVendor DESC, AD_Org_ID DESC")
+									.list();
+		return list.toArray(new MProductPO[list.size()]);
+	}	//	getOfProduct
+
 
 	/**
 	 * 	Get current PO of Product
@@ -118,12 +138,15 @@ public class MProductPO extends X_M_Product_PO
 	 * @param partnerId
 	 * @param trxName
 	 */
-	public MProductPO(Properties ctx , int productId , int partnerId , int currencyId , String trxName)
+	public MProductPO(Properties ctx , int productId , int partnerId , int currencyId, int orgId, String trxName)
 	{
 		super(ctx, 0 , trxName);
 		setM_Product_ID(productId);
 		setC_BPartner_ID(partnerId);
 		setC_Currency_ID(currencyId);
+		if (orgId > 0){
+			setAD_Org_ID(orgId);
+		}
 		setIsCurrentVendor (true);
 	}
 	
