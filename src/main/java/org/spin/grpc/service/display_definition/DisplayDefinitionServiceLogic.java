@@ -45,6 +45,7 @@ import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.POAdapter;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
@@ -140,6 +141,9 @@ import com.solop.sp010.query.Workflow;
 import com.solop.sp010.util.DisplayDefinitionChanges;
 
 public class DisplayDefinitionServiceLogic {
+
+	private static CLogger log = CLogger.getCLogger(DisplayDefinitionServiceLogic.class);
+
 
 	public static PO validateAndGetDisplayDefinition(int displayDefinitionId) {
 			if (displayDefinitionId <= 0) {
@@ -426,16 +430,29 @@ public class DisplayDefinitionServiceLogic {
 			.getIDsAsList()
 			.forEach(fieldId -> {
 				PO field = table.getPO(fieldId, null);
-				MColumn column = MColumn.get(
-					field.getCtx(),
-					field.get_ValueAsInt(
-						I_AD_Column.COLUMNNAME_AD_Column_ID
-					)
-				);
+
+				final int columnId = field.get_ValueAsInt(I_AD_Field.COLUMNNAME_AD_Column_ID);
+				if (columnId <= 0) {
+					builderList.setFieldDefinitionsCount1(
+						builderList.getFieldDefinitionsCount1() - 1
+					);
+					log.warning("@SP010_Field_ID@ " + fieldId + " @AD_Column_ID@ @FillMandatory@, @SP010_Field_ID@ " + fieldId + " @Ignored@");
+					return;
+				}
+				MColumn column = MColumn.get(Env.getCtx(), columnId);
+				if (column == null || column.getAD_Column_ID() <= 0) {
+					builderList.setFieldDefinitionsCount1(
+						builderList.getFieldDefinitionsCount1() - 1
+					);
+					log.warning("@SP010_Field_ID@ " + fieldId + " @AD_Column_ID@ @NotFound@, @SP010_Field_ID@ " + fieldId + " @Ignored@");
+					return;
+					// throw new AdempiereException("@AD_Column_ID@ " + columnId + " @NotFound@ for @SP010_Field_ID@ " + fieldId);
+				}
 				if (columnsMap.containsKey(column.getColumnName())) {
 					// omit this column
 					return;
 				}
+
 				FieldDefinition.Builder fieldBuilder = DisplayDefinitionConvertUtil.convertFieldDefinition(field);
 				builderList.addFieldDefinitions2(
 					fieldBuilder.build()
