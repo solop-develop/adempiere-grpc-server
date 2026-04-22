@@ -77,7 +77,7 @@ service ReportManagement {
 		option (google.api.http) = {
 			get: "/report-management/drill-tables/{table_name}"
 			additional_bindings: {
-				get: "/report-management/report-views/table-id/{table_id}"
+				get: "/report-management/drill-tables/table-id/{table_id}"
 			}
 		};
 	}

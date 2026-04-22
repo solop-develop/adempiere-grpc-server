@@ -62,13 +62,18 @@ service BusinessData {
 	rpc ListEntities(ListEntitiesRequest) returns (ListEntitiesResponse) {
 		option (google.api.http) = { get: "/business-data/entities/{table_name}" };
 	}
+
 	//	Request a BusinessProcess / Report
 	rpc RunBusinessProcess(RunBusinessProcessRequest) returns (ProcessLog) {
 		option (google.api.http) = {
 			post: "/business-data/process/{id}",
 			body: "*"
 			additional_bindings: {
-				post: "/business-data/report/{id}",
+				post: "/business-data/reports/{id}",
+				body: "*"
+			}
+			additional_bindings: {
+				post: "/business-data/reports/{id}/windows/{table_name}/{record_id}",
 				body: "*"
 			}
 			additional_bindings: {
