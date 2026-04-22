@@ -1907,6 +1907,7 @@ message ListProductPriceRequest {
 	string valid_from = 10;
 	int32 price_list_id = 11;
 	int32 warehouse_id = 12;
+	string product_code_vendor = 13;
 }
 
 
