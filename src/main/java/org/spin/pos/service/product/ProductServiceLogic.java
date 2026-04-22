@@ -12,6 +12,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPriceList;
 import org.compiere.model.MProduct;
+import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
@@ -27,7 +28,6 @@ import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductServiceLogic {
-	
 
 	/**
 	 * Get Product Price Method
@@ -191,26 +191,57 @@ public class ProductServiceLogic {
 		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"AND ("
-					+ "("
+			);
+
+			whereClause.append(
+					"("
 						+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 						+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
 						+ "OR UPPER(UPC) = UPPER(?) "
 						+ "OR UPPER(SKU) = UPPER(?) "
 					+ ") "
-					+ "OR EXISTS("
+			);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+			parameters.add(searchValue);
+
+			// Find on Product Purchase
+			whereClause.append(
+					"OR EXISTS("
 						+ "SELECT 1 FROM M_Product_PO AS po "
 						+ "WHERE po.IsActive = 'Y' "
 						+ "AND po.M_Product_ID = M_Product.M_Product_ID "
-						+ "AND UPPER(po.UPC) LIKE UPPER(?) "
+						+ "AND ("
+							+ "UPPER(po.UPC) LIKE UPPER(?) "
+							// + "OR UPPER(po.VendorProductNo) LIKE UPPER(?) "
+						+ ") "
 					+ ")"
-				+ ") "
 			);
-			//	Add parameters
 			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
+			// parameters.add(searchValue);
+
+			// Find on Product Info
+			MTable productTable = MTable.get(Env.getCtx(), "M_Product_Info");
+			if (productTable != null && productTable.get_ID() > 0) {
+				whereClause.append(
+					"OR EXISTS("
+						+ "SELECT 1 FROM M_Product_Info AS pi "
+						+ "WHERE pi.IsActive = 'Y' "
+						+ "AND pi.M_Product_ID = M_Product.M_Product_ID "
+						+ "AND ("
+							+ "UPPER(pi.UPC) LIKE UPPER(?) "
+							// + "OR UPPER(pi.VendorProductNo) LIKE UPPER(?) "
+						+ ") "
+					+ ")"
+				);
+				parameters.add(searchValue);
+				// parameters.add(searchValue);
+			}
+
+			whereClause.append(
+				") "
+			);
 		}
 
 		//	Add Price List
@@ -227,6 +258,45 @@ public class ProductServiceLogic {
 				+ "AND pp.M_Product_ID = M_Product.M_Product_ID"
 			+ ")"
 		);
+
+		final int businessPartnerId = request.getBusinessPartnerId();
+		if(businessPartnerId > 0) {
+			/*
+			whereClause.append(
+				"AND ("
+			);
+
+			// Find on Product Purchase
+			whereClause.append(
+					"OR EXISTS("
+						+ "SELECT 1 FROM M_Product_PO AS po "
+						+ "WHERE po.IsActive = 'Y' "
+						+ "AND po.M_Product_ID = M_Product.M_Product_ID "
+						+ "AND po.C_BPartner_ID = ? "
+					+ ")"
+			);
+			parameters.add(businessPartnerId);
+
+			// Find on Product Info
+			MTable productTable = MTable.get(Env.getCtx(), "M_Product_Info");
+			if (productTable != null && productTable.get_ID() > 0) {
+				whereClause.append(
+					"OR EXISTS("
+						+ "SELECT 1 FROM M_Product_Info AS pi "
+						+ "WHERE pi.IsActive = 'Y' "
+						+ "AND pi.M_Product_ID = M_Product.M_Product_ID "
+						+ "AND pi.C_BPartner_ID = ? "
+					+ ")"
+				);
+				parameters.add(businessPartnerId);
+			}
+
+			whereClause.append(
+				") "
+			);
+			*/
+		}
+
 		//	Add parameters
 		parameters.add(priceList.getM_PriceList_ID());
 		parameters.add(validFrom);
@@ -234,7 +304,6 @@ public class ProductServiceLogic {
 		if(request.getWarehouseId() > 0) {
 			warehouseId.set(request.getWarehouseId());
 		}
-		int businessPartnerId = request.getBusinessPartnerId();
 		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
 		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
 		//	Get Product list

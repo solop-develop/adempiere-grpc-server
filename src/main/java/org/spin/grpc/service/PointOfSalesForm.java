@@ -3883,11 +3883,6 @@ public class PointOfSalesForm extends StoreImplBase {
 		if(request.getPosId() <= 0) {
 			throw new AdempiereException("@C_POS_ID@ @NotFound@");
 		}
-		ListPaymentsResponse.Builder builder = ListPaymentsResponse.newBuilder();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
 
 		//	Dynamic where clause
 		StringBuffer whereClause = new StringBuffer();
@@ -3918,28 +3913,44 @@ public class PointOfSalesForm extends StoreImplBase {
 			whereClause.append("C_Payment.IsReceipt = 'Y'");
 		}
 		//	Get Product list
-		Query query = new Query(Env.getCtx(), I_C_Payment.Table_Name, whereClause.toString(), null)
-				.setParameters(parameters)
-				.setClient_ID()
-				.setOnlyActiveRecords(true);
-		int count = query.count();
-		query
-		.setLimit(limit, offset)
-		.<MPayment>list()
-		.forEach(payment -> {
-			Payment.Builder paymentBuilder = PaymentConvertUtil.convertPayment(
-				payment
-			);
-			builder.addPayments(paymentBuilder);
-		});
-		builder.setRecordCount(count);
+		Query query = new Query(
+			Env.getCtx(),
+			I_C_Payment.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+		;
+
+		final int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		final int limit = LimitUtil.getPageSize(request.getPageSize());
+		final int offset = (pageNumber - 1) * limit;
+		final int count = query.count();
 		//	Set page token
+		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
-		builder.setNextPageToken(
-			TextManager.getValidString(nexPageToken)
-		);
+
+		ListPaymentsResponse.Builder builder = ListPaymentsResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
+		query
+			.setLimit(limit, offset)
+			.<MPayment>list()
+			.forEach(payment -> {
+				Payment.Builder paymentBuilder = PaymentConvertUtil.convertPayment(
+					payment
+				);
+				builder.addPayments(paymentBuilder);
+			})
+		;
 		return builder;
 	}
 	
