@@ -198,9 +198,9 @@ public class ConvertUtil {
 			TextManager.getValidString(uuid)
 		);
 
-		final String displayValue = entity.getDisplayValue();
+		final String displayValueEntity = entity.getDisplayValue();
 		entityBuilder.setDisplayValue(
-			TextManager.getValidString(displayValue)
+			TextManager.getValidString(displayValueEntity)
 		);
 
 		//	Convert attributes
