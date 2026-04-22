@@ -198,6 +198,11 @@ public class ConvertUtil {
 			TextManager.getValidString(uuid)
 		);
 
+		final String displayValueEntity = entity.getDisplayValue();
+		entityBuilder.setDisplayValue(
+			TextManager.getValidString(displayValueEntity)
+		);
+
 		//	Convert attributes
 		POInfo poInfo = POInfo.getPOInfo(Env.getCtx(), entity.get_Table_ID());
 		entityBuilder.setTableName(

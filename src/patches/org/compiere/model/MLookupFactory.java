@@ -435,8 +435,7 @@ public class MLookupFactory
 				loaded = true;
 			}
 		}
-		catch (SQLException e)
-		{
+		catch (SQLException e) {
 			s_log.log(Level.WARNING, sql0, e);
 			return null;
 		}
@@ -447,8 +446,7 @@ public class MLookupFactory
 			pstmt = null;
 		}
 
-		if (!loaded)
-		{
+		if (!loaded) {
 			s_log.log(Level.WARNING, "No Table Reference Table ID=" + AD_Reference_Value_ID);
 			return null;
 		}
@@ -590,8 +588,7 @@ public class MLookupFactory
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, AD_Reference_Value_ID);
 			rs = pstmt.executeQuery();
-			if (!rs.next())
-			{
+			if (!rs.next()) {
 				s_log.log(Level.WARNING, "Cannot find Reference Table, ID=" + AD_Reference_Value_ID
 					+ ", Base=" + BaseTable + "." + BaseColumn);
 				return null;
@@ -605,8 +602,7 @@ public class MLookupFactory
 			displaySQL = rs.getString(6);
 			isDisplayIdentifier = "Y".equals(rs.getString(7));
 		}
-		catch (SQLException e)
-		{
+		catch (SQLException e) {
 			s_log.log(Level.WARNING, sql, e);
 			return null;
 		}
@@ -682,8 +678,7 @@ public class MLookupFactory
 	static private MLookupInfo getLookup_TableDir (Properties ctx, Language language,
 		int WindowNo, String ColumnName)
 	{
-		if (!ColumnName.endsWith("_ID"))
-		{
+		if (ColumnName == null || !ColumnName.endsWith("_ID")) {
 			s_log.log(Level.WARNING, "Key does not end with '_ID': " + ColumnName);
 			return null;
 		}
@@ -733,8 +728,7 @@ public class MLookupFactory
 				ZoomWindowPO = rs.getInt(6);
 			}
 		}
-		catch (SQLException e)
-		{
+		catch (SQLException e) {
 			s_log.log(Level.WARNING, sql0, e);
 			return null;
 		}
@@ -746,8 +740,7 @@ public class MLookupFactory
 		}
 
 		//  Do we have columns ?
-		if (list.size() == 0)
-		{
+		if (list == null || list.size() == 0) {
 			s_log.log(Level.WARNING, "No Identifier records found: " + ColumnName);
 			return null;
 		}
@@ -904,8 +897,7 @@ public class MLookupFactory
 					isTranslated = true;
 			}
 		}
-		catch (SQLException e)
-		{
+		catch (SQLException e) {
 			s_log.log(Level.WARNING, sql, e);
 			return "";
 		}
@@ -917,8 +909,7 @@ public class MLookupFactory
 		}
 
 		//  Do we have columns ?
-		if (list.size() == 0)
-		{
+		if (list == null || list.size() == 0) {
 			s_log.log(Level.WARNING, "No Identifier records found: " + TableName + "." + ColumnName);
 			return "CASE "
 					+ "WHEN " + BaseTable + "." + ColumnName + " IS NULL THEN NULL "

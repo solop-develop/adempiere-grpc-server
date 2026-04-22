@@ -89,6 +89,7 @@ message Entity {
 	string uuid = 2;
 	string table_name = 3;
 	google.protobuf.Struct values = 4;
+	string display_value = 5;
 }
 
 message ListEntitiesResponse {

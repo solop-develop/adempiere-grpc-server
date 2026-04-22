@@ -153,10 +153,19 @@ allprojects {
 		dependsOn "generateTestProto"
 	}
 
+	task copyDescriptorToEnvoy(type: Copy) {
+		from "${projectDir}/build/descriptors/${descriptorFile}"
+		into "${projectDir}/docker-compose/envoy/definitions/"
+
+		// task dependency
+		dependsOn "generateTestProto"
+	}
+
 	tasks.matching {
 		it.name.startsWith('compileJava')
 	}.each { task ->
 		task.finalizedBy copyDescriptor
+		task.finalizedBy copyDescriptorToEnvoy
 	}
 }
 
