@@ -576,7 +576,7 @@ public class ProductInfoLogic {
 			+ "LEFT JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID) "
 			+ "LEFT JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID = p.M_Product_Category_ID) "
 			+ "LEFT JOIN C_UOM AS u ON (p.C_UOM_ID = u.C_UOM_ID) "
-			+ "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?) "
+			+ "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?)) "
 			+ "LEFT JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID = bp.C_BPartner_ID) "
 			+ "LEFT JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID = p.M_AttributeSet_ID) "
 		;
