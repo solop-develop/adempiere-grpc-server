@@ -16,7 +16,7 @@ syntax = "proto3";
 
 
 option java_multiple_files = true;
-option java_package = "org.spin.backend.grpc.inout";
+option java_package = "org.spin.backend.grpc.field.inout";
 option java_outer_classname = "ADempiereInOut";
 
 import "google/api/annotations.proto";
@@ -32,20 +32,21 @@ package field.in_out;
 
 // The in-out service definition.
 service InOutInfoService {
-	// Filters
+	// Business Partner Filters
 	rpc ListBusinessPartners(ListBusinessPartnersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/fields/in-outs/business-partners"
 		};
 	}
+	// Shipper Filters
 	rpc ListShippers(ListShippersRequest) returns (data.ListLookupItemsResponse) {
 		option (google.api.http) = {
 			get: "/fields/in-outs/shippers"
 		};
 	}
 
-	// Result
-	rpc GetInOutInfo(GetInOutInfoRequest) returns (data.Entity) {
+	// Result a One
+	rpc GetInOutInfo(GetInOutInfoRequest) returns (InOutInfo) {
 		option (google.api.http) = {
 			get: "/fields/in-outs/{id}"
 			additional_bindings: {
@@ -56,7 +57,8 @@ service InOutInfoService {
 			}
 		};
 	}
-	rpc ListInOutInfo(ListInOutInfoRequest) returns (data.ListEntitiesResponse) {
+	// Result a List
+	rpc ListInOutInfo(ListInOutInfoRequest) returns (ListInOutInfoResponse) {
 		option (google.api.http) = {
 			get: "/fields/in-outs"
 			additional_bindings: {
@@ -82,7 +84,16 @@ service InOutInfoService {
 }
 
 
-// Business Partners
+// Business Partner
+message BusinessPartner {
+	int32 id = 1;
+	string uuid = 2;
+	string value = 3;
+	string display_value = 4;
+	string tax_id = 5;
+	string name = 6;
+	string description = 7;
+}
 message ListBusinessPartnersRequest {
 	string filters = 1;
 	string sort_by = 2;
@@ -120,7 +131,7 @@ message ListShippersRequest {
 message GetInOutInfoRequest {
 	int32 id = 1;
 	string uuid = 2;
-	string code = 3;
+	string code = 3; // Document No
 }
 message ListInOutInfoRequest {
 	string filters = 1;
@@ -150,6 +161,38 @@ message ListInOutInfoRequest {
 	string description = 23;
 	google.protobuf.Timestamp movement_date_from = 24;
 	google.protobuf.Timestamp movement_date_to = 25;
-	string order_reference = 26;
+	string order_reference = 26; // PO Reference
 	int32 shipper_id = 27;
+}
+
+message InOutInfo {
+	int32 id = 1;
+	string uuid = 2;
+	string display_value = 3;
+	string document_no = 4;
+	google.protobuf.Timestamp movement_date = 5;
+	string movement_date_formatted = 6;
+	bool is_sales_transaction = 7;
+	BusinessPartner business_partner = 8;
+	string description = 9;
+	string order_reference = 10; // PO Reference
+	string shipper_name = 11;
+	google.protobuf.Timestamp ship_date = 12;
+	string ship_date_formatted = 13;
+	string traking_no = 14;
+	bool is_drop_shipment = 15;
+	data.DocumentStatus document_status = 16;
+	BusinessPartner drop_shipment_partner = 17;
+	string invoice_no = 18;
+	google.protobuf.Timestamp invoice_date = 19;
+	string invoice_date_formatted = 20;
+	string order_no = 21;
+	google.protobuf.Timestamp order_date = 22;
+	string order_date_formatted = 23;
+}
+
+message ListInOutInfoResponse {
+	int64 record_count = 1;
+	repeated InOutInfo records = 2;
+	string next_page_token = 3;
 }
