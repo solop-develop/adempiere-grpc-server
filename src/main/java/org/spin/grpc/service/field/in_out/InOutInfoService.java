@@ -16,11 +16,14 @@ package org.spin.grpc.service.field.in_out;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.CLogger;
-import org.spin.backend.grpc.common.Entity;
-import org.spin.backend.grpc.common.ListEntitiesResponse;
-import org.spin.backend.grpc.inout.GetInOutInfoRequest;
-import org.spin.backend.grpc.inout.ListInOutInfoRequest;
-import org.spin.backend.grpc.inout.InOutInfoServiceGrpc.InOutInfoServiceImplBase;
+import org.spin.backend.grpc.common.ListLookupItemsResponse;
+import org.spin.backend.grpc.field.inout.GetInOutInfoRequest;
+import org.spin.backend.grpc.field.inout.InOutInfo;
+import org.spin.backend.grpc.field.inout.InOutInfoServiceGrpc.InOutInfoServiceImplBase;
+import org.spin.backend.grpc.field.inout.ListBusinessPartnersRequest;
+import org.spin.backend.grpc.field.inout.ListInOutInfoRequest;
+import org.spin.backend.grpc.field.inout.ListInOutInfoResponse;
+import org.spin.backend.grpc.field.inout.ListShippersRequest;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -35,16 +38,62 @@ public class InOutInfoService extends InOutInfoServiceImplBase {
 	private CLogger log = CLogger.getCLogger(InOutInfoService.class);
 
 
+	@Override
+	public void listBusinessPartners(ListBusinessPartnersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object ListBusinessPartnersRequest Null");
+			}
+			ListLookupItemsResponse.Builder entityValueList = InOutInfoLogic.listBusinessPartners(request);
+			responseObserver.onNext(
+				entityValueList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listShippers(ListShippersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object ListShippersRequest Null");
+			}
+			ListLookupItemsResponse.Builder entityValueList = InOutInfoLogic.listShippers(request);
+			responseObserver.onNext(
+				entityValueList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
 	/**
 	 * @param request
 	 * @param responseObserver
 	 */
-	public void getInOutInfo(GetInOutInfoRequest request, StreamObserver<Entity> responseObserver) {
+	public void getInOutInfo(GetInOutInfoRequest request, StreamObserver<InOutInfo> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object GetInOutInfoRequest Null");
 			}
-			Entity.Builder entityValue = InOutInfoLogic.getInOutInfo(request);
+			InOutInfo.Builder entityValue = InOutInfoLogic.getInOutInfo(request);
 			responseObserver.onNext(
 				entityValue.build()
 			);
@@ -63,13 +112,13 @@ public class InOutInfoService extends InOutInfoServiceImplBase {
 
 
 	@Override
-	public void listInOutInfo(ListInOutInfoRequest request, StreamObserver<ListEntitiesResponse> responseObserver) {
+	public void listInOutInfo(ListInOutInfoRequest request, StreamObserver<ListInOutInfoResponse> responseObserver) {
 		try {
 			if(request == null) {
 				throw new AdempiereException("Object ListInOutInfoRequest Null");
 			}
 
-			ListEntitiesResponse.Builder entityValueList = InOutInfoLogic.listInOutInfo(request);
+			ListInOutInfoResponse.Builder entityValueList = InOutInfoLogic.listInOutInfo(request);
 			responseObserver.onNext(entityValueList.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

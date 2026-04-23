@@ -358,6 +358,42 @@ public class ConvertUtil {
 			)
 		;
 	}
+	/**
+	 * Convert Document Status
+	 * @param referenceListId
+	 * @param value
+	 * @return
+	 */
+	public static DocumentStatus.Builder convertDocumentStatus(int referenceListId, String value) {
+		DocumentStatus.Builder builder = DocumentStatus.newBuilder();
+		if(referenceListId <= 0) {
+			return builder;
+		}
+		MRefList referenceList = MRefList.get(Env.getCtx(), referenceListId, value, null);
+		if (referenceList == null || referenceList.getAD_Ref_List_ID() <= 0) {
+			return builder;
+		}
+		builder
+			.setValue(
+				TextManager.getValidString(value)
+			)
+			.setName(
+				TextManager.getValidString(
+					referenceList.get_Translation(
+						I_AD_Ref_List.COLUMNNAME_Name
+					)
+				)
+			)
+			.setDescription(
+				TextManager.getValidString(
+					referenceList.get_Translation(
+						I_AD_Ref_List.COLUMNNAME_Description
+					)
+				)
+			)
+		;
+		return builder;
+	}
 
 
 
