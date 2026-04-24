@@ -267,17 +267,17 @@ public class MSession extends X_AD_Session
 	private static final long KEEP_ALIVE_MIN_INTERVAL_NS =
 			TimeUnit.SECONDS.toNanos(30);
 	/**
-	 * Último keepAlive por AD_Session_ID. Estático para sobrevivir a cache resets
-	 * de {@code s_sessions} (que ocurren seguido por eventos de CacheReset en ADempiere).
+	 * Last keepAlive timestamp per AD_Session_ID. Kept static so it survives
+	 * {@code s_sessions} cache resets (triggered often by ADempiere CacheReset events).
 	 */
 	private static final ConcurrentMap<Integer, AtomicLong> s_lastKeepAliveNanos =
 			new ConcurrentHashMap<>();
 
 	/**
 	 * Keep Alive Session.
-	 * Debounced a ~30s: si el último UPDATE fue hace menos de ese umbral, retorna
-	 * sin tocar DB. Evita hot-row contention en AD_Session cuando varios
-	 * workers paralelos saven POs simultáneamente.
+	 * Debounced to ~30s: if the last UPDATE happened less than that ago, returns
+	 * without hitting the database. Avoids hot-row contention on AD_Session when
+	 * several parallel workers save POs at the same time.
 	 */
 	public void keepAlive() {
 		int sessionId = getAD_Session_ID();
@@ -288,7 +288,7 @@ public class MSession extends X_AD_Session
 			return;
 		}
 		if (!last.compareAndSet(prev, now)) {
-			return; // otro thread ganó la carrera
+			return; // another thread won the race
 		}
 		Trx.run(trxName -> {
 			MSession session = new MSession(getCtx() , getAD_Session_ID() , trxName);

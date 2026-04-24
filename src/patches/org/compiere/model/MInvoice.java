@@ -1948,10 +1948,11 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 	}	//	rejectIt
 
 	/**
-	 * Flag transient de instancia: si true, completeIt salta los UPDATEs de MBPartner
-	 * (balance/credit/lifetime) y AD_User (LastContact/LastResult) para evitar hot-row
-	 * contention en procesos masivos. El caller es responsable de recalcular esos
-	 * valores desde DB al terminar (ej. llamando MBPartner.setTotalOpenBalance()).
+	 * Transient instance flag: when true, completeIt skips the UPDATEs on
+	 * MBPartner (balance/credit/lifetime) and AD_User (LastContact/LastResult)
+	 * to avoid hot-row contention in bulk processes. The caller is responsible
+	 * for recomputing those values from DB afterwards
+	 * (e.g. by calling MBPartner.setTotalOpenBalance()).
 	 */
 	private transient boolean isBulkComplete = false;
 
