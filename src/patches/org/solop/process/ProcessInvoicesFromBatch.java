@@ -265,17 +265,16 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 	 */
 	private void recomputeInvoiceHeader(MInvoice invoice, String trxName) {
 		invoice.calculateTaxTotal();
-		DB.executeUpdateEx(
-				"UPDATE C_Invoice i SET TotalLines="
-				+ "(SELECT COALESCE(SUM(LineNetAmt),0) FROM C_InvoiceLine il WHERE i.C_Invoice_ID=il.C_Invoice_ID) "
-				+ "WHERE C_Invoice_ID=?",
-				new Object[] { invoice.getC_Invoice_ID() }, trxName);
-		String grandSql = invoice.isTaxIncluded()
-				? "UPDATE C_Invoice i SET GrandTotal=TotalLines WHERE C_Invoice_ID=?"
-				: "UPDATE C_Invoice i SET GrandTotal=TotalLines+"
-						+ "(SELECT COALESCE(SUM(TaxAmt),0) FROM C_InvoiceTax it WHERE i.C_Invoice_ID=it.C_Invoice_ID) "
-						+ "WHERE C_Invoice_ID=?";
-		DB.executeUpdateEx(grandSql, new Object[] { invoice.getC_Invoice_ID() }, trxName);
+
+		String taxTerm = invoice.isTaxIncluded()
+				? "0"
+				: "COALESCE((SELECT SUM(TaxAmt) FROM C_InvoiceTax it WHERE it.C_Invoice_ID=i.C_Invoice_ID),0)";
+		String sql = "UPDATE C_Invoice i SET"
+				+ " TotalLines=COALESCE((SELECT SUM(LineNetAmt) FROM C_InvoiceLine il WHERE il.C_Invoice_ID=i.C_Invoice_ID),0),"
+				+ " GrandTotal=COALESCE((SELECT SUM(LineNetAmt) FROM C_InvoiceLine il WHERE il.C_Invoice_ID=i.C_Invoice_ID),0)"
+				+ "           +" + taxTerm
+				+ " WHERE C_Invoice_ID=?";
+		DB.executeUpdateEx(sql, new Object[] { invoice.getC_Invoice_ID() }, trxName);
 		invoice.load(trxName);
 	}
 }
