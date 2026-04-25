@@ -2422,6 +2422,11 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 			C_DocTypeTarget_ID, !isSOTrx(), true, false, get_TrxName(), true);
 		//
 		counter.setAD_Org_ID(counterAD_Org_ID);
+		if (!counter.isSOTrx()){
+			load(get_TrxName());
+			counter.setDocumentNo(getDocumentNo());
+		}
+
 	//	counter.setM_Warehouse_ID(counterOrgInfo.getM_Warehouse_ID());
 		//
 		counter.setBPartner(counterBP);

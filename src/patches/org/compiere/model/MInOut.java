@@ -714,6 +714,7 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 			line.setM_AttributeSetInstance_ID(fromLine.getM_AttributeSetInstance_ID());
 		//	line.setS_ResourceAssignment_ID(0);
 			line.setRef_InOutLine_ID(0);
+			line.setWM_InOutBoundLine_ID(0);
 			line.setIsInvoiced(false);
 			//
 			line.setConfirmedQty(Env.ZERO);
