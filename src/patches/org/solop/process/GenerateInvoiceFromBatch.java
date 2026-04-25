@@ -94,20 +94,38 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 		final ConcurrentMap<String, LongAdder> resultMsgMap = new ConcurrentHashMap<>();
 		final ConcurrentMap<String, LongAdder> errorMsgMap = new ConcurrentHashMap<>();
 		int created = 0;
+		boolean processing = false;
 		try {
 			if (getRecord_ID() <= 0) {
 				throw new AdempiereException("@C_InvoiceBatch_ID@ @NotFound@");
 			}
 			final MInvoiceBatch batch = new MInvoiceBatch(getCtx(), getRecord_ID(), null);
 			final String documentAction = getDocAction();
-			if (batch.isProcessed()) {
-				throw new AdempiereException("@C_InvoiceBatch_ID@ @Processed@");
+
+			// Atomic claim against both action columns: free state is
+			// ('G','C'); while either process runs both flip to ('P','P'),
+			// so a single UPDATE with a conditional WHERE works as a CAS.
+			int claimed = DB.executeUpdateEx(
+					"UPDATE C_InvoiceBatch "
+					+ "SET SP030C_PR_GenerateInvoices='P', SP030C_PR_ProcessInvoices='P' "
+					+ "WHERE C_InvoiceBatch_ID = ? "
+					+ "  AND SP030C_PR_GenerateInvoices = 'G' "
+					+ "  AND SP030C_PR_ProcessInvoices = 'C' "
+					+ "  AND Processed = 'N'",
+					new Object[]{ getRecord_ID() }, null);
+			if (claimed == 0) {
+				batch.load(null);
+				if (batch.isProcessed()) {
+					throw new AdempiereException("@C_InvoiceBatch_ID@ @Processed@");
+				}
+				throw new AdempiereException("@Processing@");
 			}
+			processing = true;
+
 			if (batch.getControlAmt().signum() != 0
 					&& batch.getControlAmt().compareTo(batch.getDocumentAmt()) != 0) {
 				throw new AdempiereException("@ControlAmt@ <> @DocumentAmt@");
 			}
-
 			// Phase 0: reuse any draft invoices already linked to this batch
 			// (re-run safe) and resolve the default price list for fallbacks.
 			final ConcurrentMap<String, Integer> invoiceIdByKey = new ConcurrentHashMap<>();
@@ -339,6 +357,14 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 		} catch (Exception e) {
 			addLog(0, null, null, "@Error@ " + e.getLocalizedMessage());
 			return "@Error@ " + e.getLocalizedMessage();
+		} finally {
+			if (processing) {
+				DB.executeUpdateEx(
+						"UPDATE C_InvoiceBatch "
+						+ "SET SP030C_PR_GenerateInvoices='G', SP030C_PR_ProcessInvoices='C' "
+						+ "WHERE C_InvoiceBatch_ID=?",
+						new Object[]{ getRecord_ID() }, null);
+			}
 		}
 	}
 

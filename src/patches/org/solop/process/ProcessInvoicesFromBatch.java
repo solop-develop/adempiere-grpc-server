@@ -78,6 +78,7 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 	@Override
 	protected String doIt() throws Exception
 	{
+		boolean processing = false;
 		try {
 			if (getRecord_ID() <= 0) {
 				throw new AdempiereException("@C_InvoiceBatch_ID@ @NotFound@");
@@ -92,6 +93,26 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 			if (documentAction == null || documentAction.isEmpty()) {
 				throw new AdempiereException("@DocAction@ @NotFound@");
 			}
+
+			// Atomic claim against both action columns: free state is
+			// ('G','C'); while either process runs both flip to ('P','P'),
+			// so a single UPDATE with a conditional WHERE works as a CAS.
+			int claimed = DB.executeUpdateEx(
+					"UPDATE C_InvoiceBatch "
+					+ "SET SP030C_PR_GenerateInvoices='P', SP030C_PR_ProcessInvoices='P' "
+					+ "WHERE C_InvoiceBatch_ID = ? "
+					+ "  AND SP030C_PR_GenerateInvoices = 'G' "
+					+ "  AND SP030C_PR_ProcessInvoices = 'C' "
+					+ "  AND Processed = 'N'",
+					new Object[]{ getRecord_ID() }, null);
+			if (claimed == 0) {
+				batch.load(get_TrxName());
+				if (batch.isProcessed()) {
+					throw new AdempiereException("@C_InvoiceBatch_ID@ @Processed@");
+				}
+				throw new AdempiereException("@Processing@");
+			}
+			processing = true;
 
 			// Fail fast if the batch is not fully generated.
 			validateBatchIntegrity();
@@ -227,6 +248,14 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 		} catch (Exception e) {
 			addLog(0, null, null, "@Error@ " + e.getLocalizedMessage());
 			return "@Error@ " + e.getLocalizedMessage();
+		} finally {
+			if (processing) {
+				DB.executeUpdateEx(
+						"UPDATE C_InvoiceBatch "
+						+ "SET SP030C_PR_GenerateInvoices='G', SP030C_PR_ProcessInvoices='C' "
+						+ "WHERE C_InvoiceBatch_ID=?",
+						new Object[]{ getRecord_ID() }, null);
+			}
 		}
 	}
 
