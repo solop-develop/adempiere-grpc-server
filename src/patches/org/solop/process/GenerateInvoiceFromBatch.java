@@ -129,19 +129,22 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 			// Phase 0: reuse any draft invoices already linked to this batch
 			// (re-run safe) and resolve the default price list for fallbacks.
 			final ConcurrentMap<String, Integer> invoiceIdByKey = new ConcurrentHashMap<>();
+			// Read with null trx (autocommit / fresh connection) so the parent
+			// process trx does not stay idle during the long parallel phases
+			// (PostgreSQL idle_in_transaction_session_timeout would kill it).
 			List<Integer> existingInvoiceIds = new Query(getCtx(), MInvoice.Table_Name,
 					"C_Invoice_ID IN (SELECT DISTINCT C_Invoice_ID FROM C_InvoiceBatchLine"
 					+ " WHERE C_InvoiceBatch_ID = ? AND C_Invoice_ID IS NOT NULL)"
-					+ " AND DocStatus IN ('DR','IP','IN')", get_TrxName())
+					+ " AND DocStatus IN ('DR','IP','IN')", null)
 					.setParameters(getRecord_ID())
 					.getIDsAsList();
 			for (Integer invId : existingInvoiceIds) {
-				MInvoice inv = new MInvoice(getCtx(), invId, get_TrxName());
+				MInvoice inv = new MInvoice(getCtx(), invId, null);
 				invoiceIdByKey.put(inv.getC_BPartner_ID() + "|" + inv.getC_BPartner_Location_ID(), invId);
 			}
 
 			final int defaultPriceListId = new Query(batch.getCtx(), MPriceList.Table_Name,
-					"IsDefault = 'Y' AND IsSOPriceList = ? AND C_Currency_ID = ?", batch.get_TrxName())
+					"IsDefault = 'Y' AND IsSOPriceList = ? AND C_Currency_ID = ?", null)
 					.setParameters(batch.isSOTrx(), batch.getC_Currency_ID())
 					.setClient_ID()
 					.setOnlyActiveRecords(true)
@@ -235,7 +238,7 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 			// some earlier phase failed; in that case skip phase 3 and leave
 			// the partial state for the user to inspect / re-run.
 			int pendingLines = new Query(getCtx(), I_C_InvoiceBatchLine.Table_Name,
-					"C_InvoiceBatch_ID = ? AND (C_Invoice_ID IS NULL OR C_InvoiceLine_ID IS NULL)", get_TrxName())
+					"C_InvoiceBatch_ID = ? AND (C_Invoice_ID IS NULL OR C_InvoiceLine_ID IS NULL)", null)
 					.setParameters(getRecord_ID())
 					.count();
 
@@ -246,7 +249,7 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 				List<Integer> allInvoiceIds = new Query(getCtx(), MInvoice.Table_Name,
 						"C_Invoice_ID IN (SELECT DISTINCT C_Invoice_ID FROM C_InvoiceBatchLine"
 						+ " WHERE C_InvoiceBatch_ID = ? AND C_Invoice_ID IS NOT NULL)"
-						+ " AND DocStatus IN ('DR','IP','IN')", get_TrxName())
+						+ " AND DocStatus IN ('DR','IP','IN')", null)
 						.setParameters(getRecord_ID())
 						.getIDsAsList();
 
@@ -290,7 +293,7 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 								hasError.set(true);
 								processErr.incrementAndGet();
 								try {
-									MInvoice invoice = new MInvoice(getCtx(), invId, get_TrxName());
+									MInvoice invoice = new MInvoice(getCtx(), invId, null);
 									MDocType docType = (MDocType) invoice.getC_DocTypeTarget();
 									String key = "@Error@ " + docType.getName() + " "
 											+ invoice.getDocStatusName() + " @Qty@: ";
@@ -320,23 +323,27 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 					// unallocated payments) and are the source of truth that
 					// replaces the per-invoice deltas skipped when
 					// MInvoice.isBulkComplete == true.
-					int[] affectedBPs = DB.getIDsEx(get_TrxName(),
+					int[] affectedBPs = DB.getIDsEx(null,
 							"SELECT DISTINCT i.C_BPartner_ID FROM C_Invoice i "
 							+ "WHERE i.C_Invoice_ID IN (SELECT DISTINCT C_Invoice_ID FROM C_InvoiceBatchLine "
 							+ "                         WHERE C_InvoiceBatch_ID = ? AND C_Invoice_ID IS NOT NULL)",
 							getRecord_ID());
 					for (int bpId : affectedBPs) {
-						MBPartner bp = new MBPartner(getCtx(), bpId, get_TrxName());
-						bp.setTotalOpenBalance();
-						bp.setActualLifeTimeValue();
-						if (bp.getFirstSale() == null) {
-							Timestamp firstSale = DB.getSQLValueTSEx(get_TrxName(),
-									"SELECT MIN(DateInvoiced) FROM C_Invoice "
-									+ "WHERE C_BPartner_ID = ? AND IsSOTrx='Y' AND DocStatus IN ('CO','CL')",
-									bpId);
-							if (firstSale != null) bp.setFirstSale(firstSale);
-						}
-						bp.saveEx();
+						// One transaction per BP so the parent process trx
+						// stays free of long-held locks.
+						Trx.run(trx -> {
+							MBPartner bp = new MBPartner(getCtx(), bpId, trx);
+							bp.setTotalOpenBalance();
+							bp.setActualLifeTimeValue();
+							if (bp.getFirstSale() == null) {
+								Timestamp firstSale = DB.getSQLValueTSEx(trx,
+										"SELECT MIN(DateInvoiced) FROM C_Invoice "
+										+ "WHERE C_BPartner_ID = ? AND IsSOTrx='Y' AND DocStatus IN ('CO','CL')",
+										bpId);
+								if (firstSale != null) bp.setFirstSale(firstSale);
+							}
+							bp.saveEx();
+						});
 					}
 
 					// Close the batch only on a clean Complete run.
@@ -384,7 +391,9 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = DB.prepareStatement(sql, get_TrxName());
+			// null trx: read on a fresh connection so the parent process trx
+			// does not stay idle across the long parallel phases.
+			ps = DB.prepareStatement(sql, (String) null);
 			ps.setInt(1, getRecord_ID());
 			rs = ps.executeQuery();
 			while (rs.next()) {
@@ -418,7 +427,8 @@ public class GenerateInvoiceFromBatch extends GenerateInvoiceFromBatchAbstract
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = DB.prepareStatement(sql, get_TrxName());
+			// null trx: see comment in loadDistinctPendingKeys.
+			ps = DB.prepareStatement(sql, (String) null);
 			ps.setInt(1, getRecord_ID());
 			rs = ps.executeQuery();
 			while (rs.next()) {
