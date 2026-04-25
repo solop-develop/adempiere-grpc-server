@@ -78,12 +78,16 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 	@Override
 	protected String doIt() throws Exception
 	{
+		boolean processing = false;
 		try {
 			if (getRecord_ID() <= 0) {
 				throw new AdempiereException("@C_InvoiceBatch_ID@ @NotFound@");
 			}
 
-			MInvoiceBatch batch = new MInvoiceBatch(getCtx(), getRecord_ID(), get_TrxName());
+			// Load with null trx so subsequent batch.saveEx() does not pin
+			// the parent process trx during the long parallel phases
+			// (idle_in_transaction_session_timeout would kill it).
+			MInvoiceBatch batch = new MInvoiceBatch(getCtx(), getRecord_ID(), null);
 			if (batch.get_ID() <= 0) {
 				throw new AdempiereException("@C_InvoiceBatch_ID@ @NotFound@");
 			}
@@ -92,6 +96,26 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 			if (documentAction == null || documentAction.isEmpty()) {
 				throw new AdempiereException("@DocAction@ @NotFound@");
 			}
+
+			// Atomic claim against both action columns: free state is
+			// ('G','C'); while either process runs both flip to ('P','P'),
+			// so a single UPDATE with a conditional WHERE works as a CAS.
+			int claimed = DB.executeUpdateEx(
+					"UPDATE C_InvoiceBatch "
+					+ "SET SP030C_PR_GenerateInvoices='P', SP030C_PR_ProcessInvoices='P' "
+					+ "WHERE C_InvoiceBatch_ID = ? "
+					+ "  AND SP030C_PR_GenerateInvoices = 'G' "
+					+ "  AND SP030C_PR_ProcessInvoices = 'C' "
+					+ "  AND Processed = 'N'",
+					new Object[]{ getRecord_ID() }, null);
+			if (claimed == 0) {
+				batch.load(null);
+				if (batch.isProcessed()) {
+					throw new AdempiereException("@C_InvoiceBatch_ID@ @Processed@");
+				}
+				throw new AdempiereException("@Processing@");
+			}
+			processing = true;
 
 			// Fail fast if the batch is not fully generated.
 			validateBatchIntegrity();
@@ -106,7 +130,7 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 					+ " AND EXISTS (SELECT 1 FROM C_InvoiceBatchLine ibl"
 					+ "             WHERE ibl.C_InvoiceBatch_ID = ?"
 					+ "               AND ibl.C_Invoice_ID = C_Invoice.C_Invoice_ID)",
-					get_TrxName())
+					null)
 					.setParameters(getRecord_ID())
 					.getIDsAsList();
 
@@ -160,7 +184,7 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 						hasError.set(true);
 						processErr.incrementAndGet();
 						try {
-							MInvoice invoice = new MInvoice(getCtx(), invId, get_TrxName());
+							MInvoice invoice = new MInvoice(getCtx(), invId, null);
 							MDocType docType = (MDocType) invoice.getC_DocTypeTarget();
 							String key = "@Error@ " + docType.getName() + " "
 									+ invoice.getDocStatusName() + " @Qty@: ";
@@ -189,29 +213,33 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 			// Replaces the per-invoice deltas that MInvoice.completeIt() skips
 			// when isBulkComplete == true. setTotalOpenBalance / setActualLifeTimeValue
 			// rebuild the values from C_Invoice_v and are the source of truth.
-			int[] affectedBPs = DB.getIDsEx(get_TrxName(),
+			int[] affectedBPs = DB.getIDsEx(null,
 					"SELECT DISTINCT i.C_BPartner_ID FROM C_Invoice i "
 					+ "WHERE i.C_Invoice_ID IN (SELECT DISTINCT C_Invoice_ID FROM C_InvoiceBatchLine "
 					+ "                         WHERE C_InvoiceBatch_ID = ? AND C_Invoice_ID IS NOT NULL)",
 					getRecord_ID());
 			for (int bpId : affectedBPs) {
-				MBPartner bp = new MBPartner(getCtx(), bpId, get_TrxName());
-				bp.setTotalOpenBalance();
-				bp.setActualLifeTimeValue();
-				if (bp.getFirstSale() == null) {
-					Timestamp firstSale = DB.getSQLValueTSEx(get_TrxName(),
-							"SELECT MIN(DateInvoiced) FROM C_Invoice "
-							+ "WHERE C_BPartner_ID = ? AND IsSOTrx='Y' AND DocStatus IN ('CO','CL')",
-							bpId);
-					if (firstSale != null) bp.setFirstSale(firstSale);
-				}
-				bp.saveEx();
+				// One transaction per BP so the parent process trx
+				// stays free of long-held locks.
+				Trx.run(trx -> {
+					MBPartner bp = new MBPartner(getCtx(), bpId, trx);
+					bp.setTotalOpenBalance();
+					bp.setActualLifeTimeValue();
+					if (bp.getFirstSale() == null) {
+						Timestamp firstSale = DB.getSQLValueTSEx(trx,
+								"SELECT MIN(DateInvoiced) FROM C_Invoice "
+								+ "WHERE C_BPartner_ID = ? AND IsSOTrx='Y' AND DocStatus IN ('CO','CL')",
+								bpId);
+						if (firstSale != null) bp.setFirstSale(firstSale);
+					}
+					bp.saveEx();
+				});
 			}
 
 			// Close the batch only when every invoice succeeded and the action
 			// was a full Complete.
 			if (!hasError.get() && DocumentEngine.ACTION_Complete.equals(documentAction)) {
-				batch.load(get_TrxName());
+				batch.load(null);
 				batch.setProcessed(true);
 				batch.saveEx();
 			}
@@ -227,6 +255,14 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 		} catch (Exception e) {
 			addLog(0, null, null, "@Error@ " + e.getLocalizedMessage());
 			return "@Error@ " + e.getLocalizedMessage();
+		} finally {
+			if (processing) {
+				DB.executeUpdateEx(
+						"UPDATE C_InvoiceBatch "
+						+ "SET SP030C_PR_GenerateInvoices='G', SP030C_PR_ProcessInvoices='C' "
+						+ "WHERE C_InvoiceBatch_ID=?",
+						new Object[]{ getRecord_ID() }, null);
+			}
 		}
 	}
 
@@ -236,7 +272,7 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 	 * longer exists in the database.
 	 */
 	private void validateBatchIntegrity() {
-		int pendingLines = DB.getSQLValueEx(get_TrxName(),
+		int pendingLines = DB.getSQLValueEx(null,
 				"SELECT COUNT(*) FROM C_InvoiceBatchLine"
 				+ " WHERE C_InvoiceBatch_ID = ?"
 				+ "   AND (C_Invoice_ID IS NULL OR C_InvoiceLine_ID IS NULL)",
@@ -246,7 +282,7 @@ public class ProcessInvoicesFromBatch extends ProcessInvoicesFromBatchAbstract
 					"@C_InvoiceBatchLine_ID@: @C_Invoice_ID@ @NotFound@ @Qty@: " + pendingLines);
 		}
 
-		int missingInvoices = DB.getSQLValueEx(get_TrxName(),
+		int missingInvoices = DB.getSQLValueEx(null,
 				"SELECT COUNT(DISTINCT ibl.C_Invoice_ID) FROM C_InvoiceBatchLine ibl"
 				+ " WHERE ibl.C_InvoiceBatch_ID = ?"
 				+ "   AND ibl.C_Invoice_ID IS NOT NULL"
