@@ -16,7 +16,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.5.5'
+def adempiereCoreVersion = '1.5.6'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -74,7 +74,7 @@ dependencies {
 
 	//	ADempiere Core + Patches + Features
 	implementation "org.solop.adempiere:adempiere-core:${adempiereCoreVersion}"
-	implementation "com.solop.adempiere.tools:solop-core:core-1.4.19-1.0.1"
+	implementation "com.solop.adempiere.tools:solop-core:core-1.5.6-1.0.0"
 	implementation "com.solop.adempiere.tools:display-definition:core-1.5.5-1.0.0"
 	// Firebase Connector
 	implementation "com.solop.adempiere.tools:adempiere-firebase-connector:core-1.0.0-1.0.0"
@@ -84,7 +84,7 @@ dependencies {
 	implementation "com.solop.adempiere.verticals:import-export-management:core-1.4.21-1.0.1"
 	implementation "com.solop.adempiere.verticals:agency-project:core-1.4.22-1.0.0"
 	// Electronic Invoicing
-	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.5.5-1.0.0"
+	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.5.6-1.0.0"
 	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-1.5.2-1.0.0"
 	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-1.0.0-1.0.0"
 	// Payment Processor
