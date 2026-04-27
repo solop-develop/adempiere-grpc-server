@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+	id 'scala'
     id 'com.google.protobuf' version '0.9.4'
     id 'idea'
     id 'application'
@@ -56,6 +57,7 @@ dependencies {
         ]
     )
 
+	implementation "org.scala-lang:scala3-library_3:3.0.1"
 	implementation 'org.jsoup:jsoup:1.17.2'
 	implementation "io.netty:netty-handler:4.1.107.Final"
 	runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
@@ -177,7 +179,11 @@ sourceSets {
             srcDirs 'build/generated/source/proto/main/java'
             srcDirs 'src/main/proto'
 			srcDirs 'src/patches'
+			exclude 'scala/**' // TODO: Remove when move patches to src/patches/java
         }
+		scala {
+			srcDirs "src/patches/scala"
+		}
         resources {
     		srcDirs 'src/main/java'
 			include 'org/spin/base/version.properties'
