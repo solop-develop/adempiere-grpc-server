@@ -5,13 +5,7 @@
   * victor.perez@e-evolution.com , www.e-evolution.com
   */
 
-package org
-package eevolution
-package context
-package service
-package infrastructure
-package domain
-package callouts
+package org.eevolution.context.service.infrastructure.domain.callouts
 
 import java.math.BigDecimal
 import java.math.RoundingMode
