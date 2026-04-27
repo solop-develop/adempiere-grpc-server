@@ -221,7 +221,7 @@ startScripts {
 		"-DPropertyFile=Adempiere.properties", 
 		"-Dorg.adempiere.server.embedded=true"
 	]
-	outputDir = new File(project.buildDir, 'tmp')
+	outputDir = new File(project.buildDir, 'tmp/startScripts')
 	classpath = jar.outputs.files + project.configurations.runtimeClasspath
 
 	// Configure script names with extensions
