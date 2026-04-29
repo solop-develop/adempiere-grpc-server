@@ -44,6 +44,12 @@ service InOutInfoService {
 			get: "/fields/in-outs/shippers"
 		};
 	}
+	// Invoices Filters
+	rpc ListInvoices(ListInvoicesRequest) returns (data.ListLookupItemsResponse) {
+		option (google.api.http) = {
+			get: "/fields/in-outs/invoices"
+		};
+	}
 
 	// Result a One
 	rpc GetInOutInfo(GetInOutInfoRequest) returns (InOutInfo) {
@@ -127,6 +133,25 @@ message ListShippersRequest {
 }
 
 
+// Invoices
+message ListInvoicesRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// custom filters
+	string is_sales_transaction = 12;
+}
+
+
+
 // InOut Info
 message GetInOutInfoRequest {
 	int32 id = 1;
@@ -163,6 +188,7 @@ message ListInOutInfoRequest {
 	google.protobuf.Timestamp movement_date_to = 25;
 	string order_reference = 26; // PO Reference
 	int32 shipper_id = 27;
+	int32 invoice_id = 28;
 }
 
 message InOutInfo {
