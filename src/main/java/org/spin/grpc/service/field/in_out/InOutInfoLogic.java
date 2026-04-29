@@ -35,6 +35,7 @@ import org.spin.backend.grpc.field.inout.InOutInfo;
 import org.spin.backend.grpc.field.inout.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoResponse;
+import org.spin.backend.grpc.field.inout.ListInvoicesRequest;
 import org.spin.backend.grpc.field.inout.ListShippersRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
@@ -97,6 +98,42 @@ public class InOutInfoLogic {
 			I_M_InOut.COLUMNNAME_M_Shipper_ID, I_M_InOut.Table_Name,
 			0,
 			null
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			true
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listInvoices(ListInvoicesRequest request) {
+		String whereClause = "";
+		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
+			boolean isSalesTransaction = BooleanManager.getBooleanFromString(
+				request.getIsSalesTransaction()
+			);
+			if (isSalesTransaction) {
+				whereClause = " C_Invoice.IsSOTrx = 'Y' ";
+			} else {
+				whereClause = " C_Invoice.IsSOTrx = 'N' ";
+			}
+		}
+		// Invoice
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.TableDir,
+			0, 0, 0,
+			0,
+			I_M_InOut.COLUMNNAME_C_Invoice_ID, I_M_InOut.Table_Name,
+			0,
+			whereClause
 		);
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
@@ -296,6 +333,14 @@ public class InOutInfoLogic {
 			whereClause.append(" AND M_Shipper_ID = ? ");
 			parametersList.add(
 				shipperId
+			);
+		}
+		// Invoice
+		final int invoiceId = request.getInvoiceId();
+		if (invoiceId > 0) {
+			whereClause.append(" AND C_Invoice_ID = ? ");
+			parametersList.add(
+				invoiceId
 			);
 		}
 
