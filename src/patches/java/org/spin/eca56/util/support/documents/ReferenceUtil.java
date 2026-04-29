@@ -1,106 +1,57 @@
-/*************************************************************************************
- * Product: Adempiere ERP & CRM Smart Business Solution                              *
- * This program is free software; you can redistribute it and/or modify it           *
- * under the terms version 2 or later of the GNU General Public License as published *
- * by the Free Software Foundation. This program is distributed in the hope          *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied        *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                  *
- * See the GNU General Public License for more details.                              *
- * You should have received a copy of the GNU General Public License along           *
- * with this program; if not, write to the Free Software Foundation, Inc.,           *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                            *
- * For the text or an alternative of this public license, you may reach us           *
- * Copyright (C) 2012-2018 E.R.P. Consultores y Asociados, S.A. All Rights Reserved. *
- * Contributor(s): Yamel Senih www.erpya.com                                         *
- *************************************************************************************/
-package org.spin.base.util;
+/******************************************************************************
+ * Product: Adempiere ERP & CRM Smart Business Solution                       *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 or later of the                                  *
+ * GNU General Public License as published                                    *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * Copyright (C) 2003-2023 E.R.P. Consultores y Asociados, C.A.               *
+ * All Rights Reserved.                                                       *
+ * Contributor(s): Yamel Senih www.erpya.com                                  *
+ *****************************************************************************/
+package org.spin.eca56.util.support.documents;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_AD_Chart;
 import org.adempiere.core.domains.models.I_AD_Image;
-import org.adempiere.core.domains.models.I_AD_Reference;
+import org.adempiere.core.domains.models.I_AD_Ref_List;
+import org.adempiere.core.domains.models.I_C_ElementValue;
 import org.adempiere.core.domains.models.I_C_Location;
 import org.adempiere.core.domains.models.I_C_ValidCombination;
 import org.adempiere.core.domains.models.I_M_AttributeSetInstance;
 import org.adempiere.core.domains.models.I_M_Locator;
-import org.compiere.model.MColumn;
+import org.adempiere.core.domains.models.I_S_ResourceAssignment;
+import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.model.MCountry;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MLookupInfo;
-import org.compiere.model.MTable;
+import org.compiere.model.MRefTable;
 import org.compiere.model.MValRule;
-import org.adempiere.core.domains.models.X_AD_Reference;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.spin.dictionary.util.DictionaryUtil;
-import org.spin.grpc.service.accounting.AccountingUtils;
-import org.spin.util.AttachmentUtil;
-
 
 /**
- * Class for handle reference for reports, Smart Browsers and other values with Table, List or Table Direct
- * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
+ * 	The util class for all documents
+ * 	@author Yamel Senih, ysenih@erpya.com, ERPCyA http://www.erpya.com
  */
 public class ReferenceUtil {
-	/**	Instance	*/
-	private static ReferenceUtil instance = null;
-	/**	Context	*/
-	private Properties context;
-	/**	Local cache	*/
-	private Map<String, ReferenceInfo> referenceInfoMap;
-
-	public static final List<Integer> REFERENCES_DECIMALS = Arrays.asList(
-		DisplayType.Amount,
-		DisplayType.CostPrice,
-		DisplayType.Number,
-		DisplayType.Quantity
-	);
-
-	public static final List<Integer> REFERENCES_AMOUNT = Arrays.asList(
-		DisplayType.Amount,
-		DisplayType.CostPrice,
-		DisplayType.Number
-	);
-
-	public static final List<Integer> REFERENCES_QUANTITY = Arrays.asList(
-		DisplayType.Amount,
-		DisplayType.CostPrice,
-		DisplayType.Integer,
-		DisplayType.Number,
-		DisplayType.Quantity
-	);
-
-	public static final List<Integer> REFERENCES_CURRENCY = Arrays.asList(
-		DisplayType.Amount,
-		DisplayType.CostPrice
-	);
-
-	
-	public static ReferenceUtil getInstance(Properties context) {
-		if(instance == null) {
-			instance = new ReferenceUtil(context);
-		}
-		return instance;
-	}
-	
-	/**
-	 * Private constructor
-	 * @param context
-	 */
-	private ReferenceUtil(Properties context) {
-		this.context = context;
-		referenceInfoMap = new HashMap<String, ReferenceInfo>();
-	}
 
 	/**
 	 * Validate reference
@@ -108,24 +59,23 @@ public class ReferenceUtil {
 	 * @param displayTypeId
 	 * @return
 	 */
-	public static boolean validateReference(int displayTypeId) {
-		if (
-			DisplayType.isLookup(displayTypeId)
-			|| DisplayType.Account == displayTypeId
-			|| DisplayType.ID == displayTypeId
-			|| DisplayType.Location == displayTypeId
-			|| DisplayType.Locator == displayTypeId
-			|| DisplayType.PAttribute == displayTypeId
-		) {
+	public static boolean isLookupReference(int displayTypeId) {
+		if (DisplayType.isLookup(displayTypeId)
+				|| DisplayType.Account == displayTypeId
+				|| DisplayType.Assignment == displayTypeId
+				|| DisplayType.ID == displayTypeId
+				|| DisplayType.Location == displayTypeId
+				|| DisplayType.Locator == displayTypeId
+				|| DisplayType.Image == displayTypeId
+				|| DisplayType.PAttribute == displayTypeId) {
 			return true;
 		}
-		if(DisplayType.Image == displayTypeId) {
-			return AttachmentUtil.getInstance()
-				.isValidForClient(
-					Env.getAD_Client_ID(Env.getCtx())
-				);
-		}
-
+		// if(DisplayType.Image == displayTypeId) {
+		// 	return AttachmentUtil.getInstance()
+		// 		.isValidForClient(
+		// 			Env.getAD_Client_ID(Env.getCtx())
+		// 		);
+		// }
 		return false;
 	}
 
@@ -157,195 +107,126 @@ public class ReferenceUtil {
 		return newDisplayType;
 	}
 
-
-
 	/**
-	 * Get Reference information, can return null if reference is invalid or not exists
-	 * @param referenceId
-	 * @param referenceValueId
-	 * @param columnName
-	 * @param language
-	 * @param tableName
+	 * Get Context column names from context
+	 * @param context
 	 * @return
+	 * @return List<String>
 	 */
-	public ReferenceInfo getReferenceInfo(int referenceId, int referenceValueId, String columnName, String language, String tableName) {
-		return getReferenceInfo(
-			referenceId,
-			referenceValueId,
-			columnName,
-			null,
-			language,
-			tableName
+	public static List<String> getContextColumnNames(String context) {
+		if (Util.isEmpty(context, true)) {
+			return new ArrayList<String>();
+		}
+		String START = "\\@";  // A literal "(" character in regex
+		String END   = "\\@";  // A literal ")" character in regex
+
+		// Captures the word(s) between the above two character(s)
+		final String COLUMN_NAME_PATTERN = START + "(#|$|\\d\\|){0,1}(\\w+)" + END;
+
+		Pattern pattern = Pattern.compile(
+			COLUMN_NAME_PATTERN,
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL
 		);
+		Matcher matcher = pattern.matcher(context);
+		Map<String, Boolean> columnNamesMap = new HashMap<String, Boolean>();
+		while(matcher.find()) {
+			final String columnContext = matcher.group().replace("@", "").replace("@", "");
+			columnNamesMap.put(columnContext, true);
+		}
+		return new ArrayList<String>(columnNamesMap.keySet());
 	}
-	/**
-	 * Get Reference information, can return null if reference is invalid or not exists
-	 * @param referenceId
-	 * @param referenceValueId
-	 * @param columnName
-	 * @param columnAlias
-	 * @param language
-	 * @param tableName
-	 * @return
-	 */
-	public ReferenceInfo getReferenceInfo(int referenceId, int referenceValueId, String columnName, String columnAlias, String language, String tableName) {
-		if(!validateReference(referenceId)) {
-			return null;
-		}
-		final String key = referenceId + "|" + referenceValueId + "|" + columnName + "|" + language;
-		ReferenceInfo referenceInfo = referenceInfoMap.get(key);
-		Language languageValue = Language.getLanguage(Env.getAD_Language(Env.getCtx()));
-		if (referenceInfo != null) {
-			// get from cache
-			return referenceInfo;
-		}
 
-		// new instance generated
-		referenceInfo = new ReferenceInfo();
-		referenceInfo.setColumnName(columnName);
-		referenceInfo.setColumnAlias(columnAlias);
+	public static ReferenceValues getReferenceDefinition(String columnName, int displayTypeId, int referenceValueId, int validationRuleId) {
+		String embeddedContextColumn = null;
 
-		if (DisplayType.ID == referenceId) {
-			MTable table = MTable.get(context, tableName);
-			if (table == null) {
-				return null;
-			}
-			String[] keyColumns = table.getKeyColumns();
-			if (keyColumns == null || keyColumns.length > 1) {
-				// traslated or accounting table
-				return null;
-			}
-
-			final String baseColumnToReplace = "REPLACE_COLUMN_TO_REPLACE";
-			String displayColumn = MLookupFactory.getLookup_TableDirEmbed(languageValue, columnName, tableName, baseColumnToReplace);
-			// No Identifier records
-			if (Util.isEmpty(displayColumn, true)) {
-				// displayColumn = tableName + "." + columnName;
-				return null;
-			}
-			final String tableAlias = tableName + "_" + columnName;
-
-			String regexMainTable = "(?<from>\\bFROM\\b)\\s+(?<table>" + tableName + "\\b)\\s+"
-				+ "(?<restriction>\\bWHERE\\b|\\bORDER\\s+BY\\b|((LEFT|INNER|RIGHT|FULL|SELF|CROSS)\\s+(OUTER\\s+){0,1}){0,1}JOIN)"
-			;
-			Pattern patternMainTable = Pattern.compile(
-				regexMainTable,
-				Pattern.CASE_INSENSITIVE | Pattern.DOTALL
-			);
-			Matcher matcherMainTable = patternMainTable
-				.matcher(displayColumn);
-			if (matcherMainTable.find()) {
-				displayColumn = displayColumn.replaceAll(
-					regexMainTable,
-					// "FROM " + tableName + " AS " + tableAlias + " " + matcherMainTable.group(3)
-					"FROM " + tableName + " AS " + tableAlias + " " + matcherMainTable.group("restriction")
-				);
-			} else {
-				displayColumn = displayColumn.replace(
-					"FROM " + tableName,
-					"FROM " + tableName + " AS " + tableAlias
-				);
-			}
-			displayColumn = displayColumn.replace(
-				tableName + "." + baseColumnToReplace,
-				tableAlias + "." + columnName
-			);
-
-			referenceInfo.setTableName(tableName);
-			referenceInfo.setTableAlias(tableAlias);
-			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
-			referenceInfo.setHasJoinValue(false);
-		} else if (DisplayType.Account == referenceId) {
-			//	Add Display
-			referenceInfo.setTableName(I_C_ValidCombination.Table_Name);
-			referenceInfo.setDisplayColumnValue(I_C_ValidCombination.COLUMNNAME_Combination);
-			referenceInfo.setTableAlias(I_C_ValidCombination.Table_Name + "_" + columnName);
-			referenceInfo.setJoinColumnName(I_C_ValidCombination.COLUMNNAME_C_ValidCombination_ID);
-		} else if (DisplayType.PAttribute == referenceId) {
-			//  Add Display
-			referenceInfo.setTableName(I_M_AttributeSetInstance.Table_Name);
-			referenceInfo.setDisplayColumnValue(I_M_AttributeSetInstance.COLUMNNAME_Description);
-			referenceInfo.setTableAlias(I_M_AttributeSetInstance.Table_Name + "_" + columnName);
-			referenceInfo.setJoinColumnName(I_M_AttributeSetInstance.COLUMNNAME_M_AttributeSetInstance_ID);
-		} else if (DisplayType.Image == referenceId) {
-			final String displaColumn = getDisplayColumnSQLImage(tableName, columnName);
-			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
-			referenceInfo.setHasJoinValue(false);
-		} else if (DisplayType.Location == referenceId) {
-			//  Add Display
-			referenceInfo.setTableName(I_C_Location.Table_Name);
-			final String displaColumn = getDisplayColumnSQLLocation(tableName, columnName);
-			referenceInfo.setDisplayColumnValue("(" + displaColumn + ")");
-			referenceInfo.setHasJoinValue(false);
-		} else if (DisplayType.Locator == referenceId) {
-			//	Add Display
-			referenceInfo.setTableName(I_M_Locator.Table_Name);
-			referenceInfo.setDisplayColumnValue(I_M_Locator.COLUMNNAME_Value);
-			referenceInfo.setTableAlias(I_M_Locator.Table_Name + "_" + columnName);
-			referenceInfo.setJoinColumnName(I_M_Locator.COLUMNNAME_M_Locator_ID);
-		} else if((DisplayType.TableDir == referenceId || (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
-			&& columnName.endsWith("_ID")) && referenceValueId <= 0) {
-			//	Add Display
-			String displayColumn = MLookupFactory.getLookup_TableDirEmbed(
-				languageValue,
-				columnName,
-				tableName
-			);
-			if (Util.isEmpty(displayColumn, true)) {
-				// TODO: Validate if is `NULL` column, or `tableName.columnName` to same value, or break and return
-				// displayColumn = "NULL";
-				// displayColumn = tableName + "." + columnName;
-				return null; // if is empty break as null and omit
-			}
-			referenceInfo.setDisplayColumnValue("(" + displayColumn + ")");
-			referenceInfo.setHasJoinValue(false);
-		} else {
-			//	Get info
-			MLookupInfo lookupInfo = MLookupFactory.getLookupInfo(
-				context, 0, 0,
-				referenceId, languageValue,
-				columnName, referenceValueId,
-				false, null, false
-			);
-			if(lookupInfo == null) {
-				// Table Reference without table validation
-				return null;
-			}
-
-			String displayColumn = lookupInfo.DisplayColumn;
-			if (Util.isEmpty(displayColumn, true)) {
-				// Parent recursive columns
-				displayColumn = "(" + MLookupFactory.getLookup_TableEmbed(languageValue, columnName, tableName, referenceValueId) + ")";
-				referenceInfo.setDisplayColumnValue(displayColumn);
-				referenceInfo.setHasJoinValue(false);
-				return referenceInfo;
-			}
-
-			displayColumn = (lookupInfo.DisplayColumn).replace(lookupInfo.TableName + ".", "");
-			if (!Util.isEmpty(displayColumn, true)) {
-				referenceInfo.setDisplayColumnValue(displayColumn);
-			}
-	
-			referenceInfo.setJoinColumnName((lookupInfo.KeyColumn == null ? "" : lookupInfo.KeyColumn).replace(lookupInfo.TableName + ".", ""));
-			referenceInfo.setTableName(lookupInfo.TableName);
-			// TODO: Validate if it is a `Table` with reference value key, to remove the `List` from the condition
-			if(DisplayType.List == referenceId && referenceValueId > 0) {
-				referenceInfo.setReferenceId(referenceValueId);
-			}
-			//	Translate
-			if (!Util.isEmpty(displayColumn, true) && MTable.hasTranslation(lookupInfo.TableName)) {
-				// display column exists on translation table
-				int columnId = MColumn.getColumn_ID(
-					lookupInfo.TableName + DictionaryUtil.TRANSLATION_SUFFIX,
-					displayColumn
-				);
-				if (columnId > 0) {
-					referenceInfo.setLanguage(language);
+		if (DisplayType.Button == displayTypeId) {
+			//	Reference Value
+			if (referenceValueId > 0) {
+				X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceValueId, null);
+				if (reference != null && reference.getAD_Reference_ID() > 0) {
+					// overwrite display type to Table or List
+					if (X_AD_Reference.VALIDATIONTYPE_TableValidation.equals(reference.getValidationType())) {
+						displayTypeId = DisplayType.Table;
+					} else {
+						displayTypeId = DisplayType.List;
+					}
 				}
 			}
 		}
 
-		return referenceInfo;
+		if(displayTypeId > 0 && ReferenceUtil.isLookupReference(displayTypeId)) {
+			String tableName = getTableNameFromReference(columnName, displayTypeId);
+			// X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), displayTypeId, null);
+			// MLookupInfo lookupInformation = null;
+			// //	Special references
+			// if(Util.isEmpty(tableName)) {
+			// 	lookupInformation = MLookupFactory.getLookupInfo(Env.getCtx(), 0, 0, referenceId, Language.getBaseLanguage(), columnName, referenceValueId, false, null, false);
+			// 	if(lookupInformation != null) {
+			// 		String validationRuleValue = null;
+			// 		if(validationRuleId > 0) {
+			// 			MValRule validationRule = MValRule.get(Env.getCtx(), validationRuleId);
+			// 			validationRuleValue = validationRule.getCode();
+			// 		}
+			// 		tableName = lookupInformation.TableName;
+			// 		embeddedContextColumn = Optional.ofNullable(lookupInformation.Query).orElse("") 
+			// 			+ Optional.ofNullable(lookupInformation.QueryDirect).orElse("") 
+			// 			+ Optional.ofNullable(lookupInformation.ValidationCode).orElse("")
+			// 			+ Optional.ofNullable(validationRuleValue).orElse("")
+			// 		;
+			// 	}
+			// }
+			String whereClauseReference = null;
+			String validationRuleValue = null;
+			if(validationRuleId > 0) {
+				MValRule validationRule = MValRule.get(Env.getCtx(), validationRuleId);
+				validationRuleValue = validationRule.getCode();
+			}
+			if ((displayTypeId == DisplayType.Table || displayTypeId == DisplayType.Search) && referenceValueId > 0) {
+				MRefTable tableReference = MRefTable.getById(Env.getCtx(), referenceValueId);
+				if(tableReference != null) {
+					whereClauseReference = tableReference.getWhereClause();
+				}
+			}
+			embeddedContextColumn = Optional.ofNullable(whereClauseReference).orElse("")
+				+ Optional.ofNullable(validationRuleValue).orElse("")
+			;
+			return ReferenceValues.newInstance(displayTypeId, tableName, embeddedContextColumn);
+		}
+		return null;
+	}
+
+	/**
+	 * Get Table Name for special tables
+	 * @param columnName
+	 * @param referenceId
+	 * @return
+	 */
+	public static String getTableNameFromReference(String columnName, int referenceId) {
+		String tableName = null;
+		if(DisplayType.ID == referenceId || DisplayType.Search == referenceId
+			|| DisplayType.Table == referenceId || DisplayType.TableDir == referenceId) {
+			tableName = columnName.replaceAll("(_ID_To|_To_ID|_ID)$", "");
+			if (columnName.endsWith("_Acct")) {
+				tableName = I_C_ElementValue.Table_Name;
+			}
+		} else if (DisplayType.List == referenceId) {
+			tableName = I_AD_Ref_List.Table_Name;
+		} else if (DisplayType.Location == referenceId) {
+			tableName = I_C_Location.Table_Name;
+		} else if (DisplayType.Locator == referenceId) {
+			tableName = I_M_Locator.Table_Name;
+		} else if (DisplayType.PAttribute == referenceId) {
+			tableName = I_M_AttributeSetInstance.Table_Name;
+		} else if(DisplayType.Image == referenceId) {
+			tableName = I_AD_Image.Table_Name;
+		} else if(DisplayType.Assignment == referenceId) {
+			tableName = I_S_ResourceAssignment.Table_Name;
+		} else if(DisplayType.Chart == referenceId) {
+			tableName = I_AD_Chart.Table_Name;
+		} else if(DisplayType.Account == referenceId) {
+			tableName = I_C_ElementValue.Table_Name;
+		}
+		return tableName;
 	}
 
 
@@ -504,6 +385,8 @@ public class ReferenceUtil {
 		return directQuery.toString();
 	}
 
+
+
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
 	 * @param referenceId
@@ -521,7 +404,6 @@ public class ReferenceUtil {
 			null
 		);
 	}
-
 	/**
 	 * Get Reference information, can return null if reference is invalid or not exists
 	 * @param referenceId
@@ -532,7 +414,7 @@ public class ReferenceUtil {
 	 * @return
 	 */
 	public static MLookupInfo getReferenceLookupInfo(int referenceId, int referenceValueId, String columnName, int validationRuleId, String customRestriction) {
-		if(!validateReference(referenceId)) {
+		if(!isLookupReference(referenceId)) {
 			return null;
 		}
 		MLookupInfo lookupInformation = null;
@@ -670,13 +552,10 @@ public class ReferenceUtil {
 	 */
 	private static MLookupInfo getLookupInfoFromReference(int referenceId) {
 		MLookupInfo lookupInformation = null;
-		X_AD_Reference reference = (X_AD_Reference) org.spin.service.grpc.util.base.RecordUtil.getEntity(
-			Env.getCtx(),
-			I_AD_Reference.Table_Name,
-			null,
-			referenceId,
-			null
-		);
+		X_AD_Reference reference = new X_AD_Reference(Env.getCtx(), referenceId, null);
+		if (reference == null || reference.getAD_Reference_ID() <= 0) {
+			return null;
+		}
 		if(reference.getValidationType().equals(X_AD_Reference.VALIDATIONTYPE_TableValidation)) {
 			lookupInformation = MLookupFactory.getLookupInfo(
 				Env.getCtx(),
@@ -699,6 +578,8 @@ public class ReferenceUtil {
 		return lookupInformation;
 	}
 
+
+
 	/**
 	 * Get Query with UUID
 	 * @param tableName
@@ -712,7 +593,8 @@ public class ReferenceUtil {
 		).matcher(query);
 
 		List<MatchResult> fromWhereParts = matcherFrom.results()
-				.collect(Collectors.toList());
+			.collect(Collectors.toList())
+		;
 
 		String queryWithUuid = query;
 		if (fromWhereParts != null && fromWhereParts.size() > 0) {
@@ -738,7 +620,8 @@ public class ReferenceUtil {
 		).matcher(query);
 
 		List<MatchResult> fromWhereParts = matcherFrom.results()
-				.collect(Collectors.toList());
+			.collect(Collectors.toList())
+		;
 
 		String queryWithUuid = query;
 		if (fromWhereParts != null && fromWhereParts.size() > 0) {

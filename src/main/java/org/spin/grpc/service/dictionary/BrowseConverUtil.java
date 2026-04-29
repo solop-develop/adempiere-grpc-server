@@ -400,14 +400,14 @@ public class BrowseConverUtil {
 			TextManager.getValidString(elementName))
 		;
 
+		//	Reference Value
+		int referenceValueId = browseField.getAD_Reference_Value_ID();
 		// overwrite display type `Button` to `List`, example `PaymentRule` or `Posted`
 		int displayTypeId = ReferenceUtil.overwriteDisplayType(
 			browseField.getAD_Reference_ID(),
-			browseField.getAD_Reference_Value_ID()
+			referenceValueId
 		);
 		if (ReferenceUtil.validateReference(displayTypeId)) {
-			//	Reference Value
-			int referenceValueId = browseField.getAD_Reference_Value_ID();
 			//	Validation Code
 			int validationRuleId = browseField.getAD_Val_Rule_ID();
 
