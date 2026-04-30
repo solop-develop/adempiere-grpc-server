@@ -311,7 +311,7 @@ public class Window extends DictionaryDocument {
 					+ "SELECT 1 FROM AD_Field f "
 					+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
 					+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
-					+ "AND f.IsDisplayed = 'Y' "
+					// + "AND f.IsDisplayed = 'Y' "
 					+ "AND f.AD_Tab_ID = ? " // #2
 					+ "AND f.IsActive = 'Y'"
 				+ ") "
