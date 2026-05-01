@@ -251,7 +251,9 @@ public class WindowUtil {
 				+ "SELECT 1 FROM AD_Field f "
 				+ "INNER JOIN AD_Column c ON(c.AD_Column_ID = f.AD_Column_ID) "
 				+ "WHERE c.AD_Process_ID = AD_Process.AD_Process_ID "
-				+ "AND f.IsDisplayed = 'Y' "
+				// + "AND f.IsDisplayed = 'Y' "
+				+ "AND f.AD_Tab_ID = ? " // #2
+				+ "AND f.IsActive = 'Y'"
 				// ASP filter
 				// TODO: Add filter with ASP Level
 				// + "AND NOT EXISTS("
@@ -265,8 +267,6 @@ public class WindowUtil {
 				// 	+ "AND fc.AD_Field_ID = f.AD_Field_ID "
 				// 	+ "AND (wc.AD_User_ID = ? OR wc.AD_Role_ID = ?)"
 				// + ") "
-				+ "AND f.AD_Tab_ID = ? " // #2
-				+ "AND f.IsActive = 'Y'"
 			+ ") "
 			// process on table
 			+ "OR EXISTS("
