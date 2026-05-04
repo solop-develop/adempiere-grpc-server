@@ -500,7 +500,6 @@ public class PaymentPrintExport extends PaymentPrintExportImplBase {
 
 		builder.setDocumentNo(documentNo)
 			.setVendorId(vendor.getC_BPartner_ID())
-			// .setVendorTaxId(ValueUtil.validateNull(vendor.getUUID()))
 			.setVendorTaxId(
 				TextManager.getValidString(
 					vendor.getTaxID()
