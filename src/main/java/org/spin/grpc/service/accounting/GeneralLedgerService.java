@@ -748,7 +748,7 @@ public class GeneralLedgerService extends GeneralLedgerImplBase {
 			locationFromId,locationToId, salesRegionId,
 			projectId, campaignId, activityId,
 			user1Id, user2Id , user3Id , user4Id,
-			0, 0, null
+			0, 0, 0, null
 		);
 		
 		if (!Util.isEmpty(accountingAlias, true) && accountCombination != null && accountCombination.getAccount_ID() > 0) {
