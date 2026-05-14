@@ -1125,7 +1125,7 @@ public abstract class BankStatementMatchLogic {
 			);
 		}
 
-		// V3 - Balance: Sum(PayAmt adjusted) == Sum(TrxAmt), tolerance 0.01
+		// V3 - Balance: |Sum(PayAmt adjusted) - Sum(TrxAmt)| <= tolerance
 		BigDecimal totalPayAmt = BigDecimal.ZERO;
 		for (MPayment payment : payments) {
 			BigDecimal payAmt = payment.getPayAmt();
@@ -1138,7 +1138,16 @@ public abstract class BankStatementMatchLogic {
 		for (X_I_BankStatement movement : importedMovements) {
 			totalTrxAmt = totalTrxAmt.add(movement.getTrxAmt());
 		}
-		if (totalPayAmt.subtract(totalTrxAmt).abs().compareTo(new BigDecimal("0.01")) > 0) {
+		BigDecimal toleranceAmount = NumberManager.getBigDecimalFromString(
+			request.getToleranceAmount()
+		);
+		if (toleranceAmount == null || toleranceAmount.signum() <= 0) {
+			toleranceAmount = new BigDecimal("0.01");
+		} else {
+			toleranceAmount = toleranceAmount.abs();
+		}
+		BigDecimal residual = totalTrxAmt.subtract(totalPayAmt);
+		if (residual.abs().compareTo(toleranceAmount) > 0) {
 			throw new AdempiereException("@PayAmt@/@TrxAmt@ @BankStatementMatch.NoMatchedFound@: "
 				+ "@PayAmt@ (" + totalPayAmt + ") vs @TrxAmt@ (" + totalTrxAmt + ")"
 			);
@@ -1184,12 +1193,18 @@ public abstract class BankStatementMatchLogic {
 			}
 		}
 
+		// Concentrate the residual difference (within tolerance) on the LAST selected
+		// imported movement as SimulationChargeAmt so the bank statement line absorbs it.
+		X_I_BankStatement lastMovement = importedMovements.get(importedMovements.size() - 1);
 		// Update each imported movement flags and build matching_movements
 		for (X_I_BankStatement movement : importedMovements) {
 			movement.setC_Payment_ID(payments.get(0).getC_Payment_ID());
 			// movement.set_ValueOfColumn("IsMatched", true);
 			movement.set_ValueOfColumn("IsManualMatch", true);
 			movement.set_ValueOfColumn("IsMultiPaymentMatch", true);
+			if (movement == lastMovement) {
+				movement.set_ValueOfColumn("SimulationChargeAmt", residual);
+			}
 			movement.saveEx();
 
 			responseBuilder.addMatchingMovements(
