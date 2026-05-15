@@ -351,7 +351,7 @@ public class ContextManager {
 			}
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
 		} else if (value instanceof Timestamp) {
-			String currentValue = TimeManager.getTimestampToString(
+			String currentValue = TimeManager.getDisplayValue(
 				TimeManager.getTimestampFromObject(value)
 			);
 			Env.setContext(context, windowNo, tabNo, key, currentValue);
