@@ -136,6 +136,12 @@ public class Security extends SecurityImplBase {
 	private CLogger log = CLogger.getCLogger(Security.class);
 	/**	Menu */
 	private static CCache<String, MenuResponse.Builder> menuCache = new CCache<String, MenuResponse.Builder>("Menu_for_User", 30, 0);
+	/**
+	 * Tracks consumed (code|state) pairs from OpenID logins to block replay.
+	 * TTL must exceed the OpenID authorization-code lifetime so a stolen code
+	 * cannot be reused after a legitimate exchange completes.
+	 */
+	private static CCache<String, Boolean> usedOpenIdCredentials = new CCache<String, Boolean>("OpenIDUsedCredentials", 1000, 10);
 
 
 
@@ -994,7 +1000,20 @@ public class Security extends SecurityImplBase {
 	 * @return
 	 */
 	private Session.Builder createSessionFromOpenID(LoginOpenIDRequest request) {
-		MUser validUser = OpenIDUtil.getUserAuthenticated(request.getCodeParameter(), request.getStateParameter());
+		final String code = request.getCodeParameter();
+		final String state = request.getStateParameter();
+		if (Util.isEmpty(code, true) || Util.isEmpty(state, true)) {
+			throw new AdempiereException("@FillMandatory@ code/state");
+		}
+		// OpenID authorization codes are single-use by spec. Mark the (code, state)
+		// pair as consumed before delegating to OpenIDUtil so concurrent or replayed
+		// exchanges are rejected even if the IdP would still accept them.
+		final String replayKey = code + "|" + state;
+		if (usedOpenIdCredentials.putIfAbsent(replayKey, Boolean.TRUE) != null) {
+			log.warning("OpenID code/state replay blocked");
+			throw new AdempiereException("@Invalid@ @AD_Token_ID@");
+		}
+		MUser validUser = OpenIDUtil.getUserAuthenticated(code, state);
 		if(validUser == null) {
 			throw new AdempiereException("@AD_User_ID@ / @AD_Role_ID@ / @AD_Org_ID@ @NotFound@");
 		}
@@ -1102,6 +1121,7 @@ public class Security extends SecurityImplBase {
 		if (currentSession.get_ColumnIndex(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) >= 0) {
 			isOpenID = currentSession.get_ValueAsInt(I_AD_User_Authentication.COLUMNNAME_AD_User_Authentication_ID) > 0;
 		}
+		final int previousRoleId = currentSession.getAD_Role_ID();
 		final String bearerToken = SessionManager.createSessionAndGetToken(
 			currentSession.getWebSession(),
 			language,
@@ -1112,20 +1132,35 @@ public class Security extends SecurityImplBase {
 			isOpenID
 		);
 		builder.setToken(bearerToken);
-		// Update Keycloak session cache before logout (so next request finds new session)
-		updateKeycloakCacheIfNeeded(bearerToken);
-		// Logout
+		// Mark the old AD_Session as Processed='Y' BEFORE updating the local
+		// Keycloak cache. Other JVMs (e.g. the report-engine) only learn about
+		// the role switch by hitting a cached AD_Session_ID, loading it, and
+		// seeing isProcessed()=true — so the DB write must commit first.
 		logoutSession(LogoutRequest.newBuilder().build());
+		// Now point this JVM's Keycloak sid → AD_Session_ID cache to the new session
+		updateKeycloakCacheIfNeeded(bearerToken);
+		// Drop cached MRole entries so the next access-SQL build uses the new tenant
+		MRole.removeFromCache(previousRoleId, userId);
+		MRole.removeFromCache(roleId, userId);
 
-		// Update session preferences
-		PreferenceUtil.saveSessionPreferences(
-			userId,
-			language,
-			roleId,
-			role.getAD_Client_ID(),
-			organizationId,
-			warehouseId
-		);
+		// Update session preferences — failures here must not silently corrupt
+		// the Keycloak resolve path (which reads language/warehouse from MPreference)
+		try {
+			PreferenceUtil.saveSessionPreferences(
+				userId,
+				language,
+				roleId,
+				role.getAD_Client_ID(),
+				organizationId,
+				warehouseId
+			);
+		} catch (Exception e) {
+			log.warning("Failed to persist session preferences after change-role"
+				+ " (userId=" + userId + " roleId=" + roleId
+				+ " clientId=" + role.getAD_Client_ID()
+				+ " orgId=" + organizationId
+				+ " warehouseId=" + warehouseId + "): " + e.getMessage());
+		}
 
 		// Return session
 		return builder;

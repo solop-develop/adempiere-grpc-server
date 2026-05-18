@@ -435,7 +435,12 @@ public class SessionManager {
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-			userId, language, session.getAD_Role_ID(), session.getAD_Client_ID(), session.getAD_Org_ID(), warehouseId
+			userId,
+			language,
+			session.getAD_Role_ID(),
+			session.getAD_Client_ID(),
+			session.getAD_Org_ID(),
+			warehouseId
 		);
 
 		return bearerToken;
