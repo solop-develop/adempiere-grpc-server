@@ -185,8 +185,8 @@ public class OrderServiceLogic {
 					Env.getCtx(),
 					request.getDiscountSchemaId()
 				);
-				// discountRateOff = discountSchema.getFlatDiscount();
-				DiscountManagement.configureDiscount(salesOrder, discountSchema.getFlatDiscount(), transactionName);
+				salesOrder.set_ValueOfColumn("FlatDiscount", discountSchema.getFlatDiscount());
+				salesOrder.saveEx(transactionName);
 			}
 			if(discountRateOff != null) {
 				DiscountManagement.configureDiscountRateOff(salesOrder, discountRateOff, transactionName);
@@ -396,12 +396,6 @@ public class OrderServiceLogic {
 
 				//	Save Line
 				orderLine.saveEx(transactionName);
-				//	Apply Discount from order
-				DiscountManagement.configureDiscountRateOff(
-					order,
-					(BigDecimal) order.get_Value("FlatDiscount"),
-					transactionName
-				);
 				orderLineReference.set(orderLine);
 			}
 		});
@@ -478,12 +472,6 @@ public class OrderServiceLogic {
 				orderLine.setTax();
 				//	Save Line
 				orderLine.saveEx(transactionName);
-				//	Apply Discount from order
-				DiscountManagement.configureDiscountRateOff(
-					order,
-					(BigDecimal) order.get_Value("FlatDiscount"),
-					transactionName
-				);
 				orderLineReference.set(orderLine);
 			}
 		});
@@ -553,12 +541,6 @@ public class OrderServiceLogic {
 			}
 			OrderManagement.validateOrderReleased(order);
 			orderLine.deleteEx(true);
-			//	Apply Discount from order
-			DiscountManagement.configureDiscountRateOff(
-				order,
-				(BigDecimal) order.get_Value("FlatDiscount"),
-				transactionName
-			);
 		});
 		//	Return
 		return Empty.newBuilder();
