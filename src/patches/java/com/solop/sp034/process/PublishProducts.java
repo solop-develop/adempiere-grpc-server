@@ -28,6 +28,7 @@ import org.compiere.util.Trx;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Generated Process for (Publish Products)
@@ -119,6 +120,7 @@ public class PublishProducts extends PublishProductsAbstract {
 				PO fromAllocation = allocationTable.getPO(allocationId, null);
 				PO toAllocation = allocationTable.getPO(0, transactionName);
 				PO.copyValues(fromAllocation, toAllocation);
+				toAllocation.set_ValueOfColumn("UUID", UUID.randomUUID().toString());
 				toAllocation.set_ValueOfColumn("SP034_Publishing_ID", publishingId);
 				toAllocation.saveEx();
 			});
