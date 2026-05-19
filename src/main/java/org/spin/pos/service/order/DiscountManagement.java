@@ -5,12 +5,10 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MCurrency;
 import org.compiere.model.MOrder;
-import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.util.Env;
 import org.spin.pos.service.pos.AccessManagement;
@@ -91,31 +89,8 @@ public class DiscountManagement {
 		if(discountRateOff == null) {
 			return;
 		}
-		MPOS pos = new MPOS(order.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		if(pos.get_ValueAsInt("DefaultDiscountCharge_ID") <= 0) {
-			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
-		}
-		//	Validate Discount
-		Optional<BigDecimal> baseAmount = Arrays.asList(order.getLines())
-			.stream()
-			.filter(ordeLine -> {
-				return ordeLine.getC_Charge_ID() != pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
-			})
-			.map(ordeLine -> ordeLine.getLineNetAmt())
-			.collect(Collectors.reducing(BigDecimal::add))
-		;
-		//	Get Base amount
-		if(baseAmount.isPresent()
-				&& baseAmount.get().compareTo(Env.ZERO) > 0) {
-			int precision = MCurrency.getStdPrecision(order.getCtx(), order.getC_Currency_ID());
-			BigDecimal finalPrice = getFinalPrice(baseAmount.get(), discountRateOff, precision);
-			createDiscountLine(pos, order, baseAmount.get().subtract(finalPrice), transactionName);
-			//	Set Discount Rate
-			order.set_ValueOfColumn("FlatDiscount", discountRateOff);
-			order.saveEx(transactionName);
-		} else {
-			deleteDiscountLine(pos, order, transactionName);
-		}
+		order.set_ValueOfColumn("FlatDiscount", discountRateOff);
+		order.saveEx(transactionName);
 	}
 
 
@@ -128,9 +103,6 @@ public class DiscountManagement {
 			return;
 		}
 		MPOS pos = new MPOS(order.getCtx(), order.getC_POS_ID(), order.get_TrxName());
-		if(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID) <= 0) {
-			throw new AdempiereException("@DefaultDiscountCharge_ID@ @NotFound@");
-		}
 		int defaultDiscountChargeId = pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
 		boolean isAllowsApplyDiscount = AccessManagement.getBooleanValueFromPOS(pos, Env.getAD_User_ID(Env.getCtx()), ColumnsAdded.COLUMNNAME_IsAllowsApplyDiscount);
 		if(!isAllowsApplyDiscount) {
@@ -146,66 +118,17 @@ public class DiscountManagement {
 			.reduce(BigDecimal.ZERO, BigDecimal::add)).orElse(Env.ZERO)
 		;
 		if(baseAmount.compareTo(Env.ZERO) <= 0) {
-			deleteDiscountLine(pos, order, transactionName);
 			return;
 		}
-		//	
+		//
 		int precision = MCurrency.getStdPrecision(order.getCtx(), order.getC_Currency_ID());
 		BigDecimal discountRateOff = getDiscount(baseAmount, baseAmount.add(discountAmountOff), precision).negate();
 		if(maximumDiscountAllowed.compareTo(Env.ZERO) > 0 && discountRateOff.compareTo(maximumDiscountAllowed) > 0) {
 			throw new AdempiereException("@POS.MaximumDiscountAllowedExceeded@");
 		}
-		//	Create Discount line
-		createDiscountLine(pos, order, discountAmountOff, transactionName);
 		//	Set Discount Rate
 		order.set_ValueOfColumn("FlatDiscount", discountRateOff);
 		order.saveEx(transactionName);
-	}
-	
-	/**
-	 * Delete Discount Line
-	 * @param pos
-	 * @param order
-	 * @param transactionName
-	 */
-	private static void deleteDiscountLine(MPOS pos, MOrder order, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
-			.parallelStream()
-			.filter(ordeLine -> {
-				return ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
-			})
-			.findFirst()
-		;
-		maybeOrderLine.ifPresent(discountLine -> discountLine.deleteEx(true,transactionName));
-	}
-	
-	/**
-	 * Create Discount Line
-	 * @param pos
-	 * @param order
-	 * @param amount
-	 * @param transactionName
-	 */
-	private static void createDiscountLine(MPOS pos, MOrder order, BigDecimal amount, String transactionName) {
-		Optional<MOrderLine> maybeOrderLine = Arrays.asList(order.getLines())
-			.parallelStream()
-			.filter(ordeLine -> {
-				return ordeLine.getC_Charge_ID() == pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID);
-			})
-			.findFirst()
-		;
-		MOrderLine discountOrderLine = null;
-		if(maybeOrderLine.isPresent()) {
-			discountOrderLine = maybeOrderLine.get();
-		} else {
-			discountOrderLine = new MOrderLine(order);
-			discountOrderLine.setC_Charge_ID(pos.get_ValueAsInt(ColumnsAdded.COLUMNNAME_DefaultDiscountCharge_ID));
-		}
-		discountOrderLine.setQty(Env.ONE);
-		discountOrderLine.setPrice(amount.negate());
-		discountOrderLine.setM_AttributeSetInstance_ID(0);
-		//	
-		discountOrderLine.saveEx(transactionName);
 	}
 
 }

@@ -1007,12 +1007,6 @@ public class OrderManagement {
 		//	Set values
 		orderLine.setTax();
 		orderLine.saveEx(transactionName);
-		//	Apply Discount from order
-		DiscountManagement.configureDiscountRateOff(
-			order,
-			(BigDecimal) order.get_Value("FlatDiscount"),
-			transactionName
-		);
 
 		return orderLine;
 	} // UpdateLine
