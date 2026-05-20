@@ -26,7 +26,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import org.adempiere.core.domains.models.I_AD_Column;
 import org.adempiere.core.domains.models.I_AD_Field;
 import org.adempiere.core.domains.models.I_AD_Tab;
 import org.adempiere.core.domains.models.I_AD_Table;
@@ -109,6 +108,7 @@ import org.spin.backend.grpc.display_definition.WorkflowStep;
 import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordWriteGuard;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
@@ -1211,6 +1211,9 @@ public class DisplayDefinitionServiceLogic {
 			context,
 			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
 		);
+		if (RecordWriteGuard.isTableReadOnly(table)) {
+			throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+		}
 		PO currentEntity = table.getPO(0, null);
 		if (currentEntity == null) {
 			throw new AdempiereException("@Error@ PO is null");
@@ -1219,8 +1222,18 @@ public class DisplayDefinitionServiceLogic {
 
 		Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 		table.getColumnsAsList().forEach(column -> {
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				// checks if the column exists in the database
+				log.warning("@AD_Column_ID@ @NotFound@");
+				return;
+			}
 			final String columnName = column.getColumnName();
 			if (column.isVirtualColumn()) {
+				log.warning("@AD_Column_ID@ (" + column.getAD_Column_ID() + ") is virtual: " + columnName);
+				return;
+			}
+			if (column.isKey()) {
+				log.warning("@AD_Column_ID@ (" + column.getAD_Column_ID() + ") is key: " + columnName);
 				return;
 			}
 
@@ -1249,11 +1262,13 @@ public class DisplayDefinitionServiceLogic {
 				}
 			}
 			if (value == null) {
-				if (columnName.endsWith("tedBy") || columnName.equals("Created")
-					|| columnName.equals("Updated") || columnName.equals(table.getTableName() + "_ID")
-					|| columnName.equals("IsActive") || columnName.equals("AD_Client_ID")
-					|| columnName.equals("AD_Org_ID") || columnName.equals("Processed")
-					|| columnName.equals("Processing") || columnName.equals("Posted")) {
+				if (
+					columnName.equals("AD_Client_ID") || columnName.equals("AD_Org_ID") 
+					|| columnName.equals("Created") || columnName.equals("Updated") || columnName.endsWith("tedBy") 
+					|| columnName.equals("IsActive") || columnName.equals(table.getTableName() + "_ID")
+					|| columnName.equals("Processed") || columnName.equals("Processing")
+					|| columnName.equals("Posted")
+				) {
 					return;
 				}
 			}
@@ -1319,6 +1334,9 @@ public class DisplayDefinitionServiceLogic {
 			Env.getCtx(),
 			displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
 		);
+		if (RecordWriteGuard.isTableReadOnly(table)) {
+			throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+		}
 		String[] keyColumns = table.getKeyColumns();
 
 		if (request.getId() <= 0) {
@@ -1327,6 +1345,9 @@ public class DisplayDefinitionServiceLogic {
 		PO currentEntity = table.getPO(request.getId(), null);
 		if (currentEntity == null || currentEntity.get_ID() <= 0) {
 			throw new AdempiereException("@Record_ID@ @NotFound@");
+		}
+		if (RecordWriteGuard.isForeignClient(Env.getCtx(), currentEntity)) {
+			throw new AdempiereException("@Ignored@ : Record is other client");
 		}
 		POAdapter adapter = new POAdapter(currentEntity);
 
@@ -1338,11 +1359,16 @@ public class DisplayDefinitionServiceLogic {
 			}
 			if (Arrays.stream(keyColumns).anyMatch(columnName::equals)) {
 				// prevent warning `PO.set_Value: Column not updateable`
+				log.warning("@Ignored@ " + columnName + " : @KeyColumn@");
 				return;
 			}
 			MColumn column = table.getColumn(columnName);
 			if (column == null || column.getAD_Column_ID() <= 0) {
 				// checks if the column exists in the database
+				return;
+			}
+			if (RecordWriteGuard.shouldSkipColumn(currentEntity, column)) {
+				log.warning("@Ignored@ " + columnName + " : @NotAllowed@");
 				return;
 			}
 			int displayTypeId = column.getAD_Reference_ID();
@@ -1424,6 +1450,9 @@ public class DisplayDefinitionServiceLogic {
 				context,
 				displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
 			);
+			if (RecordWriteGuard.isTableReadOnly(table)) {
+				throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+			}
 
 			Map<String, Value> attributes = new HashMap<>(request.getAttributes().getFieldsMap());
 
@@ -1595,6 +1624,9 @@ public class DisplayDefinitionServiceLogic {
 				Env.getCtx(),
 				displayDefinition.get_ValueAsInt(I_AD_Table.COLUMNNAME_AD_Table_ID)
 			);
+			if (RecordWriteGuard.isTableReadOnly(table)) {
+				throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+			}
 			String[] keyColumns = table.getKeyColumns();
 
 			Properties context = Env.getCtx();
@@ -1605,6 +1637,9 @@ public class DisplayDefinitionServiceLogic {
 			PO currentEntity = table.getPO(request.getId(), transationName);
 			if (currentEntity == null || currentEntity.get_ID() <= 0) {
 				throw new AdempiereException("@Record_ID@ @NotFound@");
+			}
+			if (RecordWriteGuard.isForeignClient(context, currentEntity)) {
+				throw new AdempiereException("@Ignored@ : Record is other client");
 			}
 			int resourceAssignmentColumnId = displayDefinition.get_ValueAsInt(
 				DisplayDefinitionChanges.SP010_Resource_ID
@@ -1644,6 +1679,10 @@ public class DisplayDefinitionServiceLogic {
 					// checks if the column exists in the database
 					return;
 				}
+				if (RecordWriteGuard.shouldSkipColumn(resourceAssignment, column)) {
+					log.warning("@Ignored@ " + columnName + " : @NotAllowed@");
+					return;
+				}
 				int referenceId = column.getAD_Reference_ID();
 				Object value = null;
 				if (!attribute.getValue().hasNullValue()) {
@@ -1652,7 +1691,7 @@ public class DisplayDefinitionServiceLogic {
 							attribute.getValue(),
 							referenceId
 						);
-					} 
+					}
 					if (value == null) {
 						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue()
@@ -1675,6 +1714,10 @@ public class DisplayDefinitionServiceLogic {
 					// checks if the column exists in the database
 					return;
 				}
+				if (RecordWriteGuard.shouldSkipColumn(currentEntity, column)) {
+					log.warning("@Ignored@ " + columnName + " : @NotAllowed@");
+					return;
+				}
 				int referenceId = column.getAD_Reference_ID();
 				Object value = null;
 				if (!attribute.getValue().hasNullValue()) {
@@ -1683,7 +1726,7 @@ public class DisplayDefinitionServiceLogic {
 							attribute.getValue(),
 							referenceId
 						);
-					} 
+					}
 					if (value == null) {
 						value = ValueManager.getObjectFromProtoValue(
 							attribute.getValue()

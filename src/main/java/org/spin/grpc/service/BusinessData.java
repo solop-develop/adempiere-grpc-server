@@ -61,6 +61,7 @@ import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordWriteGuard;
 import org.spin.base.workflow.WorkflowUtil;
 import org.spin.dictionary.util.BrowserUtil;
 import org.spin.dictionary.util.DictionaryUtil;
@@ -678,7 +679,7 @@ public class BusinessData extends BusinessDataImplBase {
 		for (MPInstance recentInstance : recentInstances) {
 			//	Block concurrent executions of the same process for the same user/session/record
 			if (recentInstance.isProcessing()) {
-				throw new AdempiereException("@AD_Process_ID@ @IsProcessing@");
+				throw new AdempiereException("@Processing@ @AD_PInstance_ID@");
 			}
 			//	For recently completed instances: compare parameters to detect duplicate submission
 			MPInstancePara[] storedParams = recentInstance.getParameters();
@@ -851,6 +852,9 @@ public class BusinessData extends BusinessDataImplBase {
 		final MTable table = RecordUtil.validateAndGetTable(
 			request.getTableName()
 		);
+		if (RecordWriteGuard.isTableReadOnly(table)) {
+			throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+		}
 
 		PO entity = table.getPO(0, null);
 		if(entity == null) {
@@ -908,20 +912,15 @@ public class BusinessData extends BusinessDataImplBase {
 		final String[] keyColumns = table.getKeyColumns();
 		Entity.Builder builder = ConvertUtil.convertEntity(entity);
 
-		if (table.isView()) {
+		if (RecordWriteGuard.isTableReadOnly(table)) {
 			log.warning("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@ ");
 			return builder;
 		}
 
-		final int sessionClientId = Env.getAD_Client_ID(context);
-		if (sessionClientId != currentEntity.getAD_Client_ID()) {
+		if (RecordWriteGuard.isForeignClient(context, currentEntity)) {
 			log.warning("@Ignored@ : Record is other client");
 			return builder;
 		}
-
-		// final boolean isActiveRecord = currentEntity.isActive();
-		final boolean isProcessedRecord = currentEntity.get_ValueAsBoolean("Processed");
-		final boolean isProcessingRecord = currentEntity.get_ValueAsBoolean("Processing");
 
 		Map<String, Value> attributes = request.getAttributes().getFieldsMap();
 		attributes.entrySet().forEach(attribute -> {
@@ -955,60 +954,14 @@ public class BusinessData extends BusinessDataImplBase {
 				return;
 			}
 
-			if (!column.isAlwaysUpdateable()) {
-				if (!column.isUpdateable()) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsUpdateable@ @NotValid@"
-						)
-					);
-					return;
-				}
-
-				if (isProcessedRecord) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processed@ "
-						)
-					);
-					return;
-				}
-				if (isProcessingRecord) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processing@ "
-						)
-					);
-					return;
-				}
-
-				// if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
-				// 	boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
-				// 	if (isReadOnlyColumn) {
-				// 		log.warning(
-				// 			Msg.parseTranslation(
-				// 				context,
-				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
-				// 			)
-				// 		);
-				// 		return;
-				// 	}
-				// }
-
-				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
-				// 	if (!isActiveRecord) {
-				// 		log.warning(
-				// 			Msg.parseTranslation(
-				// 				context,
-				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotActive@ "
-				// 			)
-				// 		);
-				// 		return;
-				// 	}
-				// }
+			if (RecordWriteGuard.shouldSkipColumn(currentEntity, column)) {
+				log.warning(
+					Msg.parseTranslation(
+						context,
+						"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotAllowed@"
+					)
+				);
+				return;
 			}
 
 			Object value = null;

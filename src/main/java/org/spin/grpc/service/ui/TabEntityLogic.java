@@ -41,7 +41,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Evaluator;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.spin.backend.grpc.common.Entity;
@@ -55,6 +54,7 @@ import org.spin.base.db.QueryUtil;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordWriteGuard;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.base.RecordUtil;
@@ -83,8 +83,14 @@ public class TabEntityLogic {
 				"@AD_Tab_ID@ " + request.getTabId() + " @NotFound@"
 			);
 		}
+		if (RecordWriteGuard.isTabReadOnly(tab, null)) {
+			throw new AdempiereException("@Ignored@ @AD_Tab_ID@ (" + tab.getName() + ") : @IsReadOnly@");
+		}
 
 		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		if (RecordWriteGuard.isTableReadOnly(table)) {
+			throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+		}
 		PO currentEntity = table.getPO(0, null);
 		if (currentEntity == null) {
 			throw new AdempiereException("@Error@ @PO@ @NotFound@");
@@ -100,6 +106,9 @@ public class TabEntityLogic {
 			MColumn column = table.getColumn(columnName);
 			if (column == null || column.getAD_Column_ID() <= 0) {
 				// checks if the column exists in the database
+				return;
+			}
+			if (column.isVirtualColumn()) {
 				return;
 			}
 			int referenceId = column.getAD_Reference_ID();
@@ -482,35 +491,23 @@ public class TabEntityLogic {
 			windowNo, context, entity, false
 		);
 
-		if (window.getWindowType().equals(X_AD_Window.WINDOWTYPE_QueryOnly)) {
+		if (RecordWriteGuard.isWindowReadOnly(window)) {
 			log.warning("@Ignored@ @AD_Window_ID@ (" + window.getName() + ") : @WindowType@ " + X_AD_Window.WINDOWTYPE_QueryOnly);
 			return builder;
 		}
-		if (table.isView()) {
+		if (RecordWriteGuard.isTableReadOnly(table)) {
 			log.warning("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@ ");
 			return builder;
 		}
-		if (tab.isReadOnly()) {
+		if (RecordWriteGuard.isTabReadOnly(tab, currentEntity)) {
 			log.warning("@Ignored@ @AD_Tab_ID@ (" + tab.getName() + ") : @IsReadOnly@ ");
 			return builder;
 		}
-		if (!Util.isEmpty(tab.getReadOnlyLogic(), true)) {
-			boolean isReadOnlyTab = Evaluator.evaluateLogic(currentEntity, tab.getReadOnlyLogic());
-			if (isReadOnlyTab) {
-				log.warning("@Ignored@ @AD_Tab_ID@ (" + tab.getName() + ") : @ReadOnlyLogic@ ");
-				return builder;
-			}
-		}
 
-		final int sessionClientId = Env.getAD_Client_ID(context);
-		if (sessionClientId != currentEntity.getAD_Client_ID()) {
+		if (RecordWriteGuard.isForeignClient(context, currentEntity)) {
 			log.warning("@Ignored@ : Record is other client");
 			return builder;
 		}
-
-		// final boolean isActiveRecord = currentEntity.isActive();
-		final boolean isProcessedRecord = currentEntity.get_ValueAsBoolean("Processed");
-		final boolean isProcessingRecord = currentEntity.get_ValueAsBoolean("Processing");
 
 		attributes.entrySet().forEach(attribute -> {
 			final String columnName = attribute.getKey();
@@ -543,82 +540,14 @@ public class TabEntityLogic {
 				return;
 			}
 
-			if (!column.isAlwaysUpdateable()) {
-				if (!column.isUpdateable()) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsUpdateable@ @NotValid@"
-						)
-					);
-					return;
-				}
-
-				if (isProcessedRecord) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processed@ "
-						)
-					);
-					return;
-				}
-				if (isProcessingRecord) {
-					log.warning(
-						Msg.parseTranslation(
-							context,
-							"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @Processing@ "
-						)
-					);
-					return;
-				}
-
-				// if (!Util.isEmpty(column.getReadOnlyLogic(), true)) {
-				// 	boolean isReadOnlyColumn = Evaluator.evaluateLogic(currentEntity, column.getReadOnlyLogic());
-				// 	if (isReadOnlyColumn) {
-				// 		log.warning(
-				// 			Msg.parseTranslation(
-				// 				context,
-				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @ReadOnlyLogic@ "
-				// 			)
-				// 		);
-				// 		return;
-				// 	}
-				// }
-
-				// if (!columnName.equals(I_AD_Element.COLUMNNAME_IsActive)) {
-				// 	if (!isActiveRecord) {
-				// 		log.warning(
-				// 			Msg.parseTranslation(
-				// 				context,
-				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotActive@ "
-				// 			)
-				// 		);
-				// 		return;
-				// 	}
-				// }
-
-				// MField field = new Query(
-				// 	Env.getCtx(),
-				// 	I_AD_Field.Table_Name,
-				// 	I_AD_Field.COLUMNNAME_AD_Column_ID + " = ? AND " + I_AD_Field.COLUMNNAME_AD_Tab_ID + " = ?",
-				// 	null
-				// )
-				// 	.setParameters(column.getAD_Column_ID(), tab.getAD_Tab_ID())
-				// 	.setOnlyActiveRecords(true)
-				// 	.first()
-				// ;
-				// if (field != null) {
-				// 	if (field.isReadOnly()) {
-				// 		log.warning(
-				// 			Msg.parseTranslation(
-				// 				context,
-				// 				"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @IsReadOnly@ "
-				// 			)
-				// 		);
-				// 		return;
-				// 	}
-				// }
+			if (RecordWriteGuard.shouldSkipColumn(currentEntity, column)) {
+				log.warning(
+					Msg.parseTranslation(
+						context,
+						"@Ignored@ " + column.getName() + " (" + columnName + ") @NewValue@ = " + displayValue + " : @NotAllowed@"
+					)
+				);
+				return;
 			}
 
 			Object value = null;

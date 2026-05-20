@@ -73,7 +73,7 @@ public class RecordManagement extends RecordManagementImplBase {
 	public void toggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest request,
 			StreamObserver<ToggleIsActiveRecordsBatchResponse> responseObserver) {
 		try {
-			ToggleIsActiveRecordsBatchResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecords(request);
+			ToggleIsActiveRecordsBatchResponse.Builder builder = RecordManagementServiceLogic.toggleIsActiveRecordsBatch(request);
 			responseObserver.onNext(builder.build());
 			responseObserver.onCompleted();
 		} catch (Exception e) {

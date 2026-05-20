@@ -84,6 +84,7 @@ import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.store.util.VueStoreFrontUtil;
 
@@ -1058,12 +1059,12 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setValidFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					calendarItem.getValidFrom()
 				)
 			)
 			.setValidTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					calendarItem.getValidTo()
 				)
 			)
@@ -1505,12 +1506,12 @@ public class DisplayDefinitionConvertUtil {
 				)
 			)
 			.setValidFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceItem.getValidFrom()
 				)
 			)
 			.setValidTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceItem.getValidTo()
 				)
 			)
@@ -1578,7 +1579,7 @@ public class DisplayDefinitionConvertUtil {
 				timelineItem.isReadOnly()
 			)
 			.setDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					timelineItem.getDate()
 				)
 			)
