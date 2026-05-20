@@ -59,6 +59,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordResponse;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRequest;
 import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchResponse;
 import org.spin.backend.grpc.record_management.ZoomWindow;
+import org.spin.base.util.RecordWriteGuard;
 import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
@@ -86,18 +87,27 @@ public class RecordManagementServiceLogic {
 	}
 
 
-	public static ToggleIsActiveRecordsBatchResponse.Builder toggleIsActiveRecords(ToggleIsActiveRecordsBatchRequest request) {
+	public static ToggleIsActiveRecordsBatchResponse.Builder toggleIsActiveRecordsBatch(ToggleIsActiveRecordsBatchRequest request) {
 		StringBuilder errorMessage = new StringBuilder();
 		AtomicInteger recordsChanges = new AtomicInteger(0);
 
 		Trx.run(transactionName -> {
 			MTable table = validateAndGetTable(request.getTableName());
+			if (RecordWriteGuard.isTableReadOnly(table)) {
+				throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+			}
 			List<Integer> ids = request.getIdsList();
 			if (ids.size() > 0) {
 				ids.stream().forEach(id -> {
 					PO entity = table.getPO(id, transactionName);
 					if (entity != null && entity.get_ID() > 0) {
+						if (RecordWriteGuard.isForeignClient(Env.getCtx(), entity)) {
+							return;
+						}
 						if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
+							return;
+						}
+						if (RecordWriteGuard.isDocumentClosed(entity)) {
 							return;
 						}
 						entity.setIsActive(request.getIsActive());
@@ -138,13 +148,22 @@ public class RecordManagementServiceLogic {
 
 		Trx.run(transactionName -> {
 			MTable table = validateAndGetTable(request.getTableName());
+			if (RecordWriteGuard.isTableReadOnly(table)) {
+				throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+			}
 			if (request.getId() <= 0 && !RecordUtil.isValidId(request.getId(), table.getAccessLevel())) {
 				throw new AdempiereException("@FillMandatory@ @Record_ID@");
 			}
 			if (request.getId() > 0) {
 				PO entity = RecordUtil.getEntity(Env.getCtx(), request.getTableName(), request.getId(), transactionName);
 				if (entity != null && entity.get_ID() > 0) {
+					if (RecordWriteGuard.isForeignClient(Env.getCtx(), entity)) {
+						return;
+					}
 					if (entity.get_ColumnIndex("Processed") >= 0 && entity.get_ValueAsBoolean("Processed")) {
+						return;
+					}
+					if (RecordWriteGuard.isDocumentClosed(entity)) {
 						return;
 					}
 					entity.setIsActive(request.getIsActive());
