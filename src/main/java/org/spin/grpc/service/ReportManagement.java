@@ -959,10 +959,7 @@ public class ReportManagement extends ReportManagementImplBase {
 		List<Object> parameters = new ArrayList<>();
 		//	For Table Name
 		if(!Util.isEmpty(request.getTableName(), true)) {
-			MTable table = MTable.get(Env.getCtx(), request.getTableName());
-			if (table == null || table.getAD_Table_ID() <= 0) {
-				throw new AdempiereException("@TableName@ @NotFound@");
-			}
+			MTable table = RecordUtil.validateAndGetTable(request.getTableName());
 			whereClause = "AD_Table_ID = ? "
 				+ "OR EXISTS ("
 					+ "SELECT 1 FROM AD_PrintFormat AS pf "
@@ -978,9 +975,19 @@ public class ReportManagement extends ReportManagementImplBase {
 			whereClause = "EXISTS("
 					+ "SELECT 1 FROM AD_Process AS p "
 					+ "WHERE p.AD_Process_ID = ? "
-					+ "AND (p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID "
-					+ "OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID) "
 					+ "AND p.IsActive = 'Y' "
+					+ "AND ("
+						+ "p.AD_PrintFormat_ID = AD_PrintFormat.AD_PrintFormat_ID "
+						+ "OR p.AD_ReportView_ID = AD_PrintFormat.AD_ReportView_ID "
+						+ "OR AD_PrintFormat.AD_Table_ID = ("
+							+ "SELECT AD_Table_ID FROM AD_PrintFormat "
+							+ "WHERE AD_PrintFormat_ID = p.AD_PrintFormat_ID"
+						+ ") "
+						+ "OR AD_PrintFormat.AD_Table_ID = ("
+							+ "SELECT AD_Table_ID FROM AD_ReportView "
+							+ "WHERE AD_ReportView_ID = p.AD_ReportView_ID"
+						+ ")"
+					+ ")"
 				+ ")"
 			;
 			parameters.add(request.getReportId());
