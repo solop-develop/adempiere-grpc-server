@@ -155,6 +155,7 @@ public class PublishProducts extends PublishProductsAbstract {
 		List<Object> products = new ArrayList<>();
 		if(getSelectionKeys() == null || getSelectionKeys().isEmpty()) {
 			if(getRecord_ID() <= 0) {
+				log.warning("No publishing Record_ID selected");
 				return new ArrayList<>();
 			}
 			products.add(getRecord_ID());
