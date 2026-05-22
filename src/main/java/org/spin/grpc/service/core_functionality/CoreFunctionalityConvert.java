@@ -57,7 +57,7 @@ import org.spin.backend.grpc.core_functionality.Warehouse;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.util.AttachmentUtil;
 
 /**
@@ -293,7 +293,7 @@ public class CoreFunctionalityConvert {
 				+ "|" + currencyTo.getISO_Code()
 			)
 			.setValidFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					conversionRate.getValidFrom()
 				)
 			)
@@ -323,7 +323,7 @@ public class CoreFunctionalityConvert {
 		;
 		if(conversionRate.getValidTo() != null) {
 			builder.setValidTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					conversionRate.getValidTo()
 				)
 			);

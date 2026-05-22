@@ -56,6 +56,7 @@ import org.spin.backend.grpc.issue_management.TaskStatus;
 import org.spin.backend.grpc.issue_management.User;
 import org.spin.model.MADAttachmentReference;
 import org.spin.service.grpc.util.value.TextManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.service.grpc.util.value.ValueManager;
 import org.spin.util.AttachmentUtil;
 
@@ -549,17 +550,17 @@ public class IssueManagementConvertUtil {
 				)
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getUpdated()
 				)
 			)
 			.setLastUpdated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getUpdated()
 				)
 			)
 			.setDateNextAction(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getDateNextAction()
 				)
 			)
@@ -644,7 +645,7 @@ public class IssueManagementConvertUtil {
 		}
 		builder.setId(requestUpdate.getR_RequestUpdate_ID())
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					requestUpdate.getCreated()
 				)
 			)
@@ -682,7 +683,7 @@ public class IssueManagementConvertUtil {
 
 		builder.setId(requestAction.getR_RequestAction_ID())
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					requestAction.getCreated()
 				)
 			)

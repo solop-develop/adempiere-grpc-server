@@ -140,7 +140,7 @@ public class ConvertUtil {
 		}
 
 		builder.setLogDate(
-			ValueManager.getProtoTimestampFromTimestamp(
+			TimeManager.getProtoTimestampFromTimestamp(
 				chatEntry.getCreated()
 			)
 		);
@@ -729,7 +729,7 @@ public class ConvertUtil {
 				)
 			)
 			.setMovementDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					shipment.getMovementDate()
 				)
 			)

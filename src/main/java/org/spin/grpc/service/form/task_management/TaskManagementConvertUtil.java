@@ -25,7 +25,7 @@ import org.spin.backend.grpc.form.task_management.Task;
 import org.spin.backend.grpc.form.task_management.TaskType;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
@@ -63,12 +63,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setDateStartSchedule(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					project.getDateStartSchedule()
 				)
 			)
 			.setDateFinishSchedule(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					project.getDateFinishSchedule()
 				)
 			)
@@ -104,12 +104,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					project.getDateStartSchedule()
 				)
 			)
 			.setEndDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					project.getDateFinishSchedule()
 				)
 			)
@@ -150,12 +150,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setDateStartPlan(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getDateStartPlan()
 				)
 			)
 			.setDateCompletePlan(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getDateCompletePlan()
 				)
 			)
@@ -191,12 +191,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getDateStartPlan()
 				)
 			)
 			.setEndDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					request.getDateCompletePlan()
 				)
 			)
@@ -242,12 +242,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setAssignDateForm(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			)
 			.setAssignDateTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			)
@@ -285,12 +285,12 @@ public class TaskManagementConvertUtil {
 				)
 			)
 			.setStartDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			)
 			.setEndDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			)

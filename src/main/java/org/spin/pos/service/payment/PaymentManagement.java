@@ -25,7 +25,6 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Util;
 import org.spin.pos.service.pos.POS;
 
 /**
@@ -103,7 +102,7 @@ public class PaymentManagement {
 				transactionName
 			);
 		}
-		//TODO:Validate if PaymentTypeAllocation should have revere docTypes like hte POS
+		// TODO: Validate if PaymentTypeAllocation should have revere docTypes like hte POS
 		if (paymentTypeAllocation != null && !isManual) {
 			if (payment.isReceipt()) {
 				// TODO: Rename this column as `POSCollectingDocumentType_ID`

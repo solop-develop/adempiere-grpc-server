@@ -26,7 +26,7 @@ import org.spin.backend.grpc.field.business_partner.BusinessPartnerContact;
 import org.spin.backend.grpc.field.business_partner.BusinessPartnerInfo;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 public class BusinessPartnerConvert {
 
@@ -209,7 +209,7 @@ public class BusinessPartnerConvert {
 				)
 			)
 			.setLastContact(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					businessPartnerContact.getLastContact()
 				)
 			)
