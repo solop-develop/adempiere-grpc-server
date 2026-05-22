@@ -39,6 +39,7 @@ public class PublishProducts extends PublishProductsAbstract {
 	private final AtomicInteger publications = new AtomicInteger();
 	private final AtomicInteger errors = new AtomicInteger();
 	private MTable publishingTable;
+
 	@Override
 	protected String doIt() throws Exception {
 		publishingTable = MTable.get(getCtx(), Changes.Table_SP034_Publishing);
@@ -112,40 +113,68 @@ public class PublishProducts extends PublishProductsAbstract {
 				})
 			;
 		}
-		new Query(getCtx(), Changes.Table_SP034_Allocation, "M_Product_ID = ? AND SP034_Publishing_ID IS NULL", null)
+		new Query(
+			getCtx(),
+			Changes.Table_SP034_Allocation,
+			"M_Product_ID = ? AND SP034_Publishing_ID IS NULL",
+			null
+		)
 			.setParameters(productId)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
-			.getIDsAsList().forEach(allocationId -> {
+			.getIDsAsList()
+			.forEach(allocationId -> {
 				PO fromAllocation = allocationTable.getPO(allocationId, null);
 				PO toAllocation = allocationTable.getPO(0, transactionName);
 				PO.copyValues(fromAllocation, toAllocation);
 				toAllocation.set_ValueOfColumn("UUID", UUID.randomUUID().toString());
 				toAllocation.set_ValueOfColumn("SP034_Publishing_ID", publishingId);
 				toAllocation.saveEx();
-			});
+			})
+		;
 	}
 
 	private int getTaxId(int taxCategoryId) {
-		return new Query(getCtx(), I_C_Tax.Table_Name, "C_TaxCategory_ID = ? " +
-				"AND (IsSalesTax = 'Y' OR SOPOType IN('S', 'B')) ", null)
-				.setParameters(taxCategoryId)
-				.setClient_ID()
-				.setOnlyActiveRecords(true)
-				.firstId();
+		if (taxCategoryId <= 0) {
+			return -1;
+		}
+		return new Query(
+			getCtx(),
+			I_C_Tax.Table_Name,
+			"C_TaxCategory_ID = ? AND (IsSalesTax = 'Y' OR SOPOType IN('S', 'B')) ",
+			null
+		)
+			.setParameters(taxCategoryId)
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.firstId()
+		;
 	}
 
 	private List<Integer> getValidProductsId() {
 		List<Object> products = new ArrayList<>();
-		if(getSelectionKeys() == null) {
+		if(getSelectionKeys() == null || getSelectionKeys().isEmpty()) {
+			if(getRecord_ID() <= 0) {
+				log.warning("No publishing Record_ID selected");
+				return new ArrayList<>();
+			}
 			products.add(getRecord_ID());
 		} else {
 			products.addAll(getSelectionKeys());
 		}
-		return new Query(getCtx(), I_M_Product.Table_Name,
-				"M_Product_ID IN" + products.toString().replace("[", "(").replace("]", ")"), get_TrxName())
-				.setOnlyActiveRecords(true)
-				.setClient_ID()
-				.getIDsAsList();
+		if(products == null || products.isEmpty()) {
+			log.warning("No products selected");
+			return new ArrayList<>();
+		}
+		return new Query(
+			getCtx(),
+			I_M_Product.Table_Name,
+			"M_Product_ID IN" + products.toString().replace("[", "(").replace("]", ")"),
+			get_TrxName()
+		)
+			.setOnlyActiveRecords(true)
+			.setClient_ID()
+			.getIDsAsList()
+		;
 	}
 }
