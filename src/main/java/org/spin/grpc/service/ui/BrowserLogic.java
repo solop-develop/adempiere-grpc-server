@@ -66,6 +66,7 @@ import org.spin.base.util.AccessUtil;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.ConvertUtil;
 import org.spin.base.util.LookupUtil;
+import org.spin.base.util.RecordWriteGuard;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.dictionary.util.DictionaryUtil;
 import org.spin.service.grpc.authentication.SessionManager;
@@ -851,17 +852,27 @@ public class BrowserLogic {
 			throw new AdempiereException("No Table defined in the Smart Browser");
 		}
 		final MTable table = MTable.get(context, browser.getAD_Table_ID());
+		if (RecordWriteGuard.isTableReadOnly(table)) {
+			throw new AdempiereException("@Ignored@ @AD_Table_ID@ (" + table.getName() + ") : @IsView@");
+		}
 
 		PO entity = RecordUtil.getEntity(context, table.getAD_Table_ID(), null, request.getRecordId(), null);
 		if (entity == null || entity.get_ID() <= 0) {
-			// Return
+			log.warning("@Ignored@ @PO@ (" + request.getRecordId() + ") : @NotFound@");
 			return ConvertUtil.convertEntity(entity);
+		}
+		if (RecordWriteGuard.isForeignClient(context, entity)) {
+			throw new AdempiereException("@Ignored@ : Record is other client");
 		}
 
 		MView view = new MView(context, browser.getAD_View_ID());
 		List<MViewColumn> viewColumnsList = view.getViewColumns();
 
-		request.getAttributes().getFieldsMap().entrySet().parallelStream().forEach(attribute -> {
+		request.getAttributes().getFieldsMap().entrySet().stream().forEach(attribute -> {
+			if (attribute == null || Util.isEmpty(attribute.getKey(), true)) {
+				log.warning("@Ignored@ : Attribute key is empty");
+				return;
+			}
 			// find view column definition
 			MViewColumn viewColumn = viewColumnsList
 				.parallelStream()
@@ -873,34 +884,39 @@ public class BrowserLogic {
 			;
 			// if view aliases not exists, next element
 			if (viewColumn == null || viewColumn.getAD_View_Column_ID() <= 0) {
+				log.warning("@AD_View_Column_ID@ (" + attribute.getKey() + ") @NotFound@");
 				return;
 			}
 
 			MViewDefinition viewDefinition = MViewDefinition.get(context, viewColumn.getAD_View_Definition_ID());
 			// not same table setting in smart browser and view definition
 			if (browser.getAD_Table_ID() != viewDefinition.getAD_Table_ID()) {
-				log.info("Browse Table " + browser.getAD_Table_ID() + " and View Definition Table " + viewDefinition.getAD_Table_ID() + " different ");
+				log.warning("@AD_Browse_ID@ @AD_Table_ID@ (" + browser.getAD_Table_ID() + ") and @AD_View_Definition_ID@ @AD_Table_ID@ " + viewDefinition.getAD_Table_ID() + " different ");
 				return;
 			}
 
 			MBrowseField browseField = MBrowseField.get(browser, viewColumn);
 			if (browseField == null || browseField.getAD_Browse_Field_ID() <= 0) {
-				log.warning("Browse Field no found");
+				log.warning("@AD_Browse_Field_ID@ (" + viewColumn.getColumnName() + ") @NotFound@");
 				return;
 			}
 			if (!browseField.isActive() || browseField.isReadOnly()) {
-				log.warning("Browse Field not updateable: " + browseField.getName());
+				log.warning("@AD_Browse_Field_ID@ not updateable: " + browseField.getName());
 				return;
 			}
 
 			MColumn column = MColumn.get(browser.getCtx(), viewColumn.getAD_Column_ID());
 			if (column == null || column.getAD_Column_ID() <= 0) {
+				log.warning("@AD_Column_ID@ (" + viewColumn.getAD_Column_ID() + ") @NotFound@");
 				// column is not present on current table
 				return;
 			}
-			if (column.isVirtualColumn() || column.isKey() || !column.isUpdateable()) {
-				// virtual column with columnSQL
-				log.warning("Column is virtual column or not updateable: " + column.getColumnName());
+			if (column.isVirtualColumn() || column.isKey()) {
+				log.warning("@AD_Column_ID@ (" + column.getAD_Column_ID() + ") is virtual or @KeyColumn@: " + column.getColumnName());
+				return;
+			}
+			if (RecordWriteGuard.shouldSkipColumn(entity, column)) {
+				log.warning("@Ignored@ " + column.getColumnName() + " : @NotAllowed@");
 				return;
 			}
 			String columnName = column.getColumnName();
