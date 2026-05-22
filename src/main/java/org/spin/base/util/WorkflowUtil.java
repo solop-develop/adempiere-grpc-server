@@ -60,7 +60,7 @@ import org.spin.backend.grpc.wf.WorkflowState;
 import org.spin.backend.grpc.wf.WorkflowTransition;
 import org.spin.backend.grpc.wf.ZoomWindow;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 /**
  * Class for handle workflow conversion values
@@ -111,7 +111,7 @@ public class WorkflowUtil {
 				workflowProcess.isProcessed()
 			)
 			.setLogDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					workflowProcess.getCreated()
 				)
 			)
@@ -246,7 +246,7 @@ public class WorkflowUtil {
 		}
 		if(workflow.getValidFrom() != null) {
 			builder.setValidFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					workflow.getValidFrom()
 				)
 			);
@@ -557,7 +557,7 @@ public class WorkflowUtil {
 				)
 			)
 			.setLogDate(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					workflowEventAudit.getCreated()
 				)
 			)
@@ -669,7 +669,7 @@ public class WorkflowUtil {
 				workflowActivity.isProcessed()
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					workflowActivity.getCreated()
 				)
 			)
@@ -742,7 +742,7 @@ public class WorkflowUtil {
 
 		if(workflowActivity.getDateLastAlert() != null) {
 			builder.setLastAlert(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					workflowActivity.getDateLastAlert()
 				)
 			);

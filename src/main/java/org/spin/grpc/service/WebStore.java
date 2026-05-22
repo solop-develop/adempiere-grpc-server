@@ -150,7 +150,7 @@ import org.spin.model.MADTokenDefinition;
 import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 import org.spin.store.model.MCPaymentMethod;
 import org.spin.store.model.MWDeliveryViaRuleAllocation;
 import org.spin.store.util.VueStoreFrontUtil;
@@ -816,17 +816,17 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
 			.setTransmited(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
@@ -889,17 +889,17 @@ public class WebStore extends WebStoreImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
 			.setTransmited(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					salesOrder.getUpdated()
 				)
 			)
@@ -2092,12 +2092,12 @@ public class WebStore extends WebStoreImplBase {
 				customer.getAD_User_ID()
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					customer.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					customer.getUpdated()
 				)
 			)
@@ -2819,12 +2819,12 @@ public class WebStore extends WebStoreImplBase {
 			.setVisibility(org.spin.backend.grpc.store.Product.Visibility.BOTH)
 			.setProductGroupId(product.getM_Product_Group_ID())
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					product.getCreated()
 				)
 			)
 			.setUpdated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					product.getUpdated()
 				)
 			)

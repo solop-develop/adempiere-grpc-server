@@ -49,7 +49,6 @@ import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
-import org.spin.service.grpc.util.value.ValueManager;
 
 import com.google.protobuf.Empty;
 
@@ -164,14 +163,14 @@ public class TimeControl extends TimeControlImplBase {
 		;
 		if (resourceAssignment.getAssignDateFrom() != null) {
 			builder.setAssignDateFrom(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateFrom()
 				)
 			);
 		}
 		if (resourceAssignment.getAssignDateTo() != null) {
 			builder.setAssignDateTo(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					resourceAssignment.getAssignDateTo()
 				)
 			);

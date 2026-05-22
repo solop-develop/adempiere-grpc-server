@@ -49,7 +49,7 @@ import org.spin.service.grpc.authentication.SessionManager;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
-import org.spin.service.grpc.util.value.ValueManager;
+import org.spin.service.grpc.util.value.TimeManager;
 
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
@@ -138,7 +138,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 				)
 			)
 			.setCreated(
-				ValueManager.getProtoTimestampFromTimestamp(
+				TimeManager.getProtoTimestampFromTimestamp(
 					notice.getCreated()
 				)
 			)

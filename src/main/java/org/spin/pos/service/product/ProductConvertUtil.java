@@ -74,7 +74,7 @@ public class ProductConvertUtil {
 			)
 			.setValidFrom(
 				TextManager.getValidString(
-					TimeManager.getTimestampToString(
+					TimeManager.getDisplayValue(
 						productPricing.getPriceDate()
 					)
 				)
