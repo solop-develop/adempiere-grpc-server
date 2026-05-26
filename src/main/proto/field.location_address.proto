@@ -115,7 +115,7 @@ service LocationAddressService {
 	}
 	rpc UpdateAddress(UpdateAddressRequest) returns (Address) {
 		option (google.api.http) = {
-			patch: "/field/location-address/addresses/{id}",
+			patch: "/fields/location-address/addresses/{id}",
 			body: "*"
 			additional_bindings: {
 				// Deprecated bindings, to be removed in future versions
