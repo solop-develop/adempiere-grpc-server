@@ -26,8 +26,8 @@ import org.spin.backend.grpc.field.location_address.ListCountriesRequest;
 import org.spin.backend.grpc.field.location_address.ListCountriesResponse;
 import org.spin.backend.grpc.field.location_address.ListRegionsRequest;
 import org.spin.backend.grpc.field.location_address.ListRegionsResponse;
+import org.spin.backend.grpc.field.location_address.LocationAddressServiceGrpc.LocationAddressServiceImplBase;
 import org.spin.backend.grpc.field.location_address.UpdateAddressRequest;
-import org.spin.backend.grpc.field.location_address.LocationAddressGrpc.LocationAddressImplBase;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -36,9 +36,10 @@ import io.grpc.stub.StreamObserver;
  * @author Edwin Betancourt, EdwinBetanc0urt@outlook.com, https://github.com/EdwinBetanc0urt
  * Service for Location Address field
  */
-public class LocationAddress extends LocationAddressImplBase {
+public class LocationAddressService extends LocationAddressServiceImplBase {
+
 		/**	Logger			*/
-	private CLogger log = CLogger.getCLogger(LocationAddress.class);
+	private CLogger log = CLogger.getCLogger(LocationAddressService.class);
 
 
 
