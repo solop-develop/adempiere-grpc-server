@@ -55,7 +55,7 @@ import org.spin.grpc.service.field.business_partner.BusinessPartnerInfoService;
 import org.spin.grpc.service.field.field_management.FieldManagementService;
 import org.spin.grpc.service.field.in_out.InOutInfoService;
 import org.spin.grpc.service.field.invoice.InvoiceInfoService;
-import org.spin.grpc.service.field.location_address.LocationAddress;
+import org.spin.grpc.service.field.location_address.LocationAddressService;
 import org.spin.grpc.service.field.payment.PaymentInfoService;
 import org.spin.grpc.service.field.order.OrderInfoService;
 import org.spin.grpc.service.field.product.ProductInfoService;
@@ -228,8 +228,8 @@ public class AllInOneServices {
 		serverBuilder.addService(new IssueManagementService());
 		logger.info("Service " + IssueManagementService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Location Address
-		serverBuilder.addService(new LocationAddress());
-		logger.info("Service " + LocationAddress.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
+		serverBuilder.addService(new LocationAddressService());
+		logger.info("Service " + LocationAddressService.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());
 		//	Log
 		serverBuilder.addService(new LogsInfo());
 		logger.info("Service " + LogsInfo.class.getName() + " added on " + SetupLoader.getInstance().getServer().getPort());

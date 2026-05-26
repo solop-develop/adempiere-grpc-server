@@ -13,6 +13,7 @@ import org.compiere.model.MCountry;
 import org.compiere.model.MLocation;
 import org.compiere.model.MRegion;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
@@ -34,13 +35,26 @@ import org.spin.service.grpc.util.value.TextManager;
 
 public class LocationAddressLogic {
 
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(LocationAddressLogic.class);
+
 	private static MCountry validateAndCountry(int countryId) {
 		if (countryId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_Country_ID@");
 		}
 		MCountry country = MCountry.get(Env.getCtx(), countryId);
 		if (country == null || country.getC_Country_ID() <= 0) {
-			throw new AdempiereException("@C_Country_ID@ @NotFound@");
+			throw new AdempiereException("@C_Country_ID@ (" + countryId + ") @NotFound@");
+		}
+		return country;
+	}
+	private static MCountry validateAndCountry(String countryCode) {
+		if (Util.isEmpty(countryCode, true)) {
+			throw new AdempiereException("@FillMandatory@ @C_Country_ID@ @CountryCode@");
+		}
+		MCountry country = MCountry.get(Env.getCtx(), countryCode);
+		if (country == null || country.getC_Country_ID() <= 0) {
+			throw new AdempiereException("@C_Country_ID@ @CountryCode@ (" + countryCode + ") @NotFound@");
 		}
 		return country;
 	}
@@ -117,9 +131,13 @@ public class LocationAddressLogic {
 		}
 		MCountry country = null;
 		if (request.getId() > 0) {
-			country = MCountry.get(Env.getCtx(), request.getId());
+			country = validateAndCountry(
+				request.getId()
+			);
 		} else if (!Util.isEmpty(request.getCountryCode(), true)) {
-			country = MCountry.get(Env.getCtx(), request.getCountryCode());
+			country = validateAndCountry(
+				request.getCountryCode()
+			);
 		}
 		if (country == null || country.getC_Country_ID() <= 0) {
 			throw new AdempiereException("@C_Country_ID@ @NotFound@");
@@ -136,9 +154,22 @@ public class LocationAddressLogic {
 	 * @return
 	 */
 	public static ListRegionsResponse.Builder listRegions(ListRegionsRequest request) {
-		MCountry country = validateAndCountry(
-			request.getCountryId()
-		);
+		MCountry country = null;
+		if (request.getCountryId() > 0) {
+			country = validateAndCountry(
+				request.getCountryId()
+			);
+		} else if (!Util.isEmpty(request.getCountryCode(), true)) {
+			country = validateAndCountry(
+				request.getCountryCode()
+			);
+		}
+		if (country == null || country.getC_Country_ID() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Country_ID@ (" + request.getCountryId() + ") / @CountryCode@ (" + request.getCountryCode() + ")");
+		}
+		if (!country.isHasRegion()) {
+			log.info("@C_Country_ID@ " + country.getName() + " @No@ @HasRegion@");
+		}
 
 		String whereClause = "C_Country_ID = ? ";
 		List<Object> parameters = new ArrayList<Object>();
@@ -193,9 +224,19 @@ public class LocationAddressLogic {
 	 * @return
 	 */
 	public static ListCitiesResponse.Builder listCities(ListCitiesRequest request) {
-		MCountry country = validateAndCountry(
-			request.getCountryId()
-		);
+		MCountry country = null;
+		if (request.getCountryId() > 0) {
+			country = validateAndCountry(
+				request.getCountryId()
+			);
+		} else if (!Util.isEmpty(request.getCountryCode(), true)) {
+			country = validateAndCountry(
+				request.getCountryCode()
+			);
+		}
+		if (country == null || country.getC_Country_ID() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Country_ID@ (" + request.getCountryId() + ") / @CountryCode@ (" + request.getCountryCode() + ")");
+		}
 
 		String whereClause = "C_Country_ID = ? ";
 		List<Object> parameters = new ArrayList<Object>();
@@ -264,14 +305,24 @@ public class LocationAddressLogic {
 	}
 
 	public static Address.Builder createAddress(CreateAddressRequest request) {
-		if (request.getCountryId() <= 0) {
-			throw new AdempiereException("@FillMandatory@ @C_Country_ID@");
+		MCountry country = null;
+		if (request.getCountryId() > 0) {
+			country = validateAndCountry(
+				request.getCountryId()
+			);
+		} else if (!Util.isEmpty(request.getCountryCode(), true)) {
+			country = validateAndCountry(
+				request.getCountryCode()
+			);
+		}
+		if (country == null || country.getC_Country_ID() <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_Country_ID@ (" + request.getCountryId() + ") / @CountryCode@ (" + request.getCountryCode() + ")");
 		}
 
 		MLocation address = new MLocation(Env.getCtx(), 0, null);
 
 		address.setC_Country_ID(
-			request.getCountryId()
+			country.getC_Country_ID()
 		);
 
 		if (request.getRegionId() > 0) {

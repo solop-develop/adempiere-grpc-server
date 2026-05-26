@@ -20,48 +20,108 @@ option java_outer_classname = "ADempiereLocationAddress";
 
 import "google/api/annotations.proto";
 
-package location_address;
+// Base URL
+// /fields/location-address/
 
-service LocationAddress {
+package field.location_address;
+
+service LocationAddressService {
 	// Country
 	rpc ListCountries(ListCountriesRequest) returns (ListCountriesResponse) {
-		option (google.api.http) = { get: "/location-address/countries" };
+		option (google.api.http) = {
+			get: "/fields/location-address/countries"
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/countries"
+			}
+		};
 	}
 	rpc GetCountry(GetCountryRequest) returns (Country) {
 		option (google.api.http) = {
-			get: "/location-address/countries/{id}"
+			get: "/fields/location-address/countries/{id}"
 			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/countries/{id}"
+			}
+			additional_bindings: {
+				get: "/fields/location-address/countries/code/{country_code}"
+			}
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
 				get: "/location-address/countries/code/{country_code}"
 			}
 		};
 	}
 	// Region
 	rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
-		option (google.api.http) = { get: "/location-address/countries/{country_id}/regions" };
+		option (google.api.http) = {
+			get: "/fields/location-address/countries/{country_id}/regions"
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/countries/{country_id}/regions"
+			}
+			additional_bindings: {
+				get: "/fields/location-address/countries/code/{country_code}/regions"
+			}
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/countries/code/{country_code}/regions"
+			}
+		};
 	}
 	// Cities
 	rpc ListCities(ListCitiesRequest) returns (ListCitiesResponse) {
 		option (google.api.http) = {
-			get: "/location-address/countries/{country_id}/cities"
+			get: "/fields/location-address/countries/{country_id}/cities"
 			additional_bindings: {
+				get: "/fields/location-address/countries/code/{country_code}/cities"
+			}
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/countries/{country_id}/cities"
+			}
+			additional_bindings: {
+				get: "/fields/location-address/countries/{country_id}/regions/{region_id}/cities"
+			}
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
 				get: "/location-address/countries/{country_id}/{region_id}/cities"
+			}
+			additional_bindings: {
+				get: "/fields/location-address/countries/code/{country_code}/regions/{region_id}/cities"
 			}
 		};
 	}
 	// Location
 	rpc GetAddress(GetAddressRequest) returns (Address) {
-		option (google.api.http) = { get: "/location-address/addresses/{id}" };
+		option (google.api.http) = {
+			get: "/fields/location-address/addresses/{id}"
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				get: "/location-address/addresses/{id}"
+			}
+		};
 	}
 	rpc CreateAddress(CreateAddressRequest) returns (Address) {
 		option (google.api.http) = {
-			post: "/location-address/addresses",
+			post: "/fields/location-address/addresses",
 			body: "*"
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				post: "/location-address/addresses",
+				body: "*"
+			}
 		};
 	}
 	rpc UpdateAddress(UpdateAddressRequest) returns (Address) {
 		option (google.api.http) = {
-			patch: "/location-address/addresses/{id}",
+			patch: "/fields/location-address/addresses/{id}",
 			body: "*"
+			additional_bindings: {
+				// Deprecated bindings, to be removed in future versions
+				patch: "/location-address/addresses/{id}",
+				body: "*"
+			}
 		};
 	}
  }
@@ -123,7 +183,9 @@ message ListRegionsRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 country_id = 8;
+	string country_code = 9;
 }
 
 message ListRegionsResponse {
@@ -142,8 +204,10 @@ message ListCitiesRequest {
 	int32 page_size = 5;
 	string page_token = 6;
 	string search_value = 7;
+	// custom filters
 	int32 country_id = 8;
-	int32 region_id = 9;
+	string country_code = 9;
+	int32 region_id = 10;
 }
 
 message ListCitiesResponse {
@@ -196,6 +260,7 @@ message CreateAddressRequest {
 	string longitude = 12;
 	string altitude = 13;
 	string reference = 14;
+	string country_code = 15;
 }
 
 message UpdateAddressRequest {
@@ -214,4 +279,5 @@ message UpdateAddressRequest {
 	string longitude = 13;
 	string altitude = 14;
 	string reference = 15;
+	string country_code = 16;
 }
