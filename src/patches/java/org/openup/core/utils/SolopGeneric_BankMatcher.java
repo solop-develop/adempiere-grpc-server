@@ -17,21 +17,18 @@
  *************************************************************************************/
 package org.openup.core.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Class used for Test import matcher
- *
- * @author Yamel Senih, ysenih@erpya.com , http://www.erpya.com
- */
+import org.adempiere.core.domains.models.X_I_BankStatement;
 import org.compiere.impexp.BankStatementMatchInfo;
 import org.compiere.impexp.BankStatementMatcherInterface;
 import org.compiere.model.MBankStatementLine;
-import org.adempiere.core.domains.models.X_I_BankStatement;
+import org.compiere.model.MBankStatementMatcher;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Add matcher by reference
@@ -41,8 +38,19 @@ import org.compiere.util.Util;
  */
 public class SolopGeneric_BankMatcher implements BankStatementMatcherInterface {
 
+	private BigDecimal matchTolerance = Env.ZERO;
+
 	public SolopGeneric_BankMatcher() {
-		
+
+	}
+
+	@Override
+	public void configure(MBankStatementMatcher definition) {
+		if (definition == null) {
+			return;
+		}
+		BigDecimal tolerance = definition.getMatchTolerance();
+		matchTolerance = tolerance != null ? tolerance : Env.ZERO;
 	}
 
 	@Override
@@ -111,10 +119,15 @@ public class SolopGeneric_BankMatcher implements BankStatementMatcherInterface {
 		}
 		//	Validate amount for it
 		boolean isReceipt = ibs.getTrxAmt().compareTo(Env.ZERO) > 0;
-		where.append("(p.PayAmt = ? ");
-		params.add(isReceipt
-				? ibs.getTrxAmt()
-						: ibs.getTrxAmt().negate());
+		BigDecimal targetAmt = isReceipt ? ibs.getTrxAmt() : ibs.getTrxAmt().negate();
+		if (matchTolerance.signum() > 0) {
+			where.append("(p.PayAmt BETWEEN ? AND ? ");
+			params.add(targetAmt.subtract(matchTolerance));
+			params.add(targetAmt.add(matchTolerance));
+		} else {
+			where.append("(p.PayAmt = ? ");
+			params.add(targetAmt);
+		}
 		//	Add Receipt
 		where.append("AND p.IsReceipt = ? )");
 		params.add(isReceipt);
@@ -124,9 +137,8 @@ public class SolopGeneric_BankMatcher implements BankStatementMatcherInterface {
 		}
 		where.append("(p.C_BankAccount_ID = ?)");
 		params.add(ibs.getC_BankAccount_ID());
-
 		//	Additional validation
-		// Same as `p.DocStatus IN('CO', 'CL', 'VO', 'RE')` 
+		// Same as `p.DocStatus IN('CO', 'CL', 'VO', 'RE')`
 		// but avoiding using states that may not exist in some document types.
 		where.append(" AND p.Processed = 'Y'");
 		where.append(" AND p.IsReconciled = 'N'");
@@ -148,7 +160,6 @@ public class SolopGeneric_BankMatcher implements BankStatementMatcherInterface {
 		orderByClause.append(", p.DateTrx ASC");
 		orderByClause.append(", p.Description").append(ORDERVALUE);
 		sql.append(orderByClause);
-
 		//	Find payment
 		int paymentId = DB.getSQLValue(ibs.get_TrxName(), sql.toString(), params);
 		//	set if exits
@@ -157,5 +168,4 @@ public class SolopGeneric_BankMatcher implements BankStatementMatcherInterface {
 		}
 		return info;
 	}
-
 }
