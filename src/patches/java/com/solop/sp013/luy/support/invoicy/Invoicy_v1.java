@@ -298,7 +298,6 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
     int linesErr;
     List<String> processLogs;
     private HashMap<Tuple3, X_I_Invoice> currentInvoices;
-    int orgId;
     @Override
     public IGetInvoicesResult getElectronicInvoices(int orgId, Timestamp dateFrom, Timestamp dateTo, int periodId, String transactionName) {
 
@@ -397,7 +396,7 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
                     Unmarshaller jaxbUnmarshallerEnvioCFE = jaxbContextResponseEnvioCFE.createUnmarshaller();
                     EnvioCFE responseEnvioCFE = (EnvioCFE) jaxbUnmarshallerEnvioCFE.unmarshal(new StringReader(base64XmlDecoded));
 
-                    mapEnvioCFEToIInvoices(responseEnvioCFE);
+                    mapEnvioCFEToIInvoices(responseEnvioCFE, orgId);
 
                 }
             }
@@ -417,7 +416,7 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
 
 
 
-    private void mapEnvioCFEToIInvoices(EnvioCFE envioCFE) {
+    private void mapEnvioCFEToIInvoices(EnvioCFE envioCFE, int orgId) {
 
         List<CFEInvoiCyType> items = envioCFE.getCFE().getCFEItem();
         for (CFEInvoiCyType item : items) {
@@ -431,16 +430,15 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
                         CFEInvoiCyType.Receptor receptor = item.getReceptor();
                         String rutReceptor = receptor.getRcpDocRecep();
                         // Organization Information
-                        MOrgInfo organizationInformation = new Query(Env.getCtx(), I_AD_OrgInfo.Table_Name, I_AD_OrgInfo.COLUMNNAME_DUNS + "=?", trxName)
-                                .setParameters(rutReceptor)
-                                .first();
-                        int orgReceiverId = 0;
-                        if (organizationInformation != null) {
-                            orgReceiverId = organizationInformation.getAD_Org_ID();
-                            if (orgId > 0 && orgReceiverId != orgId) {
-                                return;
-                            }
+
+                        MOrgInfo orgInfo = MOrgInfo.get(Env.getCtx(), orgId, trxName);
+                        if (!Util.isEmpty(rutReceptor) && !orgInfo.getTaxID().trim().equals(rutReceptor)) {
+                            CFEInvoiCyType.IdDoc idDoc = item.getIdDoc();
+                            String cfeDocumentNo = idDoc.getCFESerie() + idDoc.getCFENro();
+                            processLogs.add("@TaxID@: '" + rutReceptor + "' @NotFound@ | @DocumentNo@: " + cfeDocumentNo);
+                            return;
                         }
+
                         CFEInvoiCyType.IdDoc idDoc = item.getIdDoc();
                         String cfeDocumentNo = idDoc.getCFESerie() + idDoc.getCFENro();
                         CFEInvoiCyType.Totales totales = item.getTotales();
@@ -469,9 +467,8 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
                         X_I_Invoice iInvoice = checkI_Invoice(cfeMsg, emisor.getEmiRut(), bPartnerId, documentType.get_ID(), cfeDocumentNo, trxName);
 
 
-                        if (orgReceiverId > 0) {
-                            iInvoice.setAD_Org_ID(orgReceiverId);
-                        }
+                        iInvoice.setAD_Org_ID(orgId);
+
 
                         iInvoice.setDocTypeName(String.valueOf(idDoc.getCFETipoCFE()));
                         iInvoice.setDocumentNo(cfeDocumentNo);
