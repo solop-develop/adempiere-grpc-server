@@ -433,6 +433,9 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
 
                         MOrgInfo orgInfo = MOrgInfo.get(Env.getCtx(), orgId, trxName);
                         if (!Util.isEmpty(rutReceptor) && !orgInfo.getTaxID().trim().equals(rutReceptor)) {
+                            CFEInvoiCyType.IdDoc idDoc = item.getIdDoc();
+                            String cfeDocumentNo = idDoc.getCFESerie() + idDoc.getCFENro();
+                            processLogs.add("@TaxID@: '" + rutReceptor + "' @NotFound@ | @DocumentNo@: " + cfeDocumentNo);
                             return;
                         }
 
