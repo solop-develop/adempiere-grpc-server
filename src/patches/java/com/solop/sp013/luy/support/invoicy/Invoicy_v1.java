@@ -432,7 +432,7 @@ public class Invoicy_v1 implements IFiscalSender, IGetElectronicInvoices {
                         // Organization Information
 
                         MOrgInfo orgInfo = MOrgInfo.get(Env.getCtx(), orgId, trxName);
-                        if (!orgInfo.getTaxID().trim().equals(rutReceptor)){
+                        if (!Util.isEmpty(rutReceptor) && !orgInfo.getTaxID().trim().equals(rutReceptor)) {
                             return;
                         }
 
