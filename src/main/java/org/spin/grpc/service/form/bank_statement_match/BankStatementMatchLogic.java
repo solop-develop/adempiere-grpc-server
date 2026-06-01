@@ -141,9 +141,9 @@ public abstract class BankStatementMatchLogic {
 		final String searchValue = request.getSearchValue();
 		if (!Util.isEmpty(searchValue, true)) {
 			whereClause += " AND ("
-				+ "UPPER(DocumentNo) LIKE UPPER(?) "
-				+ "OR UPPER(Name) LIKE UPPER(?) "
-				+ "OR UPPER(Description) LIKE UPPER(?)"
+				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
 				+ ")"
 			;
 			filtersList.add(searchValue);
