@@ -55,10 +55,10 @@ public class ProductServiceLogic {
 				Env.getCtx(),
 				I_M_Product.Table_Name,
 				"("
-				+ "UPPER(Value) = UPPER(?)"
-				+ "OR UPPER(Name) = UPPER(?)"
-				+ "OR UPPER(UPC) = UPPER(?)"
-				+ "OR UPPER(SKU) = UPPER(?)"
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%'"
+				+ "OR UPPER(UPC) LIKE '%' || UPPER(?) || '%'"
+				+ "OR UPPER(SKU) LIKE '%' || UPPER(?) || '%'"
 				+ ")",
 				null
 			)
