@@ -68,7 +68,7 @@ static_resources:
                 - field.business_partner.BusinessPartnerInfoService
                 - field.in_out.InOutInfoService
                 - field.invoice.InvoiceInfoService
-                - field.location_address.LocationAddress
+                - field.location_address.LocationAddressService
                 - field.order.OrderInfoService
                 - field.payment.PaymentInfoService
                 - field.product.ProductInfoService
