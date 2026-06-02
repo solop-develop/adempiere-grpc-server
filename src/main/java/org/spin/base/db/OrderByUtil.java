@@ -128,8 +128,14 @@ public class OrderByUtil {
 	 * @return
 	 */
 	public static String getBrowseOrderBy(MBrowse browser) {
+		if (browser == null || browser.getAD_Browse_ID() <= 0) {
+			return "";
+		}
 		StringBuilder sqlOrderBy = new StringBuilder();
 		List<MBrowseField> browseFieldsList = browser.getOrderByFields();
+		if (browseFieldsList == null || browseFieldsList.isEmpty()) {
+			return "";
+		}
 		for (MBrowseField field : browseFieldsList) {
 			if (sqlOrderBy.length() > 0) {
 				sqlOrderBy.append(", ");
@@ -147,6 +153,7 @@ public class OrderByUtil {
 				// 	sortColumn += " NULLS FIRST ";
 				// }
 			}
+			// TODO: Add Asc/Desc flag by new column in AD_BrowseField
 			sqlOrderBy.append(sortColumn);
 		}
 		return sqlOrderBy.length() > 0 ? sqlOrderBy.toString(): "";
