@@ -295,7 +295,8 @@ public class BrowserLogic {
 			.parallelStream()
 			.forEach(condition -> {
 				parametersMap.put(condition.getColumnName(), condition.getValue());
-			});
+			})
+		;
 
 		//	Fill context
 		final int windowNo = ThreadLocalRandom.current().nextInt(1, 8996 + 1);
@@ -335,7 +336,8 @@ public class BrowserLogic {
 				tableNameAlias,
 				MRole.SQL_FULLYQUALIFIED,
 				MRole.SQL_RO
-			);
+			)
+		;
 
 		StringBuffer whereClause = new StringBuffer();
 		String where = browser.getWhereClause();
@@ -348,7 +350,8 @@ public class BrowserLogic {
 			}
 			whereClause
 				.append(" AND ")
-				.append(parsedWhereClause);
+				.append(parsedWhereClause)
+			;
 		}
 
 		// Add Process Instance ID validation
