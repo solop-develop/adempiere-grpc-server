@@ -279,7 +279,7 @@ public interface I_LCO_WH_Concept
 	  */
 	public int getWH_Type_ID();
 
-	public org.adempiere.core.domains.models.I_WH_Type getWH_Type() throws RuntimeException;
+	public org.spin.model.I_WH_Type getWH_Type() throws RuntimeException;
 
     /** Column name WithholdingBaseRate */
     public static final String COLUMNNAME_WithholdingBaseRate = "WithholdingBaseRate";

@@ -18,7 +18,7 @@
 /** Generated Model - DO NOT CHANGE */
 package com.solop.lco.model;
 
-import org.adempiere.core.domains.models.I_LCO_WH_Combination;
+import com.solop.lco.model.I_LCO_WH_Combination;
 import org.compiere.model.I_Persistent;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -159,9 +159,9 @@ public class X_LCO_WH_Combination extends PO implements I_LCO_WH_Combination, I_
 		return ii.intValue();
 	}
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getLCO_WH_Concept() throws RuntimeException
+	public com.solop.lco.model.I_LCO_WH_Concept getLCO_WH_Concept() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_LCO_WH_Concept)MTable.get(getCtx(), org.adempiere.core.domains.models.I_LCO_WH_Concept.Table_Name)
+		return (com.solop.lco.model.I_LCO_WH_Concept)MTable.get(getCtx(), com.solop.lco.model.I_LCO_WH_Concept.Table_Name)
 			.getPO(getLCO_WH_Concept_ID(), get_TrxName());	}
 
 	/** Set Withholding Concept.

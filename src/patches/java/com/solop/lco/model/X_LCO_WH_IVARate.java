@@ -18,7 +18,7 @@
 /** Generated Model - DO NOT CHANGE */
 package com.solop.lco.model;
 
-import org.adempiere.core.domains.models.I_LCO_WH_IVARate;
+import com.solop.lco.model.I_LCO_WH_IVARate;
 import org.compiere.model.I_Persistent;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;

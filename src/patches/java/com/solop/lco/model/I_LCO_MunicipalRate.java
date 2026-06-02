@@ -127,7 +127,7 @@ public interface I_LCO_MunicipalRate
 	/** Get Municipal Concept	  */
 	public int getLCO_MunicipalConcept_ID();
 
-	public org.adempiere.core.domains.models.I_LCO_MunicipalConcept getLCO_MunicipalConcept() throws RuntimeException;
+	public com.solop.lco.model.I_LCO_MunicipalConcept getLCO_MunicipalConcept() throws RuntimeException;
 
     /** Column name LCO_MunicipalRate_ID */
     public static final String COLUMNNAME_LCO_MunicipalRate_ID = "LCO_MunicipalRate_ID";

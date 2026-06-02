@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 
 import org.adempiere.core.domains.models.I_C_Invoice;
 import org.spin.model.I_WH_Withholding;
-import org.adempiere.core.domains.models.X_LCO_WithholdingSetup;
+import com.solop.lco.model.X_LCO_WithholdingSetup;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInvoice;

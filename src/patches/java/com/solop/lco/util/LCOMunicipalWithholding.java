@@ -12,9 +12,9 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Properties;
 
-import org.adempiere.core.domains.models.I_LCO_MunicipalRate;
-import org.adempiere.core.domains.models.X_LCO_MunicipalConcept;
-import org.adempiere.core.domains.models.X_LCO_MunicipalRate;
+import com.solop.lco.model.I_LCO_MunicipalRate;
+import com.solop.lco.model.X_LCO_MunicipalConcept;
+import com.solop.lco.model.X_LCO_MunicipalRate;
 import org.compiere.model.MLocation;
 import org.compiere.model.MOrgInfo;
 import org.compiere.model.Query;

@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.adempiere.core.domains.models.I_C_Order;
-import org.adempiere.core.domains.models.I_LCO_WH_Combination;
+import com.solop.lco.model.I_LCO_WH_Combination;
 import org.spin.model.I_WH_Withholding;
-import org.adempiere.core.domains.models.X_LCO_WH_Combination;
-import org.adempiere.core.domains.models.X_LCO_WH_Concept;
-import org.adempiere.core.domains.models.X_LCO_WithholdingSetup;
+import com.solop.lco.model.X_LCO_WH_Combination;
+import com.solop.lco.model.X_LCO_WH_Concept;
+import com.solop.lco.model.X_LCO_WithholdingSetup;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MCharge;
 import org.compiere.model.MOrder;

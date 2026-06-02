@@ -18,7 +18,7 @@
 /** Generated Model - DO NOT CHANGE */
 package com.solop.lco.model;
 
-import org.adempiere.core.domains.models.I_LCO_MunicipalConcept;
+import com.solop.lco.model.I_LCO_MunicipalConcept;
 import org.compiere.model.I_Persistent;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;

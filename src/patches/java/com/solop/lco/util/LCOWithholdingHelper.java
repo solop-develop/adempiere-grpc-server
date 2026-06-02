@@ -12,10 +12,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Properties;
 
-import org.adempiere.core.domains.models.I_LCO_TributeUnit;
-import org.adempiere.core.domains.models.I_LCO_WithholdingSetup;
-import org.adempiere.core.domains.models.X_LCO_TributeUnit;
-import org.adempiere.core.domains.models.X_LCO_WithholdingSetup;
+import com.solop.lco.model.I_LCO_TributeUnit;
+import com.solop.lco.model.I_LCO_WithholdingSetup;
+import com.solop.lco.model.X_LCO_TributeUnit;
+import com.solop.lco.model.X_LCO_WithholdingSetup;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 

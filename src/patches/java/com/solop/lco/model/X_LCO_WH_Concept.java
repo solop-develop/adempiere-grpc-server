@@ -18,7 +18,7 @@
 /** Generated Model - DO NOT CHANGE */
 package com.solop.lco.model;
 
-import org.adempiere.core.domains.models.I_LCO_WH_Concept;
+import com.solop.lco.model.I_LCO_WH_Concept;
 import org.compiere.model.I_Persistent;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
@@ -335,9 +335,9 @@ public class X_LCO_WH_Concept extends PO implements I_LCO_WH_Concept, I_Persiste
 		return (String)get_Value(COLUMNNAME_Value);
 	}
 
-	public org.adempiere.core.domains.models.I_WH_Type getWH_Type() throws RuntimeException
+	public org.spin.model.I_WH_Type getWH_Type() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_WH_Type)MTable.get(getCtx(), org.adempiere.core.domains.models.I_WH_Type.Table_Name)
+		return (org.spin.model.I_WH_Type)MTable.get(getCtx(), org.spin.model.I_WH_Type.Table_Name)
 			.getPO(getWH_Type_ID(), get_TrxName());	}
 
 	/** Set Withholding Type.

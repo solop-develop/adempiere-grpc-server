@@ -121,9 +121,9 @@ public class X_LCO_MunicipalRate extends PO implements I_LCO_MunicipalRate, I_Pe
 		return (String)get_Value(COLUMNNAME_ExternalCode);
 	}
 
-	public org.adempiere.core.domains.models.I_LCO_MunicipalConcept getLCO_MunicipalConcept() throws RuntimeException
+	public com.solop.lco.model.I_LCO_MunicipalConcept getLCO_MunicipalConcept() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_LCO_MunicipalConcept)MTable.get(getCtx(), org.adempiere.core.domains.models.I_LCO_MunicipalConcept.Table_Name)
+		return (com.solop.lco.model.I_LCO_MunicipalConcept)MTable.get(getCtx(), com.solop.lco.model.I_LCO_MunicipalConcept.Table_Name)
 			.getPO(getLCO_MunicipalConcept_ID(), get_TrxName());	}
 
 	/** Set Municipal Concept.

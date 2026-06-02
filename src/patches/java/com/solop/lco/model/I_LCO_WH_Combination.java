@@ -142,7 +142,7 @@ public interface I_LCO_WH_Combination
 	/** Get Withholding Concept	  */
 	public int getLCO_WH_Concept_ID();
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getLCO_WH_Concept() throws RuntimeException;
+	public com.solop.lco.model.I_LCO_WH_Concept getLCO_WH_Concept() throws RuntimeException;
 
     /** Column name MaxValue */
     public static final String COLUMNNAME_MaxValue = "MaxValue";

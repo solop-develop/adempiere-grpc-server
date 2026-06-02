@@ -139,7 +139,7 @@ public interface I_LCO_WithholdingSetup
 	  */
 	public int getDefaultICAConcept_ID();
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getDefaultICAConcept() throws RuntimeException;
+	public com.solop.lco.model.I_LCO_WH_Concept getDefaultICAConcept() throws RuntimeException;
 
     /** Column name DefaultIVARate_ID */
     public static final String COLUMNNAME_DefaultIVARate_ID = "DefaultIVARate_ID";
@@ -154,7 +154,7 @@ public interface I_LCO_WithholdingSetup
 	  */
 	public int getDefaultIVARate_ID();
 
-	public org.adempiere.core.domains.models.I_LCO_WH_IVARate getDefaultIVARate() throws RuntimeException;
+	public com.solop.lco.model.I_LCO_WH_IVARate getDefaultIVARate() throws RuntimeException;
 
     /** Column name DefaultRentaConcept_ID */
     public static final String COLUMNNAME_DefaultRentaConcept_ID = "DefaultRentaConcept_ID";
@@ -169,7 +169,7 @@ public interface I_LCO_WithholdingSetup
 	  */
 	public int getDefaultRentaConcept_ID();
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getDefaultRentaConcept() throws RuntimeException;
+	public com.solop.lco.model.I_LCO_WH_Concept getDefaultRentaConcept() throws RuntimeException;
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";

@@ -160,9 +160,9 @@ public class X_LCO_WithholdingSetup extends PO implements I_LCO_WithholdingSetup
 		return ii.intValue();
 	}
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getDefaultICAConcept() throws RuntimeException
+	public com.solop.lco.model.I_LCO_WH_Concept getDefaultICAConcept() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_LCO_WH_Concept)MTable.get(getCtx(), org.adempiere.core.domains.models.I_LCO_WH_Concept.Table_Name)
+		return (com.solop.lco.model.I_LCO_WH_Concept)MTable.get(getCtx(), com.solop.lco.model.I_LCO_WH_Concept.Table_Name)
 			.getPO(getDefaultICAConcept_ID(), get_TrxName());	}
 
 	/** Set Default ICA Concept.
@@ -188,9 +188,9 @@ public class X_LCO_WithholdingSetup extends PO implements I_LCO_WithholdingSetup
 		return ii.intValue();
 	}
 
-	public org.adempiere.core.domains.models.I_LCO_WH_IVARate getDefaultIVARate() throws RuntimeException
+	public com.solop.lco.model.I_LCO_WH_IVARate getDefaultIVARate() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_LCO_WH_IVARate)MTable.get(getCtx(), org.adempiere.core.domains.models.I_LCO_WH_IVARate.Table_Name)
+		return (com.solop.lco.model.I_LCO_WH_IVARate)MTable.get(getCtx(), com.solop.lco.model.I_LCO_WH_IVARate.Table_Name)
 			.getPO(getDefaultIVARate_ID(), get_TrxName());	}
 
 	/** Set Default IVA Withholding Rate.
@@ -216,9 +216,9 @@ public class X_LCO_WithholdingSetup extends PO implements I_LCO_WithholdingSetup
 		return ii.intValue();
 	}
 
-	public org.adempiere.core.domains.models.I_LCO_WH_Concept getDefaultRentaConcept() throws RuntimeException
+	public com.solop.lco.model.I_LCO_WH_Concept getDefaultRentaConcept() throws RuntimeException
     {
-		return (org.adempiere.core.domains.models.I_LCO_WH_Concept)MTable.get(getCtx(), org.adempiere.core.domains.models.I_LCO_WH_Concept.Table_Name)
+		return (com.solop.lco.model.I_LCO_WH_Concept)MTable.get(getCtx(), com.solop.lco.model.I_LCO_WH_Concept.Table_Name)
 			.getPO(getDefaultRentaConcept_ID(), get_TrxName());	}
 
 	/** Set Default Income Withholding Concept.
