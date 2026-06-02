@@ -573,6 +573,13 @@ public abstract class BankStatementMatchLogic {
 					}
 					if (info.getC_Payment_ID() > 0) {
 						currentBankStatementImport.setC_Payment_ID(info.getC_Payment_ID());
+						MPayment payment = new MPayment(Env.getCtx(), info.getC_Payment_ID(), null);
+						BigDecimal difference = currentBankStatementImport.getTrxAmt().subtract(payment.getPayAmt(true));
+						if (difference.compareTo(BigDecimal.ZERO) != 0) {
+							currentBankStatementImport.set_ValueOfColumn("SimulationChargeAmt", difference);
+						} else {
+							currentBankStatementImport.set_ValueOfColumn("SimulationChargeAmt", BigDecimal.ZERO);
+						}
 					}
 					if (info.getC_Invoice_ID() > 0) {
 						currentBankStatementImport.setC_Invoice_ID(info.getC_Invoice_ID());
@@ -968,7 +975,7 @@ public abstract class BankStatementMatchLogic {
 						statementLine.setChargeAmt(currentBankStatementImport.getChargeAmt());
 						BigDecimal chargeAmt = currentBankStatementImport.getChargeAmt();
 						BigDecimal simulationCharge = NumberManager.getBigDecimalFromObject(
-							currentBankStatementImport.get_Value("SimulationChargeAmt") == null ? Env.ZERO : currentBankStatementImport.get_Value("SimulationChargeAmt")
+							currentBankStatementImport.getSimulationChargeAmt() == null ? Env.ZERO : currentBankStatementImport.getSimulationChargeAmt()
 						);
 						if (BigDecimal.ZERO.compareTo(simulationCharge) != 0) {
 							BigDecimal newTrxAmt = currentBankStatementImport.getStmtAmt().subtract(
