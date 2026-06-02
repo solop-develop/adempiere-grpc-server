@@ -997,7 +997,11 @@ public class ExpressShipmentService extends ExpressShipmentServiceImplBase {
 					+ "AND out.M_InOut_ID = ? "
 				+") "
 			;
-			MOrderLine salesOrderLine = new Query(
+			// A product may appear on more than one order line (for example a
+			// promotional line with price zero, issue #2818). Get every matching
+			// order line so the requested quantity can be distributed across all of
+			// them, including the zero-price ones, instead of only the first.
+			List<MOrderLine> salesOrderLines = new Query(
 				Env.getCtx(),
 				I_C_OrderLine.Table_Name,
 				whereClause,
@@ -1005,14 +1009,42 @@ public class ExpressShipmentService extends ExpressShipmentServiceImplBase {
 			)
 				.setParameters(productId, shipmentId)
 				.setClient_ID()
-				.first()
+				.setOrderBy(I_C_OrderLine.COLUMNNAME_Line)
+				.list()
 			;
-			if (salesOrderLine == null || salesOrderLine.getC_OrderLine_ID() <= 0) {
+			if (salesOrderLines == null || salesOrderLines.isEmpty()) {
 				throw new AdempiereException("@C_OrderLine_ID@ @NotFound@");
 			}
 
+			// Existing draft shipment lines, indexed in memory by order line
+			List<MInOutLine> shipmentLines = Arrays.asList(shipment.getLines(true));
+
+			// Quantity still deliverable across every order line of the product,
+			// discounting whatever is already loaded on this draft shipment.
+			BigDecimal totalAvailable = BigDecimal.ZERO;
+			for (MOrderLine salesOrderLine : salesOrderLines) {
+				BigDecimal alreadyEntered = shipmentLines.stream()
+					.filter(shipmentLineToFind -> {
+						return shipmentLineToFind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+					})
+					.map(MInOutLine::getQtyEntered)
+					.findFirst()
+					.orElse(BigDecimal.ZERO)
+				;
+				BigDecimal lineAvailable = salesOrderLine.getQtyOrdered()
+					.subtract(salesOrderLine.getQtyDelivered())
+					.subtract(alreadyEntered)
+				;
+				if (lineAvailable.signum() > 0) {
+					totalAvailable = totalAvailable.add(lineAvailable);
+				}
+			}
+
+			// Resolve requested quantity
 			BigDecimal quantity = BigDecimal.ONE;
-			if (request.getQuantity() != null) {
+			if (request.getIsQuantityFromOrderLine()) {
+				quantity = totalAvailable;
+			} else if (request.getQuantity() != null) {
 				quantity = NumberManager.getBigDecimalFromString(
 					request.getQuantity()
 				);
@@ -1020,58 +1052,73 @@ public class ExpressShipmentService extends ExpressShipmentServiceImplBase {
 					quantity = BigDecimal.ONE;
 				}
 			}
-			if (request.getIsQuantityFromOrderLine()) {
-				quantity = salesOrderLine.getQtyReserved();
-			}
-			// Validate available
-			BigDecimal orderQuantityDelivered = salesOrderLine.getQtyOrdered().subtract(salesOrderLine.getQtyDelivered());
-			if (orderQuantityDelivered.compareTo(quantity) < 0) {
+
+			// Validate available against the whole product, not a single line
+			if (totalAvailable.compareTo(quantity) < 0) {
 				throw new AdempiereException("@QtyInsufficient@");
 			}
 
-			Optional<MInOutLine> maybeShipmentLine = Arrays.asList(shipment.getLines(true))
-				.parallelStream()
-				.filter(shipmentLineTofind -> {
-					return shipmentLineTofind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
-				})
-				.findFirst()
-			;
-			MInOutLine shipmentLine = null;
-			if (maybeShipmentLine.isPresent()) {
-				shipmentLine = maybeShipmentLine.get();
-				BigDecimal orderQuantity = shipmentLine.getQtyEntered();
-				orderQuantity = orderQuantity.add(quantity);
-				shipmentLine.setQty(orderQuantity);
-				shipmentLine.setC_Project_ID(projectId);
-				shipmentLine.setC_Activity_ID(activityId);
-			} else {
-				shipmentLine = new MInOutLine(shipment);
-				shipmentLine.setOrderLine(salesOrderLine, 0, quantity);
-				shipmentLine.setQty(quantity);
-				shipmentLine.setC_Project_ID(projectId);
-				shipmentLine.setC_Activity_ID(activityId);
-			}
-
-			// Link to OutBound Line if provided
-			if (outBoundOrderId > 0) {
-				MWMInOutBoundLine outBoundLine = new Query(
-					Env.getCtx(),
-					I_WM_InOutBoundLine.Table_Name,
-					"C_OrderLine_ID = ? AND WM_InOutBound_ID = ?",
-					transactionName
-				)
-					.setParameters(salesOrderLine.getC_OrderLine_ID(), outBoundOrderId)
-					.setClient_ID()
-					.first()
-				;
-				if (outBoundLine != null && outBoundLine.getWM_InOutBoundLine_ID() > 0) {
-					shipmentLine.setWM_InOutBoundLine_ID(outBoundLine.getWM_InOutBoundLine_ID());
+			// Distribute the quantity across the order lines (lower line number first)
+			BigDecimal remaining = quantity;
+			for (MOrderLine salesOrderLine : salesOrderLines) {
+				if (remaining.signum() <= 0) {
+					break;
 				}
+
+				MInOutLine shipmentLine = shipmentLines.stream()
+					.filter(shipmentLineToFind -> {
+						return shipmentLineToFind.getC_OrderLine_ID() == salesOrderLine.getC_OrderLine_ID();
+					})
+					.findFirst()
+					.orElse(null)
+				;
+				BigDecimal alreadyEntered = shipmentLine != null ? shipmentLine.getQtyEntered() : BigDecimal.ZERO;
+				BigDecimal lineAvailable = salesOrderLine.getQtyOrdered()
+					.subtract(salesOrderLine.getQtyDelivered())
+					.subtract(alreadyEntered)
+				;
+				if (lineAvailable.signum() <= 0) {
+					continue;
+				}
+
+				BigDecimal toAllocate = lineAvailable.min(remaining);
+
+				if (shipmentLine != null) {
+					shipmentLine.setQty(alreadyEntered.add(toAllocate));
+					shipmentLine.setC_Project_ID(projectId);
+					shipmentLine.setC_Activity_ID(activityId);
+				} else {
+					shipmentLine = new MInOutLine(shipment);
+					shipmentLine.setOrderLine(salesOrderLine, 0, toAllocate);
+					shipmentLine.setQty(toAllocate);
+					shipmentLine.setC_Project_ID(projectId);
+					shipmentLine.setC_Activity_ID(activityId);
+				}
+
+				// Link to OutBound Line if provided
+				if (outBoundOrderId > 0) {
+					MWMInOutBoundLine outBoundLine = new Query(
+						Env.getCtx(),
+						I_WM_InOutBoundLine.Table_Name,
+						"C_OrderLine_ID = ? AND WM_InOutBound_ID = ?",
+						transactionName
+					)
+						.setParameters(salesOrderLine.getC_OrderLine_ID(), outBoundOrderId)
+						.setClient_ID()
+						.first()
+					;
+					if (outBoundLine != null && outBoundLine.getWM_InOutBoundLine_ID() > 0) {
+						shipmentLine.setWM_InOutBoundLine_ID(outBoundLine.getWM_InOutBoundLine_ID());
+					}
+				}
+
+				shipmentLine.saveEx(transactionName);
+
+				// Keep the first affected line as the response (single-line contract)
+				shipmentLineReference.compareAndSet(null, shipmentLine);
+
+				remaining = remaining.subtract(toAllocate);
 			}
-
-			shipmentLine.saveEx(transactionName);
-
-			shipmentLineReference.set(shipmentLine);
 		});
 
 		ShipmentLine.Builder builder = convertShipmentLine(
