@@ -21,6 +21,7 @@ package com.solop.sp007.process;
 import com.solop.sp007.util.ResourceAssignment;
 import org.adempiere.core.domains.models.I_C_Project;
 import org.adempiere.core.domains.models.I_R_Request;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MProject;
 import org.compiere.model.MRequest;
 import org.compiere.model.MTable;
@@ -104,7 +105,7 @@ public class RecordHoursWorked extends RecordHoursWorkedAbstract {
 	@Override
 	protected String doIt() throws Exception {
 		if (recordIds == null || recordIds.isEmpty()){
-			return "";
+			throw new AdempiereException("@Record_ID@ @NotFound@");
 		}
 		recordIds.forEach(recordId -> {
 			if (isSelection()){
