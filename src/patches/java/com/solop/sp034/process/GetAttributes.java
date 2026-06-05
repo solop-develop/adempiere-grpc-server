@@ -121,6 +121,19 @@ public class GetAttributes extends GetAttributesAbstract {
 		allocation.saveEx();
 	}
 
+	private boolean isAllocatedToCategory(int productId, int categoryId) {
+		return new Query(
+				getCtx(),
+				Changes.Table_SP034_ProductCategory,
+				"M_Product_ID = ? AND SP034_Category_ID = ?",
+				null
+			)
+			.setParameters(productId, categoryId)
+			.setOnlyActiveRecords(true)
+			.match()
+		;
+	}
+
 	private PO getCategory(String value) {
 		return new Query(
 				getCtx(),
@@ -197,12 +210,17 @@ public class GetAttributes extends GetAttributesAbstract {
 			category.set_ValueOfColumn("Description", description);
 			category.set_ValueOfColumn("W_Store_ID", storeId);
 			category.saveEx();
-			deleteOldAllocations(productId);
-			deleteOldAttributeAllocations(productId);
-			createAllocation(productId, category.get_ID());
 		}
 
 		int categoryId = category.get_ID();
+		// Link this product to the selected category. Previously this only ran when the
+		// category was created for the first time globally, so a product that selected an
+		// already-imported category was never allocated -> no attributes to set in the UI.
+		if(!isAllocatedToCategory(productId, categoryId)) {
+			deleteOldAllocations(productId);
+			deleteOldAttributeAllocations(productId);
+			createAllocation(productId, categoryId);
+		}
 		MTable attributeTable = MTable.get(getCtx(), Changes.Table_SP034_Attribute);
 		Trx trx = get_TrxName() != null ? Trx.get(get_TrxName(), false) : null;
 		log.info("Importing " + attributes.size() + " attributes for category '" + value + "' (id=" + categoryId + ")");
