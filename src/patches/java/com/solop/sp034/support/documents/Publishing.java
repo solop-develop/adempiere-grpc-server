@@ -151,11 +151,14 @@ public class Publishing implements IMercadoLibreDocument {
         Map<String, Object> publishValues = new HashMap<>();
         publishValues.put("client", getClientUuid());
         publishValues.put("code", product.getValue());
-        publishValues.put("title", product.getName());
+        String publishTitle = product.get_ValueAsString(Changes.SP034_PublishTitle);
+        publishValues.put("title", Util.isEmpty(publishTitle, true) ? product.getName() : publishTitle);
         publishValues.put("listing_type_id", publishType);
         publishValues.put("buying_mode", "buy_it_now");
-        publishValues.put("description", product.getDescription());
-        publishValues.put("help", product.getHelp());
+        String descriptionLong = product.get_ValueAsString(Changes.SP034_DescriptionLong);
+        publishValues.put("description", Util.isEmpty(descriptionLong, true) ? product.getDescription() : descriptionLong);
+        String descriptionShort = product.get_ValueAsString(Changes.SP034_DescriptionShort);
+        publishValues.put("help", Util.isEmpty(descriptionShort, true) ? product.getHelp() : descriptionShort);
         publishValues.put("currency_code", currencyIsoCode);
         publishValues.put("category_id", categoryCode);
         publishValues.put("barcode", product.getUPC());
@@ -264,8 +267,14 @@ public class Publishing implements IMercadoLibreDocument {
     }
 
     private BigDecimal getStock(MStore store) {
+        // The drop-ship warehouse drives the stock published to the Store. When it is not
+        // configured, fall back to the store's regular warehouse (current behavior), and if that
+        // is not set either, to the total stock across all warehouses of the product.
+        int warehouseId = store.getDropShip_Warehouse_ID() > 0
+                ? store.getDropShip_Warehouse_ID()
+                : store.getM_Warehouse_ID();
         Optional<MStorage> maybeStorage = Arrays.stream(MStorage.getOfProduct(Env.getCtx(), product.getM_Product_ID(), product.get_TrxName()))
-                .filter(storage -> storage.getM_Warehouse_ID() == store.getM_Warehouse_ID())
+                .filter(storage ->  storage.getM_Warehouse_ID() == warehouseId)
                 .reduce(StockSummary::add);
         if(maybeStorage.isPresent()) {
             BigDecimal quantityOnHand = Optional.ofNullable(maybeStorage.get().getQtyOnHand()).orElse(Env.ZERO);

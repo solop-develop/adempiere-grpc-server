@@ -19,7 +19,6 @@
 package com.solop.sp034.process;
 
 import com.solop.sp034.util.Changes;
-
 import org.adempiere.core.domains.models.I_C_Tax;
 import org.adempiere.core.domains.models.I_M_PriceList_Version;
 import org.adempiere.core.domains.models.I_M_Product;
@@ -32,12 +31,14 @@ import org.compiere.model.MProduct;
 import org.compiere.model.MProductPricing;
 import org.compiere.model.MStore;
 import org.compiere.model.MTable;
+import org.compiere.model.MTax;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -95,17 +96,33 @@ public class PublishProducts extends PublishProductsAbstract {
 			publishing.set_ValueOfColumn(I_W_Store.COLUMNNAME_W_Store_ID, getStoreId());
 			publishing.set_ValueOfColumn(Changes.SP034_PublishStatus, Changes.SP034_PublishStatus_Without_Publishing);
 		}
-		publishing.set_ValueOfColumn(I_M_PriceList_Version.COLUMNNAME_M_PriceList_Version_ID, priceListVersionId);
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceList, productPricing.getPriceList());
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceStd, productPricing.getPriceStd());
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceLimit, productPricing.getPriceLimit());
 		int taxId = getTaxId(product.getC_TaxCategory_ID());
+		//	When the price list is not tax included, add the tax to the published prices so
+		//	MercadoLibre receives the final consumer price, the same way order/invoice lines do.
+		MTax tax = taxId > 0 ? MTax.get(getCtx(), taxId) : null;
+		boolean taxIncluded = productPricing.isTaxIncluded();
+		int precision = productPricing.getPrecision();
+		publishing.set_ValueOfColumn(I_M_PriceList_Version.COLUMNNAME_M_PriceList_Version_ID, priceListVersionId);
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceList, addTaxIfNeeded(productPricing.getPriceList(), tax, taxIncluded, precision));
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceStd, addTaxIfNeeded(productPricing.getPriceStd(), tax, taxIncluded, precision));
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceLimit, addTaxIfNeeded(productPricing.getPriceLimit(), tax, taxIncluded, precision));
 		if(taxId > 0) {
 			publishing.set_ValueOfColumn(I_C_Tax.COLUMNNAME_C_Tax_ID, taxId);
 		}
 		publishing.saveEx();
 		refreshAllocations(productId, publishing.get_ID(), isNew, transactionName);
 		publications.incrementAndGet();
+	}
+
+	/**
+	 * Add the tax amount to a price when the price list is not tax included.
+	 * Mirrors how MOrderLine/MInvoiceLine compute amounts using MTax.calculateTax.
+	 */
+	private BigDecimal addTaxIfNeeded(BigDecimal price, MTax tax, boolean taxIncluded, int precision) {
+		if (price == null || taxIncluded || tax == null || price.signum() == 0) {
+			return price;
+		}
+		return price.add(tax.calculateTax(price, false, precision));
 	}
 
 	private void refreshAllocations(int productId, int publishingId, boolean isNew, String transactionName) {
