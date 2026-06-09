@@ -75,5 +75,13 @@ public interface Changes {
 	String SP034_DescriptionShort = "SP034_DescriptionShort";
 	/**	Long Description (Product) */
 	String SP034_DescriptionLong = "SP034_DescriptionLong";
+	/**	Publish Price List (tax included, original/strikethrough price) */
+	String SP034_PublishPriceList = "SP034_PublishPriceList";
+	/**	Publish Price Std (tax included, current/sale price) */
+	String SP034_PublishPriceStd = "SP034_PublishPriceStd";
+	/**	Publish Discount Amount (informative): PublishPriceList - PublishPriceStd */
+	String SP034_PublishDiscountAmt = "SP034_PublishDiscountAmt";
+	/**	Publish Discount Percentage (informative) */
+	String SP034_PublishDiscount = "SP034_PublishDiscount";
 
 }
