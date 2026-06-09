@@ -39,8 +39,10 @@ import org.compiere.util.TimeUtil;
 import org.compiere.util.Trx;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -97,15 +99,31 @@ public class PublishProducts extends PublishProductsAbstract {
 			publishing.set_ValueOfColumn(Changes.SP034_PublishStatus, Changes.SP034_PublishStatus_Without_Publishing);
 		}
 		int taxId = getTaxId(product.getC_TaxCategory_ID());
-		//	When the price list is not tax included, add the tax to the published prices so
-		//	MercadoLibre receives the final consumer price, the same way order/invoice lines do.
 		MTax tax = taxId > 0 ? MTax.get(getCtx(), taxId) : null;
 		boolean taxIncluded = productPricing.isTaxIncluded();
 		int precision = productPricing.getPrecision();
 		publishing.set_ValueOfColumn(I_M_PriceList_Version.COLUMNNAME_M_PriceList_Version_ID, priceListVersionId);
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceList, addTaxIfNeeded(productPricing.getPriceList(), tax, taxIncluded, precision));
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceStd, addTaxIfNeeded(productPricing.getPriceStd(), tax, taxIncluded, precision));
-		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceLimit, addTaxIfNeeded(productPricing.getPriceLimit(), tax, taxIncluded, precision));
+		//	Keep the original (pre-tax) prices on the standard columns, as they were before.
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceList, productPricing.getPriceList());
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceStd, productPricing.getPriceStd());
+		publishing.set_ValueOfColumn(I_M_ProductPrice.COLUMNNAME_PriceLimit, productPricing.getPriceLimit());
+		//	When the price list is not tax included, add the tax to the published prices so
+		//	MercadoLibre receives the final consumer price, the same way order/invoice lines do.
+		//	These tax-included prices live in dedicated columns; the standard columns stay raw.
+		//	PublishPriceList is the original (strikethrough) price, PublishPriceStd the current
+		//	sale price; the discount is informative and computed from both.
+		BigDecimal publishPriceList = addTaxIfNeeded(productPricing.getPriceList(), tax, taxIncluded, precision);
+		BigDecimal publishPriceStd = addTaxIfNeeded(productPricing.getPriceStd(), tax, taxIncluded, precision);
+		publishing.set_ValueOfColumn(Changes.SP034_PublishPriceList, publishPriceList);
+		publishing.set_ValueOfColumn(Changes.SP034_PublishPriceStd, publishPriceStd);
+		BigDecimal listPrice = Optional.ofNullable(publishPriceList).orElse(Env.ZERO);
+		BigDecimal stdPrice = Optional.ofNullable(publishPriceStd).orElse(Env.ZERO);
+		BigDecimal discountAmt = listPrice.subtract(stdPrice);
+		publishing.set_ValueOfColumn(Changes.SP034_PublishDiscountAmt, discountAmt);
+		BigDecimal discountPercentage = listPrice.signum() > 0
+				? discountAmt.multiply(Env.ONEHUNDRED).divide(listPrice, 2, RoundingMode.HALF_UP)
+				: Env.ZERO;
+		publishing.set_ValueOfColumn(Changes.SP034_PublishDiscount, discountPercentage);
 		if(taxId > 0) {
 			publishing.set_ValueOfColumn(I_C_Tax.COLUMNNAME_C_Tax_ID, taxId);
 		}

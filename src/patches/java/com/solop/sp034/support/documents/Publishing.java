@@ -2,7 +2,6 @@ package com.solop.sp034.support.documents;
 
 import com.solop.sp034.util.Changes;
 import org.adempiere.core.domains.models.I_M_Product;
-import org.adempiere.core.domains.models.I_M_ProductPrice;
 import org.adempiere.core.domains.models.I_W_Store;
 import org.compiere.model.MClient;
 import org.compiere.model.MCurrency;
@@ -81,7 +80,7 @@ public class Publishing implements IMercadoLibreDocument {
         if(availableQuantity.compareTo(Env.ZERO) == 0 && !isUnPublish()) {
             addMessage("SP034.NoAvailableQuantity");
         }
-        price = (BigDecimal) publishing.get_Value(I_M_ProductPrice.COLUMNNAME_PriceStd);
+        price = (BigDecimal) publishing.get_Value(Changes.SP034_PublishPriceStd);
         if(Optional.of(price).orElse(Env.ZERO).compareTo(Env.ZERO) <= 0) {
             addMessage("SP034.NoPrice");
         }
@@ -163,6 +162,9 @@ public class Publishing implements IMercadoLibreDocument {
         publishValues.put("category_id", categoryCode);
         publishValues.put("barcode", product.getUPC());
         publishValues.put("price", price);
+        // Original (pre-discount) price so MercadoLibre can show the strikethrough price.
+        // price = current/sale price (PublishPriceStd); original_price = list price (PublishPriceList).
+        publishValues.put("original_price", publishing.get_Value(Changes.SP034_PublishPriceList));
         publishValues.put("available_quantity", availableQuantity);
         publishValues.put("publish_status", publishStatus);
         // Expose the MercadoLibre item id when the record is already published, so the
@@ -267,7 +269,7 @@ public class Publishing implements IMercadoLibreDocument {
     }
 
     private BigDecimal getStock(MStore store) {
-        // The drop-ship warehouse drives the stock published to the Store. When it is not
+        // The drop-ship warehouse drives the stock published to MercadoLibre. When it is not
         // configured, fall back to the store's regular warehouse (current behavior), and if that
         // is not set either, to the total stock across all warehouses of the product.
         int warehouseId = store.getDropShip_Warehouse_ID() > 0
