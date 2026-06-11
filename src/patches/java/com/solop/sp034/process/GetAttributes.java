@@ -203,16 +203,21 @@ public class GetAttributes extends GetAttributesAbstract {
 		int storeId = temporaryCategory.get_ValueAsInt(I_W_Store.COLUMNNAME_W_Store_ID);
 		int productId = temporaryCategory.get_ValueAsInt(I_M_Product.COLUMNNAME_M_Product_ID);
 		PO category = getCategory(value);
+		// Many MercadoLibre categories share the same name (e.g. several "Pelotas" under
+		// different domains), so the raw name alone is ambiguous in the lookup and in the
+		// product-category allocation. Build a distinguishable "<name> — <domain>" label.
+		String displayName = Util.isEmpty(description, true) ? name : name + " — " + description;
 		if(category == null) {
 			MTable categoryTable = MTable.get(getCtx(), Changes.Table_SP034_Category);
 			category = categoryTable.getPO(0, get_TrxName());
 			category.setAD_Org_ID(0);
 			category.set_ValueOfColumn("Value", value);
-			category.set_ValueOfColumn("Name", name);
-			category.set_ValueOfColumn("Description", description);
 			category.set_ValueOfColumn("W_Store_ID", storeId);
-			category.saveEx();
 		}
+		// Always refresh the display fields so re-importing reflects the latest prediction.
+		category.set_ValueOfColumn("Name", displayName);
+		category.set_ValueOfColumn("Description", description);
+		category.saveEx();
 
 		int categoryId = category.get_ID();
 		// Link this product to the selected category. Previously this only ran when the
