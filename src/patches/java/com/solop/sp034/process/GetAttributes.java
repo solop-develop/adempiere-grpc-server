@@ -18,24 +18,6 @@
 
 package com.solop.sp034.process;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.solop.sp034.util.Changes;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.adempiere.core.domains.models.I_M_Product;
-import org.adempiere.core.domains.models.I_W_Store;
-import org.adempiere.exceptions.AdempiereException;
-import org.compiere.model.MStore;
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.Query;
-import org.compiere.util.CLogger;
-import org.compiere.util.Trx;
-import org.compiere.util.Util;
-
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Savepoint;
@@ -45,7 +27,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.I_W_Store;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MStore;
+import org.compiere.model.MSysConfig;
+import org.compiere.model.MTable;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
+import org.compiere.util.CLogger;
+import org.compiere.util.Trx;
+import org.compiere.util.Util;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solop.sp034.util.Changes;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /** Generated Process for (Get Attributes)
  *  @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
@@ -55,6 +59,19 @@ public class GetAttributes extends GetAttributesAbstract {
 	private static final CLogger log = CLogger.getCLogger(GetAttributes.class);
 	private final AtomicInteger created = new AtomicInteger();
 	private final AtomicInteger errors = new AtomicInteger();
+
+	// HTTP timeouts (seconds) for the attributes webhook call. The n8n flow queries MercadoLibre
+	// (categories, attributes and top_values) and regularly takes well over OkHttp's 10s default,
+	// causing SocketTimeoutException. Configurable per tenant via MSysConfig; constants are the
+	// defaults used when the SysConfig entry is absent.
+	private static final String SYSCONFIG_CONNECT_TIMEOUT = "SP034_ATTRIBUTES_CONNECT_TIMEOUT";
+	private static final String SYSCONFIG_READ_TIMEOUT = "SP034_ATTRIBUTES_READ_TIMEOUT";
+	private static final String SYSCONFIG_WRITE_TIMEOUT = "SP034_ATTRIBUTES_WRITE_TIMEOUT";
+	private static final String SYSCONFIG_CALL_TIMEOUT = "SP034_ATTRIBUTES_CALL_TIMEOUT";
+	private static final int DEFAULT_CONNECT_TIMEOUT = 30;
+	private static final int DEFAULT_READ_TIMEOUT = 120;
+	private static final int DEFAULT_WRITE_TIMEOUT = 120;
+	private static final int DEFAULT_CALL_TIMEOUT = 150;
 
 	@Override
 	protected String doIt() throws Exception {
@@ -74,13 +91,26 @@ public class GetAttributes extends GetAttributesAbstract {
 				if(Util.isEmpty(attributesUrl, true)) {
 					throw new AdempiereException("@W_Store_ID@ [@SP034_AttributesUrl@] @NotFound@");
 				}
+
+				int clientId = getAD_Client_ID();
+				int connectTimeout = MSysConfig.getIntValue(SYSCONFIG_CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT, clientId);
+				int readTimeout = MSysConfig.getIntValue(SYSCONFIG_READ_TIMEOUT, DEFAULT_READ_TIMEOUT, clientId);
+				int writeTimeout = MSysConfig.getIntValue(SYSCONFIG_WRITE_TIMEOUT, DEFAULT_WRITE_TIMEOUT, clientId);
+				int callTimeout = MSysConfig.getIntValue(SYSCONFIG_CALL_TIMEOUT, DEFAULT_CALL_TIMEOUT, clientId);
+				final OkHttpClient client = new OkHttpClient.Builder()
+					.connectTimeout(connectTimeout, TimeUnit.SECONDS)
+					.readTimeout(readTimeout, TimeUnit.SECONDS)
+					.writeTimeout(writeTimeout, TimeUnit.SECONDS)
+					.callTimeout(callTimeout, TimeUnit.SECONDS)
+					.build()
+				;
+
 				HttpUrl httpUrl = Objects.requireNonNull(HttpUrl.parse(attributesUrl))
 					.newBuilder()
 					.addQueryParameter("category_id", value)
 					.build()
 				;
 				Request request = new Request.Builder().url(httpUrl).get().build();
-				final OkHttpClient client = new OkHttpClient();
 				try (Response response = client.newCall(request).execute()) {
 					if (response.isSuccessful()) {
 						ObjectMapper objectMapper = new ObjectMapper();
