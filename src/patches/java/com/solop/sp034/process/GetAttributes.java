@@ -182,19 +182,17 @@ public class GetAttributes extends GetAttributesAbstract {
 	}
 
 	private void deleteAttributeListValues(int attributeId) {
-		MTable listTable = MTable.get(getCtx(), Changes.Table_SP034_AttributeList);
+		// Load all rows in a single query (the original did one extra getPO per id) and delete
+		// each via PO so model validators and change logging still fire.
 		new Query(
-				getCtx(),
-				Changes.Table_SP034_AttributeList,
-				"SP034_Attribute_ID = ?",
-				null
-			)
+			getCtx(),
+			Changes.Table_SP034_AttributeList,
+			"SP034_Attribute_ID = ?",
+			get_TrxName()
+		)
 			.setParameters(attributeId)
-			.getIDsAsList()
-			.forEach(id -> {
-				PO attributeEntity = listTable.getPO(id, get_TrxName());
-				attributeEntity.deleteEx(true);
-			})
+			.list()
+			.forEach(attributeEntity -> ((PO) attributeEntity).deleteEx(true))
 		;
 	}
 
@@ -232,7 +230,24 @@ public class GetAttributes extends GetAttributesAbstract {
 			createAllocation(productId, categoryId);
 		}
 		MTable attributeTable = MTable.get(getCtx(), Changes.Table_SP034_Attribute);
+		MTable attributeValueTable = MTable.get(getCtx(), Changes.Table_SP034_AttributeList);
 		Trx trx = get_TrxName() != null ? Trx.get(get_TrxName(), false) : null;
+		// Pre-load the category's existing attributes in a single query (avoids one SELECT
+		// per attribute to check existence).
+		Map<String, PO> existingByCode = new HashMap<>();
+		new Query(
+			getCtx(),
+			Changes.Table_SP034_Attribute,
+			"SP034_Category_ID = ?",
+			get_TrxName()
+		)
+			.setParameters(categoryId)
+			.setOnlyActiveRecords(true)
+			.list()
+			.forEach(po -> {
+				existingByCode.put(((PO) po).get_ValueAsString("Value"), (PO) po);
+			})
+		;
 		log.info("Importing " + attributes.size() + " attributes for category '" + value + "' (id=" + categoryId + ")");
 		for(int index = 0; index < attributes.size(); index++) {
 			AttributeResponse attribute = attributes.get(index);
@@ -242,7 +257,7 @@ public class GetAttributes extends GetAttributesAbstract {
 				log.warning("Skipping attribute without code at position " + index + ": " + attribute);
 				continue;
 			}
-			log.info("Processing attribute [" + index + "] '" + attribute.code + "' (value_type=" + attribute.value_type + ", values=" + (attribute.values != null ? attribute.values.size() : 0) + ")");
+			log.fine("Processing attribute [" + index + "] '" + attribute.code + "' (value_type=" + attribute.value_type + ", values=" + (attribute.values != null ? attribute.values.size() : 0) + ")");
 			// Isolate each attribute in its own savepoint so a single failure does not
 			// poison the shared transaction (PostgreSQL aborts the whole transaction on
 			// the first failed statement, which would otherwise drop every later attribute)
@@ -252,12 +267,13 @@ public class GetAttributes extends GetAttributesAbstract {
 					savepoint = trx.setSavepoint(null);
 				}
 				boolean isNew;
-				PO attributeEntity = getAttributeCategory(attribute.code, categoryId);
+				PO attributeEntity = existingByCode.get(attribute.code);
 				if(attributeEntity == null) {
 					isNew = true;
 					attributeEntity = attributeTable.getPO(0, get_TrxName());
 					attributeEntity.setAD_Org_ID(0);
 					attributeEntity.set_ValueOfColumn("SP034_Category_ID", categoryId);
+					existingByCode.put(attribute.code, attributeEntity);
 				} else {
 					isNew = false;
 				}
@@ -292,7 +308,6 @@ public class GetAttributes extends GetAttributesAbstract {
 					deleteAttributeListValues(attributeEntityId);
 				}
 				if(attribute.values != null && !attribute.values.isEmpty()) {
-					MTable attributeValueTable = MTable.get(getCtx(), Changes.Table_SP034_AttributeList);
 					attribute.values.forEach(attributeValue -> {
 						PO attributeValueEntity = attributeValueTable.getPO(0, get_TrxName());
 						attributeValueEntity.setAD_Org_ID(0);
