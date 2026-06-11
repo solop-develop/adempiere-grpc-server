@@ -1,0 +1,123 @@
+/******************************************************************************
+ * Product: ADempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 2006-2017 ADempiere Foundation, All Rights Reserved.         *
+ * This program is free software, you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * or (at your option) any later version.                                     *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * or via info@adempiere.net                                                  *
+ * or https://github.com/adempiere/adempiere/blob/develop/license.html        *
+ *****************************************************************************/
+
+package com.solop.sp034.process;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solop.sp034.util.Changes;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.adempiere.core.domains.models.I_AD_PInstance;
+import org.adempiere.core.domains.models.I_M_Product;
+import org.adempiere.core.domains.models.I_W_Store;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MProduct;
+import org.compiere.model.MStore;
+import org.compiere.model.MTable;
+import org.compiere.model.PO;
+import org.compiere.util.Util;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/** Generated Process for (Suggest Category)
+ *  @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
+ */
+public class SuggestCategory extends SuggestCategoryAbstract {
+
+	private final AtomicInteger created = new AtomicInteger();
+	private final AtomicInteger errors = new AtomicInteger();
+
+	// HTTP timeouts (seconds) for the category-suggestion webhook call. Avoids OkHttp's 10s default
+	// cutting off the MercadoLibre lookup. Configurable per tenant via MSysConfig; constants are the
+	// defaults used when the SysConfig entry is absent.
+	private static final String SYSCONFIG_CONNECT_TIMEOUT = "SP034_CATEGORY_CONNECT_TIMEOUT";
+	private static final String SYSCONFIG_READ_TIMEOUT = "SP034_CATEGORY_READ_TIMEOUT";
+	private static final String SYSCONFIG_WRITE_TIMEOUT = "SP034_CATEGORY_WRITE_TIMEOUT";
+	private static final String SYSCONFIG_CALL_TIMEOUT = "SP034_CATEGORY_CALL_TIMEOUT";
+	private static final int DEFAULT_CONNECT_TIMEOUT = 30;
+	private static final int DEFAULT_READ_TIMEOUT = 120;
+	private static final int DEFAULT_WRITE_TIMEOUT = 120;
+	private static final int DEFAULT_CALL_TIMEOUT = 150;
+
+	@Override
+	protected String doIt() throws Exception {
+		MProduct product = MProduct.get(getCtx(), getRecord_ID());
+		MStore store = MStore.get(getCtx(), getStoreId());
+		String categoryUrl = store.get_ValueAsString(Changes.SP034_CategoryUrl);
+		if(Util.isEmpty(categoryUrl, true)) {
+			throw new AdempiereException("@W_Store_ID@ [@SP034_CategoryUrl@] @NotFound@");
+		}
+
+		int clientId = getAD_Client_ID();
+		int connectTimeout = MSysConfig.getIntValue(SYSCONFIG_CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT, clientId);
+		int readTimeout = MSysConfig.getIntValue(SYSCONFIG_READ_TIMEOUT, DEFAULT_READ_TIMEOUT, clientId);
+		int writeTimeout = MSysConfig.getIntValue(SYSCONFIG_WRITE_TIMEOUT, DEFAULT_WRITE_TIMEOUT, clientId);
+		int callTimeout = MSysConfig.getIntValue(SYSCONFIG_CALL_TIMEOUT, DEFAULT_CALL_TIMEOUT, clientId);
+		final OkHttpClient client = new OkHttpClient.Builder()
+			.connectTimeout(connectTimeout, TimeUnit.SECONDS)
+			.readTimeout(readTimeout, TimeUnit.SECONDS)
+			.writeTimeout(writeTimeout, TimeUnit.SECONDS)
+			.callTimeout(callTimeout, TimeUnit.SECONDS)
+			.build()
+		;
+
+		HttpUrl httpUrl = Objects.requireNonNull(
+				HttpUrl.parse(categoryUrl)
+			)
+			.newBuilder()
+			.addQueryParameter("product_name", product.getName())
+			.build()
+		;
+		Request request = new Request.Builder().url(httpUrl).get().build();
+		try (Response response = client.newCall(request).execute()) {
+			if (response.isSuccessful()) {
+				ObjectMapper objectMapper = new ObjectMapper();
+				if(response.body() != null) {
+					List<CategoryResponse> categories = objectMapper.readValue(response.body().string(), new TypeReference<List<CategoryResponse>>() {});
+					createCategories(categories);
+				}
+			} else {
+				throw new AdempiereException("Error sending " + product.getValue() + " - " + product.getName() + ". Response Code: " + response.code() + ", Body: " + response.body().toString());
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e);
+		}
+		return "@Created@: " + created + " @Errors@: " + errors;
+	}
+
+	private void createCategories(List<CategoryResponse> categories) {
+		MTable temporaryCategoryTable = MTable.get(getCtx(), Changes.Table_T_SP034_Category);
+		categories.forEach(category -> {
+			PO temporaryCategory = temporaryCategoryTable.getPO(0, get_TrxName());
+			temporaryCategory.set_ValueOfColumn(I_AD_PInstance.COLUMNNAME_AD_PInstance_ID, getAD_PInstance_ID());
+			temporaryCategory.set_ValueOfColumn("Value", category.code);
+			temporaryCategory.set_ValueOfColumn("Name", category.name);
+			temporaryCategory.set_ValueOfColumn("Description", category.description);
+			temporaryCategory.set_ValueOfColumn(I_W_Store.COLUMNNAME_W_Store_ID, getStoreId());
+			temporaryCategory.set_ValueOfColumn(I_M_Product.COLUMNNAME_M_Product_ID, getRecord_ID());
+			temporaryCategory.saveEx();
+			created.incrementAndGet();
+		});
+	}
+
+}
