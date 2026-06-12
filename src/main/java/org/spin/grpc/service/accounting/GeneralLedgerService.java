@@ -58,7 +58,6 @@ import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.grpc.service.ui.TabEntityLogic;
 import org.spin.service.grpc.authentication.SessionManager;
-import org.spin.service.grpc.util.base.RecordUtil;
 import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.value.CollectionManager;
