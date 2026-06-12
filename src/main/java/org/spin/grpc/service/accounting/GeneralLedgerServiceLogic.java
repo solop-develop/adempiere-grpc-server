@@ -427,7 +427,7 @@ public class GeneralLedgerServiceLogic {
 		}
 
 		//
-		MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
+		final MTable table = MTable.get(Env.getCtx(), I_Fact_Acct.Table_Name);
 		StringBuilder sql = new StringBuilder(QueryUtil.getTableQueryWithReferences(table));
 
 		List<Object> filtersList = new ArrayList<>();
@@ -540,11 +540,43 @@ public class GeneralLedgerServiceLogic {
 		if (!Util.isEmpty(request.getTableName(), true)) {
 			final MTable documentTable = MTable.get(Env.getCtx(), request.getTableName());
 			if (documentTable == null || documentTable.getAD_Table_ID() == 0) {
-				throw new AdempiereException("@AD_Table_ID@ @Invalid@");
+				throw new AdempiereException("@AD_Table_ID@ (" + request.getTableName() + ") @NotFound@");
 			}
-			// validate record
+			if (documentTable.isView()) {
+				throw new AdempiereException("@AD_Table_ID@ (" + request.getTableName() + ") @IsView@");
+			}
+
+			if (!documentTable.isDocument()) {
+				// TODO: Remove this condition when complete support to document table
+				if (!POSTED_TABLES_WITHOUT_DOCUMENT.contains(documentTable.getTableName())) {
+					// With `Posted` column
+					if (documentTable.getColumn(I_C_Invoice.COLUMNNAME_Posted) == null) {
+						throw new AdempiereException("@AD_Table_ID@ (" + request.getTableName() + ") @Not@ @IsDocument@");
+					}
+				}
+			}
+
+			// Validate record
 			final int recordId = request.getRecordId();
 			RecordUtil.validateRecordId(recordId, documentTable.getAccessLevel());
+			PO record = RecordUtil.getEntity(Env.getCtx(), documentTable.getTableName(), recordId, null);
+			if (record == null || record.get_ID() <= 0) {
+				throw new AdempiereException("@Record_ID@ (" + request.getRecordId() + ")) @NotFound@ / @PO@ @IsNull@");
+			}
+
+			// Validate `Posted` column
+			if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Posted) < 0) {
+				// without `Posted` button
+				throw new AdempiereException("@AD_Column_ID@ @Posted@ @NotFound@");
+			}
+
+			// Validate `Processed` column
+			if (record.get_ColumnIndex(I_C_Invoice.COLUMNNAME_Processed) < 0) {
+				throw new AdempiereException("@AD_Column_ID@ @Processed@ @NotFound@");
+			}
+			if (!record.get_ValueAsBoolean(I_C_Invoice.COLUMNNAME_Processed)) {
+				throw new AdempiereException("@Record_ID@ @Not@ @Processed@");
+			}
 
 			// table
 			whereClause.append(" AND ")
@@ -960,7 +992,7 @@ public class GeneralLedgerServiceLogic {
 								cell.setCellValue(((BigDecimal) value).doubleValue());
 							}
 						} else if (displayTypeId == DisplayType.YesNo) {
-							String stringBoolean = BooleanManager.getBooleanToTranslated(value.toString());
+							String stringBoolean = BooleanManager.getDisplayValue(value.toString());
 							cell.setCellValue(stringBoolean);
 						} else {
 							cell.setCellValue(value.toString());

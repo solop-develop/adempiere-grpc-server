@@ -50,6 +50,7 @@ import org.spin.backend.grpc.form.trial_balance_drillable.ListUser1Request;
 import org.spin.backend.grpc.form.trial_balance_drillable.Period;
 import org.spin.base.util.ReferenceUtil;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
+import org.spin.service.grpc.util.db.OrderByUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
@@ -220,6 +221,12 @@ public class TrialBalanceDrillableLogic {
 			column.getColumnName(),
 			0
 		);
+
+		// The C_Period reference orders by the display name (alphabetical);
+		// force chronological order by the period start date.
+		if (reference != null && reference.Query != null && reference.Query.trim().length() > 0) {
+			reference.Query = OrderByUtil.removeOrderBy(reference.Query) + " ORDER BY C_Period.StartDate ";
+		}
 
 		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
 			reference,
