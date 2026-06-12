@@ -90,6 +90,8 @@ public class SuggestCategory extends SuggestCategoryAbstract {
 			)
 			.newBuilder()
 			.addQueryParameter("product_name", product.getName())
+			// store_uuid lets the per-country flow resolve the store credentials from the client sheet.
+			.addQueryParameter("store_uuid", store.getUUID())
 			.build()
 		;
 		Request request = new Request.Builder().url(httpUrl).get().build();

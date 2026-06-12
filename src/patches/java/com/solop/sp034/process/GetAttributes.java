@@ -108,6 +108,8 @@ public class GetAttributes extends GetAttributesAbstract {
 				HttpUrl httpUrl = Objects.requireNonNull(HttpUrl.parse(attributesUrl))
 					.newBuilder()
 					.addQueryParameter("category_id", value)
+					// store_uuid lets the per-country flow resolve the store credentials from the client sheet.
+					.addQueryParameter("store_uuid", store.getUUID())
 					.build()
 				;
 				Request request = new Request.Builder().url(httpUrl).get().build();
