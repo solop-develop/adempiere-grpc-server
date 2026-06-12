@@ -43,7 +43,6 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
-import org.compiere.process.DocumentEngine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
