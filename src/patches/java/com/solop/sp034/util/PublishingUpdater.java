@@ -97,7 +97,9 @@ public class PublishingUpdater {
         BigDecimal stock = getStock(ctx, trxName, productId, warehouseId);
         publishing.set_ValueOfColumn(Changes.SP034_CurrentInventory, stock);
         publishing.set_ValueOfColumn(Changes.DropShip_Warehouse_ID, warehouseId);
-        if (Util.isEmpty(publishing.get_ValueAsString(Changes.SP034_Publication_Code), true)) {
+        BigDecimal initialPublishInventory =  (BigDecimal) publishing.get_Value(Changes.SP034_InitialInventory);
+        if (Util.isEmpty(publishing.get_ValueAsString(Changes.SP034_PublicationCode), true)
+            || initialPublishInventory == null || initialPublishInventory.signum() == 0) {
             publishing.set_ValueOfColumn(Changes.SP034_InitialInventory, stock);
         }
         publishing.saveEx();

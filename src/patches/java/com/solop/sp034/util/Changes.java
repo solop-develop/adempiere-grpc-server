@@ -90,6 +90,6 @@ public interface Changes {
 	/**	Drop Ship Warehouse: warehouse the published inventory was taken from */
 	String DropShip_Warehouse_ID = "DropShip_Warehouse_ID";
 	/**	Publication Code: Publication Code */
-	String SP034_Publication_Code = "SP034_Publication_Code";
+	String SP034_PublicationCode = "SP034_PublicationCode";
 
 }
