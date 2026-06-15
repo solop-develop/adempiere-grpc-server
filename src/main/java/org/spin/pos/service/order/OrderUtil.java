@@ -208,7 +208,30 @@ public class OrderUtil {
 			salesOrder.saveEx();
 		}
 	}
-	
+
+	/**
+	 * Apply the Payment Term defined on the POS (C_PaymentTerm_ID column added to C_POS) to the order.
+	 * When the POS has a payment term configured it is used and overrides the one derived from the
+	 * Business Partner / the payment term flagged as default in the payment term master. This avoids
+	 * POS orders silently taking an arbitrary default (e.g. a credit term) instead of the one expected
+	 * for the POS. If the POS has no payment term configured the current behavior is kept untouched.
+	 * @param pos POS definition
+	 * @param salesOrder order to update
+	 */
+	public static void setPaymentTermFromPOS(MPOS pos, MOrder salesOrder) {
+		if(pos == null || salesOrder == null) {
+			return;
+		}
+		//	Ignore if the document is processed
+		if(salesOrder.isProcessed() || salesOrder.isProcessing()) {
+			return;
+		}
+		int paymentTermId = pos.get_ValueAsInt(MOrder.COLUMNNAME_C_PaymentTerm_ID);
+		if(paymentTermId > 0) {
+			salesOrder.setC_PaymentTerm_ID(paymentTermId);
+		}
+	}
+
 	/**
 	 * Get converted Amount from POS
 	 * @param pos
