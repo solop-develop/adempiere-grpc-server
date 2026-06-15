@@ -17,10 +17,12 @@ import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.ProcessInfo;
 import org.compiere.util.CLogger;
+import org.compiere.util.Trx;
 import org.eevolution.services.dsl.ProcessBuilder;
 import org.spin.queue.model.MADQueue;
 import org.spin.queue.util.QueueManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -69,6 +71,11 @@ public class StorePublicationUpdater extends QueueManager {
         String inClause = productsIds.toString().replace("[", "(").replace("]", ")");
         MTable publishingTable = MTable.get(getContext(), Changes.Table_SP034_Publishing);
         int publishingTableId = publishingTable.getAD_Table_ID();
+        //  Each publishing is refreshed in its own committed transaction so the row lock is
+        //  released before the (parallel) re-publish runs. This avoids the self-deadlock that
+        //  happened when the queue transaction held the row while the Publishing Processing
+        //  process opened a separate transaction to update the very same row.
+        List<Integer> toPublish = new ArrayList<>();
         new Query(
                 getContext(),
                 Changes.Table_SP034_Publishing,
@@ -79,16 +86,28 @@ public class StorePublicationUpdater extends QueueManager {
                 .getIDsAsList()
                 .forEach(publishingId -> {
                     try {
-                        PO publishing = publishingTable.getPO(publishingId, getTransactionName());
-                        if(!PublishingUpdater.updateData(publishing)) {
-                            log.warning("No price list version, skipping publishing " + publishingId);
-                            return;
-                        }
-                        republishIfActive(publishing, publishingTableId);
+                        Trx.run(transactionName -> {
+                            PO publishing = publishingTable.getPO(publishingId, transactionName);
+                            if(Changes.SP034_PublishStatus_Active.equals(publishing.get_ValueAsString(Changes.SP034_PublishStatus))) {
+                                toPublish.add(publishingId);
+                                return;
+                            }
+                            if(!PublishingUpdater.updateData(publishing)) {
+                                log.warning("No price list version, skipping publishing " + publishingId);
+                                return;
+                            }
+                            publishing.saveEx();
+
+                        });
                     } catch (Exception e) {
                         log.warning("Error updating publishing " + publishingId + ": " + e.getLocalizedMessage());
                     }
                 });
+        //  All updates are committed (and unlocked) by now: re-publish the active ones in one
+        //  process call so it can publish them in parallel on its own transactions.
+        if(!toPublish.isEmpty()) {
+            republish(toPublish, publishingTableId);
+        }
     }
 
     /**
@@ -123,22 +142,19 @@ public class StorePublicationUpdater extends QueueManager {
     }
 
     /**
-     * Re-publish the record when it is active by running the Publishing Processing process with
+     * Re-publish the active records by running the Publishing Processing process with
      * SP034_PublishStatus = Publishing ("P"), which sets the status and triggers the webhook.
+     * The ids are passed as a selection so the process handles them on its own transactions
+     * (in parallel); no external transaction is shared, which is what previously deadlocked.
      */
-    private void republishIfActive(PO publishing, int publishingTableId) {
-        String publishStatus = publishing.get_ValueAsString(Changes.SP034_PublishStatus);
-        if(!Changes.SP034_PublishStatus_Active.equals(publishStatus)) {
-            return;
-        }
+    private void republish(List<Integer> publishingIds, int publishingTableId) {
         ProcessInfo info = ProcessBuilder.create(getContext())
                 .process(PublishingProcessingAbstract.getProcessId())
-                .withRecordId(publishingTableId, publishing.get_ID())
+                .withSelectedRecordsIds(publishingTableId, publishingIds)
                 .withParameter(PublishingProcessingAbstract.SP034_PUBLISHSTATUS, Changes.SP034_PublishStatus_Publishing)
-                .withoutTransactionClose()
-                .execute(getTransactionName());
+                .execute();
         if(info != null && info.isError()) {
-            log.warning("Re-publish failed for publishing " + publishing.get_ID() + ": " + info.getSummary());
+            log.warning("Re-publish failed: " + info.getSummary());
         }
     }
 }

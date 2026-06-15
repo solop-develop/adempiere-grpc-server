@@ -102,7 +102,6 @@ public class PublishingUpdater {
             || initialPublishInventory == null || initialPublishInventory.signum() == 0) {
             publishing.set_ValueOfColumn(Changes.SP034_InitialInventory, stock);
         }
-        publishing.saveEx();
         return true;
     }
 

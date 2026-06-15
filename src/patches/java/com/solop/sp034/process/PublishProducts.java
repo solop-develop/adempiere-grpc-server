@@ -88,6 +88,7 @@ public class PublishProducts extends PublishProductsAbstract {
 		}
 		//	Price and inventory live in a single place so the queue and this process stay in sync.
 		PublishingUpdater.updateData(publishing);
+		publishing.saveEx();
 		refreshAllocations(productId, publishing.get_ID(), isNew, transactionName);
 		publications.incrementAndGet();
 	}

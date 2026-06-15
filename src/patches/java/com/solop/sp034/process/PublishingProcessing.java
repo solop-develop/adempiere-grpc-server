@@ -19,6 +19,7 @@
 package com.solop.sp034.process;
 
 import com.solop.sp034.util.Changes;
+import com.solop.sp034.util.PublishingUpdater;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.Trx;
@@ -65,6 +66,7 @@ public class PublishingProcessing extends PublishingProcessingAbstract {
 	private void processPublishing(int publishingId, String transactionName) {
 		PO publishing = publishingTable.getPO(publishingId, transactionName);
 		publishing.set_ValueOfColumn(Changes.SP034_PublishStatus, getPublishStatus());
+		PublishingUpdater.updateData(publishing);
 		publishing.saveEx();
 		publications.incrementAndGet();
 	}
