@@ -4496,6 +4496,8 @@ public class PointOfSalesForm extends StoreImplBase {
 		businessPartner.set_TrxName(transactionName);
 		int oldPriceListId = salesOrder.getM_PriceList_ID();
 		salesOrder.setBPartner(businessPartner);
+		//	Payment Term from POS (overrides the one derived from the Business Partner / default payment term)
+		OrderUtil.setPaymentTermFromPOS(pos, salesOrder);
 		boolean isKeepPriceListCustomer = AccessManagement.getBooleanValueFromPOS(pos, businessPartnerId, ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer);
 		if(!isKeepPriceListCustomer && businessPartner.getM_PriceList_ID() > 0) {
 			salesOrder.setM_PriceList_ID(oldPriceListId); //keeps original price List set by POS

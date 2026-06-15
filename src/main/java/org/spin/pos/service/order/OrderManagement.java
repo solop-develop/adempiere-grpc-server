@@ -162,6 +162,8 @@ public class OrderManagement {
 		} else {
 			log.info("CPOS.SetC_BPartner_ID -" + partner);
 			order.setBPartner(partner);
+			//	Payment Term from POS (overrides the one derived from the Business Partner / default payment term)
+			OrderUtil.setPaymentTermFromPOS(pos, order);
 			AtomicBoolean priceListIsChanged = new AtomicBoolean(false);
 			if(partner.getM_PriceList_ID() > 0 && pos.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsKeepPriceFromCustomer)) {
 				MPriceList businesPartnerPriceList = MPriceList.get(Env.getCtx(), partner.getM_PriceList_ID(), null);
@@ -525,6 +527,8 @@ public class OrderManagement {
 		if(pos.get_ValueAsInt(MOrder.COLUMNNAME_C_ConversionType_ID) > 0) {
 			salesOrder.setC_ConversionType_ID(pos.get_ValueAsInt(MOrder.COLUMNNAME_C_ConversionType_ID));
 		}
+		//	Payment Term from POS (overrides the one derived from the Business Partner / default payment term)
+		OrderUtil.setPaymentTermFromPOS(pos, salesOrder);
 	}
 
 	/**
