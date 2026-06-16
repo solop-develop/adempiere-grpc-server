@@ -2822,7 +2822,7 @@
       "parameters": {
         "operation": "get",
         "propertyName": "access_token",
-        "key": "={{ $workflow.id + '_access_token' }}",
+        "key": "={{ $json.application_id + '_access_token' }}",
         "keyType": "string",
         "options": {}
       },
@@ -2883,7 +2883,7 @@
       "parameters": {
         "operation": "get",
         "propertyName": "access_token",
-        "key": "={{ $workflow.id + '_access_token' }}",
+        "key": "={{ $json.application_id + '_access_token' }}",
         "keyType": "string",
         "options": {}
       },
@@ -4120,7 +4120,7 @@
     "timeSavedMode": "fixed",
     "timezone": "America/Montevideo"
   },
-  "versionId": "d215a312-daad-4e3e-be6f-2c80c91f9b95",
+  "versionId": "3c5b8b91-594b-43c6-8a22-ae96d0a19f86",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f09489af66615439812ccb85123e7f2a2a9ea905a9abe2c1dd72caf7dcc8c50b"
