@@ -299,10 +299,10 @@ public class PaymentAllocationLogic {
 			I_C_ConversionType.Table_Name
 		);
 
-		String whereClause = "";
+		String whereClause = " 1=1 ";
 		List<Object> parametersList = new ArrayList<Object>();
 		if (table.get_ColumnIndex(I_C_BPartner.COLUMNNAME_C_BPartner_ID) >= 0) {
-			whereClause = "C_BPartner_ID IS NULL OR C_BPartner_ID = ?";
+			whereClause = "AND (C_BPartner_ID IS NULL OR C_BPartner_ID = ?) ";
 			if (request.getBusinessPartnerId() > 0) {
 				validateAndGetBusinessPartner(
 					request.getBusinessPartnerId()
@@ -311,6 +311,25 @@ public class PaymentAllocationLogic {
 			parametersList.add(
 				request.getBusinessPartnerId()
 			);
+		}
+
+		// URL decode to change characteres and add search value to filter
+		final String searchValue = TextManager.getValidString(
+			TextManager.getDecodeUrl(
+				request.getSearchValue()
+			)
+		).strip();
+		if (!Util.isEmpty(searchValue, true)) {
+			whereClause += "AND ("
+				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%' "
+				+ ") "
+			;
+			//	Add parameters
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
 		}
 
 		Query query = new Query(
