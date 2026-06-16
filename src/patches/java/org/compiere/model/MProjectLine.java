@@ -52,10 +52,6 @@ public class MProjectLine extends X_C_ProjectLine
 	 */
 	private static final long serialVersionUID = 2668549463273628848L;
 
-	/**	100 constant for margin <-> price math	*/
-	private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
-	/**	Completed/Closed document status filter	*/
-	private static final String DOCSTATUS_DONE = "('CO','CL')";
 
 	/**
 	 * 	Standard Constructor
@@ -341,12 +337,12 @@ public class MProjectLine extends X_C_ProjectLine
 					//	Price edited -> derive Margin %
 					BigDecimal margin = getPlannedPrice().subtract(getCost())
 						.divide(getCost(), 4, RoundingMode.HALF_UP)
-						.multiply(ONE_HUNDRED);
+						.multiply(Env.ONEHUNDRED);
 					setMargin(margin);
 				} else if (is_ValueChanged(COLUMNNAME_Margin)) {
 					//	Margin edited -> derive Planned Price
-					BigDecimal price = getCost().multiply(ONE_HUNDRED.add(getMargin()))
-						.divide(ONE_HUNDRED, 4, RoundingMode.HALF_UP);
+					BigDecimal price = getCost().multiply(Env.ONEHUNDRED.add(getMargin()))
+						.divide(Env.ONEHUNDRED, 4, RoundingMode.HALF_UP);
 					setPlannedPrice(price);
 				}
 			}
@@ -624,7 +620,7 @@ public class MProjectLine extends X_C_ProjectLine
 		BigDecimal[] amtQty = getDocumentAmtQty(
 			"SELECT COALESCE(SUM(ol.LineNetAmt),0), COALESCE(SUM(ol.QtyOrdered),0) "
 			+ "FROM " + MOrderLine.Table_Name + " ol JOIN " + MOrder.Table_Name + " o ON o.C_Order_ID=ol.C_Order_ID "
-			+ "WHERE ol.C_ProjectLine_ID=? AND o.IsSOTrx='Y' AND o.DocStatus IN " + DOCSTATUS_DONE, getC_ProjectLine_ID());
+			+ "WHERE ol.C_ProjectLine_ID=? AND o.IsSOTrx='Y' AND o.DocStatus IN ('CO','CL')", getC_ProjectLine_ID());
 		setOrderedAmt(amtQty[0]);
 		setQtyOrdered(amtQty[1]);
 	}	//	recalcSalesOrdered
@@ -635,7 +631,7 @@ public class MProjectLine extends X_C_ProjectLine
 		BigDecimal[] amtQty = getDocumentAmtQty(
 			"SELECT COALESCE(SUM(ol.LineNetAmt),0), COALESCE(SUM(ol.QtyOrdered),0) "
 			+ "FROM " + MOrderLine.Table_Name + " ol JOIN " + MOrder.Table_Name + " o ON o.C_Order_ID=ol.C_Order_ID "
-			+ "WHERE ol.C_ProjectLine_ID=? AND o.IsSOTrx='N' AND o.DocStatus IN " + DOCSTATUS_DONE, getC_ProjectLine_ID());
+			+ "WHERE ol.C_ProjectLine_ID=? AND o.IsSOTrx='N' AND o.DocStatus IN ('CO','CL')", getC_ProjectLine_ID());
 		setCostOrderedAmt(amtQty[0]);
 		setCostOrderedQty(amtQty[1]);
 	}	//	recalcCostOrdered
@@ -646,7 +642,7 @@ public class MProjectLine extends X_C_ProjectLine
 		BigDecimal[] amtQty = getDocumentAmtQty(
 			"SELECT COALESCE(SUM(il.LineNetAmt),0), COALESCE(SUM(il.QtyInvoiced),0) "
 			+ "FROM " + MInvoiceLine.Table_Name + " il JOIN " + MInvoice.Table_Name + " i ON i.C_Invoice_ID=il.C_Invoice_ID "
-			+ "WHERE il.C_ProjectLine_ID=? AND i.IsSOTrx='Y' AND i.DocStatus IN " + DOCSTATUS_DONE, getC_ProjectLine_ID());
+			+ "WHERE il.C_ProjectLine_ID=? AND i.IsSOTrx='Y' AND i.DocStatus IN ('CO','CL')", getC_ProjectLine_ID());
 		setInvoicedAmt(amtQty[0]);
 		setInvoicedQty(amtQty[1]);
 	}	//	recalcSalesInvoiced
@@ -657,7 +653,7 @@ public class MProjectLine extends X_C_ProjectLine
 		BigDecimal[] amtQty = getDocumentAmtQty(
 			"SELECT COALESCE(SUM(il.LineNetAmt),0), COALESCE(SUM(il.QtyInvoiced),0) "
 			+ "FROM " + MInvoiceLine.Table_Name + " il JOIN " + MInvoice.Table_Name + " i ON i.C_Invoice_ID=il.C_Invoice_ID "
-			+ "WHERE il.C_ProjectLine_ID=? AND i.IsSOTrx='N' AND i.DocStatus IN " + DOCSTATUS_DONE, getC_ProjectLine_ID());
+			+ "WHERE il.C_ProjectLine_ID=? AND i.IsSOTrx='N' AND i.DocStatus IN ('CO','CL')", getC_ProjectLine_ID());
 		setCostInvoicedAmt(amtQty[0]);
 		setCostInvoicedQty(amtQty[1]);
 	}	//	recalcCostInvoiced
@@ -669,7 +665,7 @@ public class MProjectLine extends X_C_ProjectLine
 			"SELECT COALESCE(SUM(iol.MovementQty*COALESCE(ol.PriceActual,0)),0), COALESCE(SUM(iol.MovementQty),0) "
 			+ "FROM " + MInOutLine.Table_Name + " iol JOIN " + MInOut.Table_Name + " io ON io.M_InOut_ID=iol.M_InOut_ID "
 			+ "LEFT JOIN " + MOrderLine.Table_Name + " ol ON ol.C_OrderLine_ID=iol.C_OrderLine_ID "
-			+ "WHERE iol.C_ProjectLine_ID=? AND io.IsSOTrx='N' AND io.DocStatus IN " + DOCSTATUS_DONE, getC_ProjectLine_ID());
+			+ "WHERE iol.C_ProjectLine_ID=? AND io.IsSOTrx='N' AND io.DocStatus IN ('CO','CL')", getC_ProjectLine_ID());
 		setCostReceivedAmt(amtQty[0]);
 		setCostReceivedQty(amtQty[1]);
 	}	//	recalcCostReceived
