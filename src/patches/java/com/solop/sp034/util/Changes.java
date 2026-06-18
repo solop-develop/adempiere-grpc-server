@@ -92,6 +92,6 @@ public interface Changes {
 	/**	Publication Code: Publication Code */
 	String SP034_PublicationCode = "SP034_PublicationCode";
 	/** Web Store Asset Application Type*/
-	String WebStoreAsset_ApplicationType = "SP034_WebStoreAsset";
+	String WebStoreAsset_ApplicationType = "WSA";
 
 }
