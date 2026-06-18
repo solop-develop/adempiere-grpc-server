@@ -965,7 +965,6 @@ public class ProductInfoLogic {
 
 		int count = CountUtil.countRecords(sql, "M_PRODUCT_STOCK_V", filtersList);
 
-
 		ListWarehouseStocksResponse.Builder builderList = ListWarehouseStocksResponse.newBuilder()
 			.setRecordCount(count)
 		;
@@ -984,6 +983,8 @@ public class ProductInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;
@@ -1030,6 +1031,8 @@ public class ProductInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;
@@ -1076,6 +1079,8 @@ public class ProductInfoLogic {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 
 		return builderList;
@@ -1250,6 +1255,7 @@ public class ProductInfoLogic {
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+		int countRecords = 0;
 		try {
 			pstmt = DB.prepareStatement(sql, null);
 			// ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
@@ -1257,12 +1263,17 @@ public class ProductInfoLogic {
 			while (rs.next()) {
 				AvailableToPromise.Builder builder = ProductInfoConvert.convertAvaliableToPromise(rs);
 				builderList.addRecords(builder);
+				countRecords++;
 			}
 		} catch (SQLException e) {
 			throw new AdempiereException(e);
 		} finally {
 			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
+
+		builderList.setRecordCount(countRecords);
 
 		return builderList;
 	}
