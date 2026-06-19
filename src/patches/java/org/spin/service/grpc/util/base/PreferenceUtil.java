@@ -142,36 +142,61 @@ public class PreferenceUtil {
 
 
 	/**
-	 * Normalise a language string into a valid {@code AD_Language} code.
-	 * <ul>
-	 *   <li>{@code "es_MX"} / {@code "en_US"} (full code) → returned as-is
-	 *       when present in {@code AD_Language}.</li>
-	 *   <li>{@code "es"} / {@code "en"} (ISO 2-char) → resolved to the
-	 *       system/base AD_Language for that ISO.</li>
-	 *   <li>{@code "Español (MX)"} (display name) or any other unknown
-	 *       string → null. Callers should fall back to a system default.</li>
-	 * </ul>
+	 * Normalise a language string into a valid {@code AD_Language} code by a
+	 * tiered lookup against {@code AD_Language}. The dispatcher chooses the
+	 * column to match by the length of the input:
+	 *
+	 * <ol>
+	 *   <li><b>2-char ISO</b> ({@code "es"}, {@code "en"}) → matched against
+	 *       {@code LanguageISO}, returning the system/base AD_Language for
+	 *       that ISO. This handles legacy data where the Vue language
+	 *       dropdown stored only the ISO code.</li>
+	 *   <li><b>Exact AD_Language code</b> ({@code "es_MX"}, {@code "en_US"})
+	 *       → matched against {@code AD_Language}. Fast happy path.</li>
+	 *   <li><b>Anything else</b> (e.g. {@code "Español (MX)"}, the display
+	 *       name written by the ZK UI login flow) → matched against
+	 *       {@code Name} or {@code PrintName}. This is the recovery path
+	 *       for legacy display-name data already in the table.</li>
+	 * </ol>
+	 *
+	 * Returns null when no tier produces a match — callers fall back to a
+	 * system default.
 	 */
 	private static String normalizeLanguageCode(String input) {
 		if (Util.isEmpty(input, true)) {
 			return null;
 		}
-		if (input.length() == 2) {
+		String trimmed = input.trim();
+
+		if (trimmed.length() == 2) {
 			return DB.getSQLValueString(
 				null,
 				"SELECT AD_Language FROM AD_Language "
 					+ "WHERE UPPER(LanguageISO) = UPPER(?) "
 					+ "AND (IsSystemLanguage = 'Y' OR IsBaseLanguage = 'Y') "
 					+ "AND ROWNUM = 1",
-				input
+				trimmed
 			);
 		}
-		int matches = DB.getSQLValue(
+
+		String code = DB.getSQLValueString(
 			null,
-			"SELECT COUNT(*) FROM AD_Language WHERE UPPER(AD_Language) = UPPER(?)",
-			input
+			"SELECT AD_Language FROM AD_Language "
+				+ "WHERE UPPER(AD_Language) = UPPER(?) "
+				+ "AND ROWNUM = 1",
+			trimmed
 		);
-		return matches > 0 ? input : null;
+		if (!Util.isEmpty(code, true)) {
+			return code;
+		}
+
+		return DB.getSQLValueString(
+			null,
+			"SELECT AD_Language FROM AD_Language "
+				+ "WHERE (UPPER(Name) = UPPER(?) OR UPPER(PrintName) = UPPER(?)) "
+				+ "AND ROWNUM = 1",
+			trimmed, trimmed
+		);
 	}
 
 
