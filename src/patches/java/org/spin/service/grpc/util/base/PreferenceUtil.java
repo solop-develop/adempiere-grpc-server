@@ -21,7 +21,6 @@ import java.util.List;
 import org.adempiere.core.domains.models.I_AD_Preference;
 import org.compiere.model.MPreference;
 import org.compiere.model.Query;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -142,61 +141,13 @@ public class PreferenceUtil {
 
 
 	/**
-	 * Normalise a language string into a valid {@code AD_Language} code by a
-	 * tiered lookup against {@code AD_Language}. The dispatcher chooses the
-	 * column to match by the length of the input:
-	 *
-	 * <ol>
-	 *   <li><b>2-char ISO</b> ({@code "es"}, {@code "en"}) → matched against
-	 *       {@code LanguageISO}, returning the system/base AD_Language for
-	 *       that ISO. This handles legacy data where the Vue language
-	 *       dropdown stored only the ISO code.</li>
-	 *   <li><b>Exact AD_Language code</b> ({@code "es_MX"}, {@code "en_US"})
-	 *       → matched against {@code AD_Language}. Fast happy path.</li>
-	 *   <li><b>Anything else</b> (e.g. {@code "Español (MX)"}, the display
-	 *       name written by the ZK UI login flow) → matched against
-	 *       {@code Name} or {@code PrintName}. This is the recovery path
-	 *       for legacy display-name data already in the table.</li>
-	 * </ol>
-	 *
-	 * Returns null when no tier produces a match — callers fall back to a
-	 * system default.
+	 * Thin wrapper around {@link MPreference#normalizeLanguageCode(String)}
+	 * so the tiered lookup against {@code AD_Language} lives in a single
+	 * place. Returns the canonical {@code AD_Language} code, or null when
+	 * the input does not match any row.
 	 */
 	private static String normalizeLanguageCode(String input) {
-		if (Util.isEmpty(input, true)) {
-			return null;
-		}
-		String trimmed = input.trim();
-
-		if (trimmed.length() == 2) {
-			return DB.getSQLValueString(
-				null,
-				"SELECT AD_Language FROM AD_Language "
-					+ "WHERE UPPER(LanguageISO) = UPPER(?) "
-					+ "AND (IsSystemLanguage = 'Y' OR IsBaseLanguage = 'Y') "
-					+ "AND ROWNUM = 1",
-				trimmed
-			);
-		}
-
-		String code = DB.getSQLValueString(
-			null,
-			"SELECT AD_Language FROM AD_Language "
-				+ "WHERE UPPER(AD_Language) = UPPER(?) "
-				+ "AND ROWNUM = 1",
-			trimmed
-		);
-		if (!Util.isEmpty(code, true)) {
-			return code;
-		}
-
-		return DB.getSQLValueString(
-			null,
-			"SELECT AD_Language FROM AD_Language "
-				+ "WHERE (UPPER(Name) = UPPER(?) OR UPPER(PrintName) = UPPER(?)) "
-				+ "AND ROWNUM = 1",
-			trimmed, trimmed
-		);
+		return MPreference.normalizeLanguageCode(input);
 	}
 
 
