@@ -276,13 +276,13 @@ public class Security extends SecurityImplBase {
 		// Session values
 		Session.Builder builder = Session.newBuilder();
 		final String bearerToken = SessionManager.createSessionAndGetToken(
-				currentSession.getWebSession(),
-				language,
-				role.getAD_Role_ID(),
-				userId,
-				currentSession.getAD_Org_ID(),
-				warehouseId,
-				isOpenID
+			currentSession.getWebSession(),
+			language,
+			role.getAD_Role_ID(),
+			userId,
+			currentSession.getAD_Org_ID(),
+			warehouseId,
+			isOpenID
 		);
 
 		// Update Keycloak session cache (so next request finds new session)
@@ -290,7 +290,12 @@ public class Security extends SecurityImplBase {
 
 		// Update session preferences
 		PreferenceUtil.saveSessionPreferences(
-				userId, language, role.getAD_Role_ID(), role.getAD_Client_ID(), currentSession.getAD_Org_ID(), warehouseId
+			userId,
+			language,
+			role.getAD_Role_ID(),
+			role.getAD_Client_ID(),
+			currentSession.getAD_Org_ID(),
+			warehouseId
 		);
 
 		builder.setToken(bearerToken);
