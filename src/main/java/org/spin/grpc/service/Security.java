@@ -17,6 +17,7 @@ package org.spin.grpc.service;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -250,16 +251,24 @@ public class Security extends SecurityImplBase {
 
 	private Session.Builder setSessionAttribute(SetSessionAttributeRequest request) {
 		Properties context = Env.getCtx();
-		//	Language
+
+		// Collect only the attributes the caller actually sent. The session
+		// keeps the previous values for anything that is not in the
+		// payload, and AD_Preference is not rewritten with stale data.
+		Map<String, String> preferencesToPersist = new LinkedHashMap<>();
+
+		// language
 		String language = Env.getAD_Language(context);
 		if (!Util.isEmpty(request.getLanguage(), true)) {
 			language = SessionManager.getDefaultLanguage(request.getLanguage());
+			preferencesToPersist.put(PreferenceUtil.P_LANGUAGE, language);
 		}
 
 		// warehouse
 		int warehouseId = Env.getContextAsInt(context, "#M_Warehouse_ID");
 		if (request.getWarehouseId() > 0) {
 			warehouseId = request.getWarehouseId();
+			preferencesToPersist.put(PreferenceUtil.P_WAREHOUSE, NumberManager.getIntToString(warehouseId));
 		}
 
 		MSession currentSession = MSession.get(context, false);
@@ -288,15 +297,8 @@ public class Security extends SecurityImplBase {
 		// Update Keycloak session cache (so next request finds new session)
 		updateKeycloakCacheIfNeeded(bearerToken);
 
-		// Update session preferences
-		PreferenceUtil.saveSessionPreferences(
-			userId,
-			language,
-			role.getAD_Role_ID(),
-			role.getAD_Client_ID(),
-			currentSession.getAD_Org_ID(),
-			warehouseId
-		);
+		// Persist only what the request brought; no-op when payload is empty.
+		PreferenceUtil.saveSessionPreferences(userId, preferencesToPersist);
 
 		builder.setToken(bearerToken);
 		return builder;
