@@ -21,6 +21,7 @@ import java.util.List;
 import org.adempiere.core.domains.models.I_AD_Preference;
 import org.compiere.model.MPreference;
 import org.compiere.model.Query;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -122,11 +123,55 @@ public class PreferenceUtil {
 
 
 	/**
-	 * Get the user's preferred language (AD_Language code, e.g. {@code es_VE}).
-	 * Returns null if the user has no language preference set.
+	 * Get the user's preferred language as a valid {@code AD_Language} code
+	 * (e.g. {@code es_VE}). Returns null when the preference is missing,
+	 * blank, or when the stored value does not normalise to any row in
+	 * {@code AD_Language} — this last case protects against legacy data
+	 * where the human-readable name (e.g. "Español (MX)") was saved into
+	 * {@code AD_Preference.Value} instead of the language code, which
+	 * downstream services then forward as a query parameter and break.
+	 *
+	 * 2-char ISO codes (e.g. {@code "es"}, {@code "en"}) are accepted and
+	 * resolved to the matching system/base AD_Language.
 	 */
 	public static String getLanguagePreference(int userId) {
-		return getPreferenceValue(userId, P_LANGUAGE);
+		return normalizeLanguageCode(
+			getPreferenceValue(userId, P_LANGUAGE)
+		);
+	}
+
+
+	/**
+	 * Normalise a language string into a valid {@code AD_Language} code.
+	 * <ul>
+	 *   <li>{@code "es_MX"} / {@code "en_US"} (full code) → returned as-is
+	 *       when present in {@code AD_Language}.</li>
+	 *   <li>{@code "es"} / {@code "en"} (ISO 2-char) → resolved to the
+	 *       system/base AD_Language for that ISO.</li>
+	 *   <li>{@code "Español (MX)"} (display name) or any other unknown
+	 *       string → null. Callers should fall back to a system default.</li>
+	 * </ul>
+	 */
+	private static String normalizeLanguageCode(String input) {
+		if (Util.isEmpty(input, true)) {
+			return null;
+		}
+		if (input.length() == 2) {
+			return DB.getSQLValueString(
+				null,
+				"SELECT AD_Language FROM AD_Language "
+					+ "WHERE UPPER(LanguageISO) = UPPER(?) "
+					+ "AND (IsSystemLanguage = 'Y' OR IsBaseLanguage = 'Y') "
+					+ "AND ROWNUM = 1",
+				input
+			);
+		}
+		int matches = DB.getSQLValue(
+			null,
+			"SELECT COUNT(*) FROM AD_Language WHERE UPPER(AD_Language) = UPPER(?)",
+			input
+		);
+		return matches > 0 ? input : null;
 	}
 
 
@@ -239,9 +284,16 @@ public class PreferenceUtil {
 					String.valueOf(warehouseId)
 				);
 			} else if (attributeName.equals(PreferenceUtil.P_LANGUAGE)) {
-				preference.setValue(
-					language
-				);
+				String normalized = normalizeLanguageCode(language);
+				if (Util.isEmpty(normalized, true)) {
+					// Caller passed a value that is not a recognised
+					// AD_Language code (typically the human-readable
+					// display name like "Español (MX)"). Skip the save so
+					// we do not overwrite the existing row with junk —
+					// the next login falls back to the system default.
+					continue;
+				}
+				preference.setValue(normalized);
 			}
 			preference.save();
 		}
