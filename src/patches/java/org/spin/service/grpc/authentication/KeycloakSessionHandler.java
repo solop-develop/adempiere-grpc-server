@@ -6,7 +6,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MPreference;
 import org.compiere.model.MRole;
 import org.compiere.model.MSession;
-import org.compiere.model.MUser;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -241,12 +240,6 @@ public class KeycloakSessionHandler {
 				language = pref.getValue();
 			} else if (PreferenceUtil.P_WAREHOUSE.equals(pref.getAttribute())) {
 				warehouseId = Integer.parseInt(pref.getValue());
-			}
-		}
-		if (Util.isEmpty(language, true)) {
-			MUser user = MUser.get(Env.getCtx(), userId);
-			if (user != null && !Util.isEmpty(user.getAD_Language(), true)) {
-				language = user.getAD_Language();
 			}
 		}
 		if (Util.isEmpty(language, true)) {
