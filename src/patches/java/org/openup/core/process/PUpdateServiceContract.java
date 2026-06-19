@@ -15,7 +15,7 @@
  * or via info@adempiere.net or http://www.adempiere.net/license.html         *
  *****************************************************************************/
 
-package org.openup.process;
+package org.openup.core.process;
 
 
 import com.eevolution.model.MServiceType;
@@ -35,7 +35,6 @@ import org.compiere.util.Env;
 import org.eevolution.context.service.infrastructure.domain.entities.MSContract;
 import org.eevolution.context.service.infrastructure.domain.entities.MSContractLine;
 import org.openup.core.model.MSContractReason;
-import org.openup.core.process.PUpdateServiceContractAbstract;
 
 import java.util.List;
 
