@@ -164,6 +164,11 @@ public class ProductInfoConvert {
 					I_M_Product.COLUMNNAME_IsActive
 				)
 			)
+			.setDiscontinued(
+				rs.getBoolean(
+					I_M_Product.COLUMNNAME_Discontinued
+				)
+			)
 		;
 
 		if (warhouseId > 0) {

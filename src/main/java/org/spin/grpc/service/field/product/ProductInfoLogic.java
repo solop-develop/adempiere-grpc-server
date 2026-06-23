@@ -389,7 +389,7 @@ public class ProductInfoLogic {
 		Properties context = Env.getCtx();
 
 		String sqlQuery = "SELECT "
-			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
+			+ "p.M_Product_ID, p.UUID, p.Discontinued, "
 			+ "p.IsStocked AS IsStocked, "
 			+ "pc.Name AS M_Product_Category_ID, "
 			+ "pcl.Name AS M_Product_Class_ID, "
@@ -564,7 +564,7 @@ public class ProductInfoLogic {
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 
 		String sqlQuery = "SELECT "
-			+ "p.M_Product_ID, p.UUID, " // + "p.Discontinued, "
+			+ "p.M_Product_ID, p.UUID, p.Discontinued, "
 			+ "p.IsStocked AS IsStocked, "
 			+ "pc.Name AS M_Product_Category_ID, "
 			+ "pcl.Name AS M_Product_Class_ID, "
@@ -886,7 +886,9 @@ public class ProductInfoLogic {
 
 		//	Add Order By
 		String sqlOrderBy = " ORDER BY ";
-		if (productCategoryId > 0) {
+		// Order by category name only when no category is selected (to group by
+		// category); when a category is filtered, all rows share it, so it adds nothing.
+		if (productCategoryId <= 0) {
 			sqlOrderBy += " pc.Name, ";
 		}
 		sqlOrderBy += " p.Value ";
