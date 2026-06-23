@@ -17,6 +17,13 @@
 package org.spin.sp014.notification.support;
 
 import org.adempiere.core.domains.models.X_AD_UserMail;
+import org.commonmark.Extension;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.task.list.items.TaskListItemsExtension;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MClient;
 import org.compiere.model.MEMailConfig;
@@ -33,6 +40,8 @@ import org.spin.sp014.util.ERPCloundNotification;
 import org.spin.sp014.util.NotificationParser;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Yamel Senih, yamel.senih@solopsoftware.com, Solop <a href="http://www.solopsoftware.com">solopsoftware.com</a>
@@ -44,6 +53,14 @@ public class EMailSender implements INotification {
 	private int registrationId = 0;
 	/** Static Logger					*/
 	private CLogger log = CLogger.getCLogger (EMailSender.class);
+	/** Markdown to HTML rendering (CommonMark + GFM: tables, strikethrough, task lists, autolink) */
+	private static final List<Extension> MARKDOWN_EXTENSIONS = Arrays.asList(
+			TablesExtension.create(),
+			StrikethroughExtension.create(),
+			TaskListItemsExtension.create(),
+			AutolinkExtension.create());
+	private static final Parser MARKDOWN_PARSER = Parser.builder().extensions(MARKDOWN_EXTENSIONS).build();
+	private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(MARKDOWN_EXTENSIONS).build();
 	
 	@Override
 	public int getAppRegistrationId() {
@@ -121,7 +138,8 @@ public class EMailSender implements INotification {
 					}
 					//	Subject
 					email.setSubject(notification.getDescription());
-					StringBuffer textWithSignature = new StringBuffer(MarkdownUtil.toHtml(notification.getText()));
+					String markdownText = Optional.ofNullable(notification.getText()).orElse("");
+					StringBuffer textWithSignature = new StringBuffer(HTML_RENDERER.render(MARKDOWN_PARSER.parse(markdownText)));
 					String notificationSignature = ERPCloundNotification.getNotificationSignature(notification);
 					if(!Util.isEmpty(notificationSignature)) {
 						notificationSignature = NotificationParser.newInstance(notification.getCtx())
