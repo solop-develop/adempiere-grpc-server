@@ -15,12 +15,16 @@
 package org.spin.grpc.service.field.product;
 
 import java.sql.PreparedStatement;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -89,6 +93,7 @@ import org.spin.service.grpc.util.db.CountUtil;
 import org.spin.service.grpc.util.db.LimitUtil;
 import org.spin.service.grpc.util.db.ParameterUtil;
 import org.spin.service.grpc.util.value.BooleanManager;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.TimeManager;
 
@@ -1097,30 +1102,32 @@ public class ProductInfoLogic {
 		int productId = request.getProductId();
 		int warehouseId = request.getWarehouseId();
 
-
 		//	Create the SELECT ..UNION. clause
 		//  This is done in-line rather than using prepareTable() so we can add a running sum to the data.
 		String sql;
-		if (!isShowDetail)
-			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, 0 AS ID, now() AS Date,"
+		if (!isShowDetail) {
+			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, 0 AS ID, null AS Date,"
 				+ " sum(s.QtyOnHand) AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
 				+ " null AS sumPASI," // " s.PASI,"
 				+ " 0 AS ASI,"
 				+ " null AS BP_Name, null AS DocumentNo, 10 AS SeqNo";
-		else
-			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, s.M_AttributeSetInstance_ID AS ID, now() AS Date,"
+		}
+		else {
+			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, s.M_AttributeSetInstance_ID AS ID, null AS Date,"
 				+ " s.QtyOnHand AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
 				+ " CASE WHEN s.PASI  = '' THEN '{' || COALESCE(s.M_AttributeSetInstance_ID,0) || '}' ELSE s.PASI END AS sumPASI,"
 				+ " COALESCE(M_AttributeSetInstance_ID,0) AS ASI,"
 				+ " null AS BP_Name, null AS DocumentNo,  10 AS SeqNo";
+		}
 		sql += " FROM (SELECT M_Product_ID, M_Locator_ID, QtyOnHand, QtyReserved, QtyOrdered,"
 			+ 		 " COALESCE(productAttribute(M_AttributeSetInstance_ID)::varchar, '') AS PASI,"
 			+		 " COALESCE(M_AttributeSetInstance_ID,0) AS M_AttributeSetInstance_ID FROM M_Storage) s "
 			+ " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID)"
 			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
 			+ " AND s.M_Product_ID=" + productId;
-		if (warehouseId > 0)
+		if (warehouseId > 0) {
 			sql += " AND l.M_Warehouse_ID=" + warehouseId;
+		}
 		//if (m_M_AttributeSetInstance_ID > 0)
 		//	sql += " AND s.M_AttributeSetInstance_ID=?";
 		if (!isShowDetail) {
@@ -1148,8 +1155,9 @@ public class ProductInfoLogic {
 		if (warehouseId > 0) {
 			sql += " AND w.M_Warehouse_ID=" + warehouseId;
 		}
-		//if (m_M_AttributeSetInstance_ID > 0)
+		//if (m_M_AttributeSetInstance_ID > 0) {
 		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
+		//}
 		//sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator";
 
 		sql += " UNION ALL ";
@@ -1238,11 +1246,10 @@ public class ProductInfoLogic {
 		if (warehouseId > 0) {
 			sql += " AND w.M_Warehouse_ID=" + warehouseId;
 		}
-		//if (m_M_AttributeSetInstance_ID > 0)
+		//if (m_M_AttributeSetInstance_ID > 0) {
 		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
+		//}
 		sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator)";
-
-
 
 		// List<Object> filtersList = new ArrayList<>();
 		// filtersList.add(
@@ -1256,12 +1263,32 @@ public class ProductInfoLogic {
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		int countRecords = 0;
+		// Running Available to Promise balance per warehouse (ledger, like ZK).
+		// Rows come ordered as stock first and then documents, so the balance
+		// accumulates the per-row ATP (on hand + ordered - reserved) and is
+		// reset for each warehouse.
+		Map<String, BigDecimal> runningBalanceByWarehouse = new HashMap<String, BigDecimal>();
 		try {
 			pstmt = DB.prepareStatement(sql, null);
 			// ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				AvailableToPromise.Builder builder = ProductInfoConvert.convertAvaliableToPromise(rs);
+
+				String warehouseKey = builder.getName();
+				BigDecimal rowAvailableToPromise = Optional.ofNullable(
+					NumberManager.getBigDecimalFromString(
+						builder.getAvailableToPromiseQuantity()
+					)
+				).orElse(BigDecimal.ZERO);
+				BigDecimal runningBalance = runningBalanceByWarehouse.getOrDefault(
+					warehouseKey, BigDecimal.ZERO
+				).add(rowAvailableToPromise);
+				runningBalanceByWarehouse.put(warehouseKey, runningBalance);
+				builder.setAvailableQuantity(
+					NumberManager.getBigDecimalToString(runningBalance)
+				);
+
 				builderList.addRecords(builder);
 				countRecords++;
 			}

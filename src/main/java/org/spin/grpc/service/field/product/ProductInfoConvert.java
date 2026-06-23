@@ -17,6 +17,7 @@ package org.spin.grpc.service.field.product;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_C_Order;
@@ -502,11 +503,6 @@ public class ProductInfoConvert {
 					rs.getString("Locator")
 				)
 			)
-			.setDate(
-				TimeManager.getProtoTimestampFromTimestamp(
-					rs.getTimestamp(5)
-				)
-			)
 			.setAvailableQuantity(
 				NumberManager.getBigDecimalToString(
 					availableQuantiy
@@ -543,6 +539,15 @@ public class ProductInfoConvert {
 				)
 			)
 		;
+
+		// Only set the date when there is a real one (e.g. documents).
+		// Stock rows have no date, so the field is left empty instead of "now".
+		Timestamp dateValue = rs.getTimestamp(5);
+		if (dateValue != null) {
+			builder.setDate(
+				TimeManager.getProtoTimestampFromTimestamp(dateValue)
+			);
+		}
 
 		return builder;
 	}
