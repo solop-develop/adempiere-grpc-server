@@ -330,6 +330,7 @@ message ProductInfo {
 	string document_note = 27;
 	bool is_active = 28;
 	string currency = 29; // TODO: Load with price list version
+	bool discontinued = 30;
 }
 message GetProductInfoRequest {
 	int32 id = 1;
