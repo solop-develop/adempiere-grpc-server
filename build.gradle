@@ -100,6 +100,12 @@ dependencies {
 	implementation "com.solop.adempiere.tools:core-tools:core-1.4.2-1.0.0"
 	implementation "com.solop.adempiere.localization:luy:core-1.4.22-1.0.5"
 	implementation "com.solop.adempiere.tools:payroll-light:core-1.5.2-1.0.0"
+	//	Markdown to HTML rendering (+ GFM extensions)
+	implementation "com.vladsch.flexmark:flexmark:0.42.12"
+	implementation "com.vladsch.flexmark:flexmark-ext-gfm-tables:0.42.12"
+	implementation "com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.42.12"
+	implementation "com.vladsch.flexmark:flexmark-ext-gfm-tasklist:0.42.12"
+	implementation "com.vladsch.flexmark:flexmark-ext-autolink:0.42.12"
 }
 
 configurations.all {
