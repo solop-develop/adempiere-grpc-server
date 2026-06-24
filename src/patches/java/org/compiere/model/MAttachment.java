@@ -938,19 +938,25 @@ public class MAttachment extends X_AD_Attachment
 	 */
 	protected boolean beforeDelete () {
 		if(AttachmentUtil.getInstance().isValidForClient(getAD_Client_ID())) {
-			items.stream().forEach(item -> {
-				try {
-					AttachmentUtil.getInstance()
-						.clear()
-						.withAttachmentId(getAD_Attachment_ID())
-						.withFileName(item.getName())
-						.withClientId(getAD_Client_ID())
-						.withTansactionName(get_TrxName())
-						.deleteAttachment();
-				} catch (Exception e) {
-					log.warning("Error deleting attachment: " + e.getLocalizedMessage());
-				}
-			});
+			AttachmentUtil.getInstance()
+				.clear()
+				.withAttachmentId(getAD_Attachment_ID())
+				.withClientId(getAD_Client_ID())
+				.withTansactionName(get_TrxName())
+				.getFileNameListFromAttachment()
+				.forEach(fileName -> {
+					try {
+						AttachmentUtil.getInstance()
+							.clear()
+							.withAttachmentId(getAD_Attachment_ID())
+							.withFileName(fileName)
+							.withClientId(getAD_Client_ID())
+							.withTansactionName(get_TrxName())
+							.deleteAttachment();
+					} catch (Exception e) {
+						log.warning("Error deleting attachment: " + e.getLocalizedMessage());
+					}
+				});
 			return true;
 		} else {
 			if (isStoreAttachmentsOnFileSystem) {
