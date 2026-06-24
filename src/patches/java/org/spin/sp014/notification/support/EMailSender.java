@@ -60,7 +60,10 @@ public class EMailSender implements INotification {
 			TaskListItemsExtension.create(),
 			AutolinkExtension.create());
 	private static final Parser MARKDOWN_PARSER = Parser.builder().extensions(MARKDOWN_EXTENSIONS).build();
-	private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(MARKDOWN_EXTENSIONS).build();
+	private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder()
+			.extensions(MARKDOWN_EXTENSIONS)
+			.softbreak("<br />\n")
+			.build();
 	
 	@Override
 	public int getAppRegistrationId() {
