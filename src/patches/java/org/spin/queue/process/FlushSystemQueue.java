@@ -17,6 +17,8 @@
 
 package org.spin.queue.process;
 
+import org.adempiere.core.domains.models.I_AD_NotificationRecipient;
+import org.adempiere.core.domains.models.I_AD_NotificationUpdates;
 import org.adempiere.core.domains.models.I_AD_Queue;
 import org.compiere.model.MAttachment;
 import org.compiere.model.Query;
@@ -135,11 +137,28 @@ public class FlushSystemQueue extends FlushSystemQueueAbstract {
 		if (attachment != null) {
 			attachment.delete(true);
 		}
+		deleteNotificationChildren(I_AD_NotificationUpdates.Table_Name, notification.getAD_NotificationQueue_ID(), transactionName);
+		deleteNotificationChildren(I_AD_NotificationRecipient.Table_Name, notification.getAD_NotificationQueue_ID(), transactionName);
 		notification.delete(true);
 		MADQueue queue = new MADQueue(getCtx(), queueId, transactionName);
 		if (queue.get_ID() > 0) {
 			queue.delete(true);
 		}
+	}
+
+	/**
+	 * Delete all rows of a notification child table referenced by a notification queue.
+	 * Active and inactive rows are removed to avoid leaving orphan references.
+	 * @param tableName child table name
+	 * @param notificationQueueId notification queue id
+	 * @param transactionName transaction name
+	 */
+	private void deleteNotificationChildren(String tableName, int notificationQueueId, String transactionName) {
+		new Query(getCtx(), tableName,
+				I_AD_NotificationRecipient.COLUMNNAME_AD_NotificationQueue_ID + " = ?", transactionName)
+				.setParameters(notificationQueueId)
+				.list()
+				.forEach(child -> child.delete(true));
 	}
 
 	/**
