@@ -230,16 +230,15 @@ public class CashManagementUtil {
 		paymentBankFrom.processIt(MPayment.DOCACTION_Complete);
 		paymentBankFrom.saveEx();
 		log.fine("@C_Payment_ID@ @IsReceipt@: ");
-		//	Add to current bank statement for account
+		//	Add the withdrawal as a line of the bank statement being closed, so the cash register nets to zero in the same document
 		if(isReconciled) {
-			MBankStatementLine bsl = MBankStatement.addPayment(paymentBankFrom);
+			MBankStatementLine bsl = addPaymentToBankStatement(bankStatement, paymentBankFrom);
 			if(bsl != null) {
-				//	Set POS organization on bank statement line and its bank statement
+				//	Set POS organization on the bank statement line
 				if(posOrgId > 0) {
-					updateBankStatementOrg(bsl, posOrgId);
+					bsl.setAD_Org_ID(posOrgId);
+					bsl.saveEx();
 				}
-				//	Name the generated statement by its document type (e.g. Retiro de Caja Generado: dd/mm/yyyy)
-				applyGeneratedStatementName(bsl, paymentBankFrom);
 				log.fine("@C_Payment_ID@: " + paymentBankFrom.getDocumentNo()
 						+ " @Added@ @to@ [@AccountNo@ " + paymentBankFrom.getC_BankAccount().getAccountNo()
 						+ " @C_BankStatement_ID@ " + bsl.getC_BankStatement().getName() + "]");
@@ -258,11 +257,11 @@ public class CashManagementUtil {
 				sourcePayment.saveEx();
 			});
 		}
-		//	Add to current bank statement for account
+		//	Add to current cash deposit (bank statement) for account
 		if(isReconciled) {
 			MBankStatementLine bsl = MBankStatement.addPayment(paymentBankTo);
 			if(bsl != null) {
-				//	Set POS organization on bank statement line and its bank statement
+				//	Set POS organization on the bank statement line
 				if(posOrgId > 0) {
 					updateBankStatementOrg(bsl, posOrgId);
 				}
@@ -275,6 +274,28 @@ public class CashManagementUtil {
 		}
 		//	Return
 		log.fine("@Created@ (1) @From@ " + mBankFrom.getAccountNo()+ " @To@ " + mBankTo.getAccountNo() + " @Amt@ " + DisplayType.getNumberFormat(DisplayType.Amount).format(amount));
+	}
+
+	/**
+	 * Add a payment as a line of the given bank statement (the one being closed), instead of
+	 * generating a separate statement. Keeps the withdrawal inside the cash closing so its
+	 * balance nets to zero in the same document.
+	 * @param bankStatement statement being closed
+	 * @param payment payment to reconcile
+	 * @return created (or existing) statement line
+	 */
+	private static MBankStatementLine addPaymentToBankStatement(MBankStatement bankStatement, MPayment payment) {
+		//	Avoid duplicating if the payment is already on a statement
+		MBankStatementLine existingLine = payment.getBankStatementLine();
+		if(existingLine != null && existingLine.getC_BankStatement_ID() > 0) {
+			return existingLine;
+		}
+		MBankStatementLine bankStatementLine = new MBankStatementLine(bankStatement);
+		bankStatementLine.setPayment(payment);
+		bankStatementLine.setStatementLineDate(payment.getDateAcct());
+		bankStatementLine.setDateAcct(payment.getDateAcct());
+		bankStatementLine.saveEx();
+		return bankStatementLine;
 	}
 
 	/**
