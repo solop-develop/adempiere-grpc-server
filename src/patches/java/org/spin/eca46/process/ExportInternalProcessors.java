@@ -15,7 +15,7 @@
  * or via info@adempiere.net or http://www.adempiere.net/license.html         *
  *****************************************************************************/
 
-package org.spin.eca.process;
+package org.spin.eca46.process;
 
 import org.adempiere.core.domains.models.I_AD_AlertProcessor;
 import org.adempiere.core.domains.models.I_AD_Role;
@@ -34,7 +34,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.compiere.wf.MWorkflowProcessor;
 import org.eevolution.model.MProjectProcessor;
-import org.spin.eca46.process.ExportInternalProcessorsAbstract;
 import org.spin.eca46.util.support.Accounting;
 import org.spin.eca46.util.support.Alert;
 import org.spin.eca46.util.support.IExternalProcessor;
