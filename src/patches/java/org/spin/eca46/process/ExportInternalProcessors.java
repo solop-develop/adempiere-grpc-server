@@ -64,6 +64,9 @@ public class ExportInternalProcessors extends ExportInternalProcessorsAbstract {
 	
 	@Override
 	protected String doIt() throws Exception {
+		throw	new AdempiereException("Not Implemented");
+		//TODO: This process should implement correctly the new way to generate Token with scopes
+		/*
 		List<IProcessorEntity> processorsList = new ArrayList<>();
 		//	For Accounting Processor
 		new Query(getCtx(), I_C_AcctProcessor.Table_Name, null, get_TrxName())
@@ -120,9 +123,13 @@ public class ExportInternalProcessors extends ExportInternalProcessorsAbstract {
 			});
 		}
 		return "@Created@: " + counter.get();
+		*/
 	}
 	
 	private String getToken() {
+		throw	new AdempiereException("Not Implemented");
+		//TODO: This process should implement correctly the new way to generate Token with scopes
+		/*
 		try {
 			//	Validate user and password match
 			boolean match = new Query(getCtx(), I_AD_Role.Table_Name, 
@@ -149,5 +156,6 @@ public class ExportInternalProcessors extends ExportInternalProcessorsAbstract {
 		} catch (Exception e) {
 			throw new AdempiereException(e);
 		}
+		*/
 	}
 }
