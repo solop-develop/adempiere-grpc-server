@@ -89,7 +89,8 @@ public class CashManagementUtil {
 				//	Get default values
 				AtomicInteger depositBankAccountId = new AtomicInteger(cashAccount.getDepositBankAccount_ID());
 				AtomicBoolean reconcilePayments = new AtomicBoolean(true);
-				AtomicBoolean splitDeposits = new AtomicBoolean(false);
+				//	Default from cash account header; overridden by the withdrawal configuration when one matches
+				AtomicBoolean splitDeposits = new AtomicBoolean(cashAccount.isSplitDeposits());
 				AtomicReference<String> defaultTenderType = new AtomicReference<String>(cashAccount.getDepositTenderType());
 				if(combinationId > 0) {
 					MCBankAccountWithdrawal withdrawalConfiguration = new MCBankAccountWithdrawal(bankStatement.getCtx(), combinationId, bankStatement.get_TrxName());
