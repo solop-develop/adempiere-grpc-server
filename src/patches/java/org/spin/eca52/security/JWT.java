@@ -23,7 +23,9 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.adempiere.core.domains.models.I_AD_TokenClaimSetItem;
 import org.adempiere.core.domains.models.I_AD_TokenScope;
+import org.adempiere.core.domains.models.X_AD_TokenClaimSetItem;
 import org.adempiere.core.domains.models.X_AD_TokenDefinition;
 import org.adempiere.core.domains.models.X_AD_TokenScope;
 import org.adempiere.exceptions.AdempiereException;
@@ -44,9 +46,12 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -123,10 +128,11 @@ public class JWT implements IThirdPartyAccessGenerator {
 	 * @param userId
 	 * @param roleId
 	 * @param tokenProfileId profile used to expand scopes
+	 * @param tokenClaimSetId optional claim set whose active items are added as custom claims
 	 * @return signed JWT value
 	 */
 	@Override
-	public String generateToken(int userId, int roleId, int tokenProfileId) {
+	public String generateToken(int userId, int roleId, int tokenProfileId, int tokenClaimSetId) {
 		//	Validate user
 		if(userId < 0) {
 			throw new AdempiereException("@AD_User_ID@ @NotFound@");
@@ -152,7 +158,10 @@ public class JWT implements IThirdPartyAccessGenerator {
 		int clientId = Env.getAD_Client_ID(Env.getCtx());
 		SecretKey secretKey = getJWT_SecretKey(clientId);
 		long currentTimeMillis = System.currentTimeMillis();
-		JwtBuilder jwtBuilder = Jwts.builder()
+		JwtBuilder jwtBuilder = Jwts.builder();
+		//	Apply optional claim set first so custom claims cannot override reserved/system claims
+		applyClaimSet(jwtBuilder, tokenClaimSetId);
+		jwtBuilder
 			// .id(String.valueOf(session.getAD_Session_ID()))
 			.claim("AD_Client_ID", clientId)
 			.claim("AD_Org_ID", Env.getAD_Org_ID(Env.getCtx()))
@@ -244,6 +253,64 @@ public class JWT implements IThirdPartyAccessGenerator {
 		return scopes.stream()
 			.map(X_AD_TokenScope::getValue)
 			.collect(Collectors.joining(" "));
+	}
+
+	/**	Reserved/system claims that a claim set must never override	*/
+	private static final Set<String> RESERVED_CLAIMS = new HashSet<>(Arrays.asList(
+		"AD_Client_ID", "AD_Org_ID", "AD_Role_ID", "AD_User_ID", "M_Warehouse_ID",
+		"AD_Language", "token_use", "scope", "iat", "exp"
+	));
+
+	/**
+	 * Add the active items of a token claim set as custom claims.
+	 * Optional: when {@code tokenClaimSetId <= 0} nothing is added.
+	 * Reserved/system claims are never overridden.
+	 * @param jwtBuilder builder to enrich
+	 * @param tokenClaimSetId claim set to expand
+	 */
+	private void applyClaimSet(JwtBuilder jwtBuilder, int tokenClaimSetId) {
+		if(tokenClaimSetId <= 0) {
+			return;
+		}
+		List<X_AD_TokenClaimSetItem> items = new Query(Env.getCtx(), I_AD_TokenClaimSetItem.Table_Name,
+				I_AD_TokenClaimSetItem.COLUMNNAME_AD_TokenClaimSet_ID + " = ?", null)
+				.setParameters(tokenClaimSetId)
+				.setOnlyActiveRecords(true)
+				.<X_AD_TokenClaimSetItem>list();
+		for(X_AD_TokenClaimSetItem item : items) {
+			String key = item.getClaimKey();
+			if(Util.isEmpty(key, true) || RESERVED_CLAIMS.contains(key)) {
+				continue;
+			}
+			jwtBuilder.claim(key, parseClaimValue(item));
+		}
+	}
+
+	/**
+	 * Parse a claim value according to its {@link X_AD_TokenClaimSetItem#getAD_ClaimValueType()}.
+	 * @param item claim set item
+	 * @return value typed as String / Number / Boolean / parsed JSON
+	 */
+	private Object parseClaimValue(X_AD_TokenClaimSetItem item) {
+		String raw = item.getClaimValue();
+		String type = item.getAD_ClaimValueType();
+		if(raw == null) {
+			return null;
+		}
+		if(X_AD_TokenClaimSetItem.AD_CLAIMVALUETYPE_Number.equals(type)) {
+			return new BigDecimal(raw.trim());
+		}
+		if(X_AD_TokenClaimSetItem.AD_CLAIMVALUETYPE_Boolean.equals(type)) {
+			return Boolean.parseBoolean(raw.trim());
+		}
+		if(X_AD_TokenClaimSetItem.AD_CLAIMVALUETYPE_JSON.equals(type)) {
+			try {
+				return new ObjectMapper().readValue(raw, Object.class);
+			} catch (Exception e) {
+				throw new AdempiereException(e);
+			}
+		}
+		return raw;
 	}
 
 	@Override

@@ -39,6 +39,8 @@ public abstract class GenerateTokenForThirdPartyAccessAbstract extends SvrProces
 	public static final String ISREVOKEALLTOKENS = "IsRevokeAllTokens";
 	/**	Parameter Name for Token Profile	*/
 	public static final String AD_TOKENPROFILE_ID = "AD_TokenProfile_ID";
+	/**	Parameter Name for Token Claim Set	*/
+	public static final String AD_TOKENCLAIMSET_ID = "AD_TokenClaimSet_ID";
 	/**	Parameter Value for User/Contact	*/
 	private int userId;
 	/**	Parameter Value for Role	*/
@@ -47,6 +49,8 @@ public abstract class GenerateTokenForThirdPartyAccessAbstract extends SvrProces
 	private boolean isRevokeAllTokens;
 	/**	Parameter Value for Token Profile	*/
 	private int tokenProfileId;
+	/**	Parameter Value for Token Claim Set	*/
+	private int tokenClaimSetId;
 
 	@Override
 	protected void prepare() {
@@ -54,6 +58,7 @@ public abstract class GenerateTokenForThirdPartyAccessAbstract extends SvrProces
 		roleId = getParameterAsInt(AD_ROLE_ID);
 		isRevokeAllTokens = getParameterAsBoolean(ISREVOKEALLTOKENS);
 		tokenProfileId = getParameterAsInt(AD_TOKENPROFILE_ID);
+		tokenClaimSetId = getParameterAsInt(AD_TOKENCLAIMSET_ID);
 	}
 
 	/**	 Getter Parameter Value for User/Contact	*/
@@ -94,6 +99,16 @@ public abstract class GenerateTokenForThirdPartyAccessAbstract extends SvrProces
 	/**	 Setter Parameter Value for Token Profile	*/
 	protected void setTokenProfileId(int tokenProfileId) {
 		this.tokenProfileId = tokenProfileId;
+	}
+
+	/**	 Getter Parameter Value for Token Claim Set	*/
+	protected int getTokenClaimSetId() {
+		return tokenClaimSetId;
+	}
+
+	/**	 Setter Parameter Value for Token Claim Set	*/
+	protected void setTokenClaimSetId(int tokenClaimSetId) {
+		this.tokenClaimSetId = tokenClaimSetId;
 	}
 
 	/**	 Getter Parameter Value for Process ID	*/

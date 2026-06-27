@@ -27,9 +27,10 @@ public interface IThirdPartyAccessGenerator extends ITokenGenerator {
 	 * @param userId
 	 * @param roleId
 	 * @param tokenProfileId
+	 * @param tokenClaimSetId optional claim set whose items are added as custom claims
 	 * @return
 	 */
-	public String generateToken(int userId, int roleId, int tokenProfileId);
+	public String generateToken(int userId, int roleId, int tokenProfileId, int tokenClaimSetId);
 
 	/**
 	 * Validate Token
