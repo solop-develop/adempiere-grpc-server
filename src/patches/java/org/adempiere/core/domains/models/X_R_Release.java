@@ -34,7 +34,7 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20260624L;
+	private static final long serialVersionUID = 20260629L;
 
     /** Standard Constructor */
     public X_R_Release (Properties ctx, int R_Release_ID, String trxName)
@@ -42,7 +42,6 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
       super (ctx, R_Release_ID, trxName);
       /** if (R_Release_ID == 0)
         {
-			setMemo (null);
 			setR_Release_ID (0);
 			setTitle (null);
         } */
@@ -91,6 +90,47 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 	public String getMemo () 
 	{
 		return (String)get_Value(COLUMNNAME_Memo);
+	}
+
+	/** Set Processed.
+		@param Processed 
+		The document has been processed
+	  */
+	public void setProcessed (boolean Processed)
+	{
+		set_ValueNoCheck (COLUMNNAME_Processed, Boolean.valueOf(Processed));
+	}
+
+	/** Get Processed.
+		@return The document has been processed
+	  */
+	public boolean isProcessed () 
+	{
+		Object oo = get_Value(COLUMNNAME_Processed);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	/** Set Process Release.
+		@param ProcessRelease 
+		Process the release: close linked requests and mark as processed
+	  */
+	public void setProcessRelease (String ProcessRelease)
+	{
+		set_Value (COLUMNNAME_ProcessRelease, ProcessRelease);
+	}
+
+	/** Get Process Release.
+		@return Process the release: close linked requests and mark as processed
+	  */
+	public String getProcessRelease () 
+	{
+		return (String)get_Value(COLUMNNAME_ProcessRelease);
 	}
 
 	/** ReleaseType AD_Reference_ID=54537 */

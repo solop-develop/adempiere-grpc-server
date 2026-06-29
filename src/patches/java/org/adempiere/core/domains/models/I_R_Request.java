@@ -413,6 +413,15 @@ public interface I_R_Request
 	/** Get End of Execution Date	  */
 	public Timestamp getDateInternalDelivery();
 
+    /** Column name DateInternalReject */
+    public static final String COLUMNNAME_DateInternalReject = "DateInternalReject";
+
+	/** Set Date Internal Reject	  */
+	public void setDateInternalReject (Timestamp DateInternalReject);
+
+	/** Get Date Internal Reject	  */
+	public Timestamp getDateInternalReject();
+
     /** Column name DateLastAction */
     public static final String COLUMNNAME_DateLastAction = "DateLastAction";
 
@@ -904,6 +913,24 @@ public interface I_R_Request
 	  */
 	public boolean isProcessed();
 
+    /** Column name QtyInternalDelivery */
+    public static final String COLUMNNAME_QtyInternalDelivery = "QtyInternalDelivery";
+
+	/** Set Qty Internal Delivery	  */
+	public void setQtyInternalDelivery (BigDecimal QtyInternalDelivery);
+
+	/** Get Qty Internal Delivery	  */
+	public BigDecimal getQtyInternalDelivery();
+
+    /** Column name QtyInternalReject */
+    public static final String COLUMNNAME_QtyInternalReject = "QtyInternalReject";
+
+	/** Set Qty Internal Reject	  */
+	public void setQtyInternalReject (BigDecimal QtyInternalReject);
+
+	/** Get Qty Internal Reject	  */
+	public BigDecimal getQtyInternalReject();
+
     /** Column name QtyInvoiced */
     public static final String COLUMNNAME_QtyInvoiced = "QtyInvoiced";
 
@@ -970,6 +997,15 @@ public interface I_R_Request
 	  * Direct internal record ID
 	  */
 	public int getRecord_ID();
+
+    /** Column name RejectDelivery */
+    public static final String COLUMNNAME_RejectDelivery = "RejectDelivery";
+
+	/** Set Reject Delivery	  */
+	public void setRejectDelivery (String RejectDelivery);
+
+	/** Get Reject Delivery	  */
+	public String getRejectDelivery();
 
     /** Column name RequestAmt */
     public static final String COLUMNNAME_RequestAmt = "RequestAmt";
@@ -1400,4 +1436,17 @@ public interface I_R_Request
 	  * Immutable Universally Unique Identifier
 	  */
 	public String getUUID();
+
+    /** Column name Value */
+    public static final String COLUMNNAME_Value = "Value";
+
+	/** Set Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public void setValue (String Value);
+
+	/** Get Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public String getValue();
 }
