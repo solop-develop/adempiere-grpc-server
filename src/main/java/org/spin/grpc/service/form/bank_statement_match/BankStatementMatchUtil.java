@@ -399,6 +399,14 @@ public class BankStatementMatchUtil {
 					+ "AND bsl.C_BankStatement_ID <> " + bankStatementId
 				+ ") "
 			;
+			//	Only show lines still pending to import or that belong to the statement
+			//	being reconciled; hides imported lines left over from a deleted statement
+			//	(C_BankStatement_ID null/other) that would otherwise duplicate movements.
+			whereClasueBankStatement += "AND ("
+					+ "COALESCE(I_IsImported, 'N') = 'N' "
+					+ "OR C_BankStatement_ID = " + bankStatementId
+				+ ") "
+			;
 		}
 
 		//	Match (skipped when isMultiPaymentMatch=true; the COALESCE filter below covers it)
