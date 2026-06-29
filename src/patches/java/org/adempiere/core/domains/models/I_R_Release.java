@@ -107,6 +107,32 @@ public interface I_R_Release
 	  */
 	public String getMemo();
 
+    /** Column name Processed */
+    public static final String COLUMNNAME_Processed = "Processed";
+
+	/** Set Processed.
+	  * The document has been processed
+	  */
+	public void setProcessed (boolean Processed);
+
+	/** Get Processed.
+	  * The document has been processed
+	  */
+	public boolean isProcessed();
+
+    /** Column name ProcessRelease */
+    public static final String COLUMNNAME_ProcessRelease = "ProcessRelease";
+
+	/** Set Process Release.
+	  * Process the release: close linked requests and mark as processed
+	  */
+	public void setProcessRelease (String ProcessRelease);
+
+	/** Get Process Release.
+	  * Process the release: close linked requests and mark as processed
+	  */
+	public String getProcessRelease();
+
     /** Column name ReleaseType */
     public static final String COLUMNNAME_ReleaseType = "ReleaseType";
 

@@ -40,7 +40,7 @@ public class X_R_Request extends PO implements I_R_Request, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20260624L;
+	private static final long serialVersionUID = 20260629L;
 
     /** Standard Constructor */
     public X_R_Request (Properties ctx, int R_Request_ID, String trxName)
@@ -705,6 +705,20 @@ public class X_R_Request extends PO implements I_R_Request, I_Persistent
 	public Timestamp getDateInternalDelivery () 
 	{
 		return (Timestamp)get_Value(COLUMNNAME_DateInternalDelivery);
+	}
+
+	/** Set Date Internal Reject.
+		@param DateInternalReject Date Internal Reject	  */
+	public void setDateInternalReject (Timestamp DateInternalReject)
+	{
+		set_ValueNoCheck (COLUMNNAME_DateInternalReject, DateInternalReject);
+	}
+
+	/** Get Date Internal Reject.
+		@return Date Internal Reject	  */
+	public Timestamp getDateInternalReject () 
+	{
+		return (Timestamp)get_Value(COLUMNNAME_DateInternalReject);
 	}
 
 	/** Set Date last action.
@@ -1553,6 +1567,40 @@ public class X_R_Request extends PO implements I_R_Request, I_Persistent
 		return false;
 	}
 
+	/** Set Qty Internal Delivery.
+		@param QtyInternalDelivery Qty Internal Delivery	  */
+	public void setQtyInternalDelivery (BigDecimal QtyInternalDelivery)
+	{
+		set_ValueNoCheck (COLUMNNAME_QtyInternalDelivery, QtyInternalDelivery);
+	}
+
+	/** Get Qty Internal Delivery.
+		@return Qty Internal Delivery	  */
+	public BigDecimal getQtyInternalDelivery () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_QtyInternalDelivery);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
+	/** Set Qty Internal Reject.
+		@param QtyInternalReject Qty Internal Reject	  */
+	public void setQtyInternalReject (BigDecimal QtyInternalReject)
+	{
+		set_ValueNoCheck (COLUMNNAME_QtyInternalReject, QtyInternalReject);
+	}
+
+	/** Get Qty Internal Reject.
+		@return Qty Internal Reject	  */
+	public BigDecimal getQtyInternalReject () 
+	{
+		BigDecimal bd = (BigDecimal)get_Value(COLUMNNAME_QtyInternalReject);
+		if (bd == null)
+			 return Env.ZERO;
+		return bd;
+	}
+
 	/** Set Quantity Invoiced.
 		@param QtyInvoiced 
 		Invoiced Quantity
@@ -1662,6 +1710,20 @@ public class X_R_Request extends PO implements I_R_Request, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Reject Delivery.
+		@param RejectDelivery Reject Delivery	  */
+	public void setRejectDelivery (String RejectDelivery)
+	{
+		set_Value (COLUMNNAME_RejectDelivery, RejectDelivery);
+	}
+
+	/** Get Reject Delivery.
+		@return Reject Delivery	  */
+	public String getRejectDelivery () 
+	{
+		return (String)get_Value(COLUMNNAME_RejectDelivery);
 	}
 
 	/** Set Request Amount.
@@ -2407,5 +2469,22 @@ public class X_R_Request extends PO implements I_R_Request, I_Persistent
 	public String getUUID () 
 	{
 		return (String)get_Value(COLUMNNAME_UUID);
+	}
+
+	/** Set Search Key.
+		@param Value 
+		Search key for the record in the format required - must be unique
+	  */
+	public void setValue (String Value)
+	{
+		set_Value (COLUMNNAME_Value, Value);
+	}
+
+	/** Get Search Key.
+		@return Search key for the record in the format required - must be unique
+	  */
+	public String getValue () 
+	{
+		return (String)get_Value(COLUMNNAME_Value);
 	}
 }
