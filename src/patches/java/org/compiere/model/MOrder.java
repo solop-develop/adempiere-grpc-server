@@ -2169,6 +2169,9 @@ public class MOrder extends X_C_Order implements DocAction
 			poLine.setDescription(line.getDescription());
 			poLine.setDatePromised(line.getDatePromised());
 			poLine.setPrice();
+			if (line.getCost().signum() != 0) {
+				poLine.setPrice(line.getCost());
+			}
 			poLine.saveEx();
 			//	Set link to source
 			line.setLink_OrderLine_ID(poLine.getC_OrderLine_ID());
