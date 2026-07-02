@@ -116,6 +116,29 @@ service ProductInfoService {
 			}
 		};
 	}
+	rpc ExportProductsInfo(ExportProductsInfoRequest) returns (ExportProductsInfoResponse) {
+		option (google.api.http) = {
+			get: "/fields/products/export"
+			additional_bindings: {
+				get: "/fields/products/table/{table_name}/{column_name}/export"
+			}
+			additional_bindings: {
+				get: "/fields/products/column/{column_id}/export"
+			}
+			additional_bindings: {
+				get: "/fields/products/field/{field_id}/export"
+			}
+			additional_bindings: {
+				get: "/fields/products/parameter/{process_parameter_id}/export"
+			}
+			additional_bindings: {
+				get: "/fields/products/query-criteria/{browse_field_id}/export"
+			}
+			additional_bindings: {
+				get: "/fields/products/display-definition/{display_definition_field_id}/export"
+			}
+		};
+	}
 	rpc ListWarehouseStocks(ListWarehouseStocksRequest) returns (ListWarehouseStocksResponse) {
 		option (google.api.http) = {
 			get: "/fields/products/{product_id}/warehouse-stocks"
@@ -381,6 +404,56 @@ message ListProductsInfoRequest {
 	int32 vendor_id = 32;
 	string is_stocked = 33;
 	bool is_only_stock_available = 34;
+}
+
+// Export Products Info
+// Same filters as ListProductsInfoRequest. The optional `select_columns` carries
+// the columns to include; when it is empty the export uses the same columns shown
+// by the list. `format` selects the output format (only Excel/XLSX for now).
+message ExportProductsInfoRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	string context_attributes = 8;
+	bool is_only_active_records = 9;
+	bool is_without_validation = 10;
+	google.protobuf.Value current_value = 11;
+	// references
+	int32 reference_id = 12;
+	string table_name = 13;
+	string column_name = 14;
+	int32 column_id = 15;
+	int32 field_id = 16;
+	int32 process_parameter_id = 17;
+	int32 browse_field_id = 18;
+	int32 display_definition_field_id = 19;
+	// custom filters
+	string value = 20; // As code
+	string name = 21;
+	string upc = 22;
+	string sku = 23;
+	int32 warehouse_id = 24;
+	int32 price_list_version_id = 25;
+	int32 product_category_id = 26;
+	int32 product_group_id = 27;
+	int32 product_class_id = 28;
+	int32 product_classification_id = 29;
+	int32 attribute_set_id = 30;
+	int32 attribute_set_instance_id = 31;
+	int32 vendor_id = 32;
+	string is_stocked = 33;
+	bool is_only_stock_available = 34;
+	// export options
+	// Output format, case-insensitive (only "xlsx" for now); empty defaults to Excel.
+	string format = 35;
+}
+message ExportProductsInfoResponse {
+	int64 record_count = 1;
+	string file_name = 2;
 }
 
 
