@@ -41,8 +41,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
  *   <li>{@link #isValidPasswordHash(String, String, String)} verifies both BCrypt
  *       and the legacy SHA-512 + AD_User.Salt format, so no user is locked out.</li>
  * </ul>
- * Whether a new password is written as BCrypt or as legacy SHA-512 is a policy
- * decided by the caller (MUser.setPassword) via the SysConfig USER_PASSWORD_HASH_BCRYPT.
+ * Whether a new password is written as BCrypt or as legacy SHA-512 depends only on
+ * the active provider: MUser.setPassword stores whatever getPasswordHash returns,
+ * and this provider always produces BCrypt.
  */
 public class SecureBCrypt implements SecureInterface {
 
