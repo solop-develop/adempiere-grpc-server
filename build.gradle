@@ -106,6 +106,8 @@ dependencies {
 	implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
 	implementation "org.commonmark:commonmark-ext-task-list-items:0.29.0"
 	implementation "org.commonmark:commonmark-ext-autolink:0.29.0"
+	//	Password hashing: same BCryptPasswordEncoder used by Sabana (Spring Boot 3.5.x -> Spring Security 6.5.x)
+	implementation "org.springframework.security:spring-security-crypto:6.5.7"
 }
 
 configurations.all {
