@@ -116,6 +116,11 @@ service ProductInfoService {
 			}
 		};
 	}
+	rpc ExportProductsInfo(ListProductsInfoRequest) returns (ExportProductsInfoResponse) {
+		option (google.api.http) = {
+			get: "/fields/products/export"
+		};
+	}
 	rpc ListWarehouseStocks(ListWarehouseStocksRequest) returns (ListWarehouseStocksResponse) {
 		option (google.api.http) = {
 			get: "/fields/products/{product_id}/warehouse-stocks"
@@ -381,6 +386,15 @@ message ListProductsInfoRequest {
 	int32 vendor_id = 32;
 	string is_stocked = 33;
 	bool is_only_stock_available = 34;
+}
+
+// Export Products Info
+// Reuses ListProductsInfoRequest: same filters as the list, and the optional
+// `select_columns` carries the columns to include. When `select_columns` is
+// empty the export uses the same columns shown by the list.
+message ExportProductsInfoResponse {
+	int64 record_count = 1;
+	string file_name = 2;
 }
 
 

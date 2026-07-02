@@ -14,6 +14,8 @@
  ************************************************************************************/
 package org.spin.grpc.service.field.product;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.PreparedStatement;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -22,11 +24,14 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import java.util.logging.Level;
 
 import org.adempiere.core.domains.models.I_M_AttributeSet;
 import org.adempiere.core.domains.models.I_M_AttributeSetInstance;
@@ -48,13 +53,18 @@ import org.compiere.model.MProduct;
 import org.compiere.model.MProductPO;
 import org.compiere.model.MRole;
 import org.compiere.model.Query;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.spin.backend.grpc.common.ListLookupItemsResponse;
 import org.spin.backend.grpc.common.LookupItem;
 import org.spin.backend.grpc.field.product.AvailableToPromise;
+import org.spin.backend.grpc.field.product.ExportProductsInfoRequest;
+import org.spin.backend.grpc.field.product.ExportProductsInfoResponse;
 import org.spin.backend.grpc.field.product.GetLastPriceListVersionRequest;
 import org.spin.backend.grpc.field.product.GetProductInfoRequest;
 import org.spin.backend.grpc.field.product.ListAttributeSetInstancesRequest;
@@ -84,6 +94,7 @@ import org.spin.backend.grpc.field.product.SubstituteProduct;
 import org.spin.backend.grpc.field.product.VendorPurchase;
 import org.spin.backend.grpc.field.product.WarehouseStock;
 import org.spin.base.db.WhereClauseUtil;
+import org.spin.eca62.util.S3Manager;
 import org.spin.base.util.ContextManager;
 import org.spin.base.util.LookupUtil;
 import org.spin.base.util.ReferenceInfo;
@@ -99,7 +110,13 @@ import org.spin.service.grpc.util.value.TimeManager;
 
 public class ProductInfoLogic {
 
+	/**	Logger			*/
+	private static CLogger log = CLogger.getCLogger(ProductInfoLogic.class);
+
 	public final static String Table_Name = I_M_Product.Table_Name;
+
+	/** Supported export output formats (case-insensitive) */
+	public static final String EXPORT_FORMAT_XLSX = "xlsx";
 
 
 	public static ListLookupItemsResponse.Builder listWarehouses(ListWarehousesRequest request) {
@@ -930,6 +947,364 @@ public class ProductInfoLogic {
 		return builderList;
 	}
 
+
+
+	/**
+	 * Export the product search result into an Excel (XLSX) file.
+	 * Reuses the same filters and query as {@link #listProductsInfo(ListProductsInfoRequest)},
+	 * so the export mirrors exactly what the search shows. When `select_columns` is empty
+	 * the default columns (the ones displayed by the list for the current filters) are
+	 * exported; otherwise only the requested columns are included, in the given order.
+	 * The file is uploaded as a temporary resource and its name/URL is returned.
+	 * @param request export request, `select_columns` carries the columns to include
+	 * @return record count and the exported file name
+	 */
+	public static ExportProductsInfoResponse.Builder exportProductsInfo(ExportProductsInfoRequest request) {
+		// Output format (case-insensitive). Only Excel/xlsx exists for now; an empty
+		// value defaults to it and any other value falls back to it too.
+		final String format = TextManager.getValidString(
+			request.getFormat()
+		).trim().toLowerCase();
+
+		// Reuse the list query (same filters) to get every matching record without
+		// pagination, so the export contains all the rows the search would return.
+		ListProductsInfoRequest listRequest = toListProductsInfoRequest(request)
+			.setPageSize(Integer.MAX_VALUE)
+			.setPageToken("")
+			.build()
+		;
+		ListProductsInfoResponse.Builder listBuilder = listProductsInfo(listRequest);
+		List<ProductInfo> records = listBuilder.getRecordsList();
+
+		// Resolve the columns to export: custom ones when provided, else the list defaults
+		List<ExportColumn> exportColumns = resolveExportColumns(
+			request.getSelectColumnsList(),
+			request.getWarehouseId(),
+			request.getPriceListVersionId(),
+			records
+		);
+
+		// Generate the export file. Future formats (CSV, PDF, ...) would add a branch;
+		// any other/unset value falls back to XLSX, so an empty request still exports Excel.
+		File exportFile = null;
+		try {
+			switch (format) {
+				case EXPORT_FORMAT_XLSX:
+				default:
+					exportFile = generateProductsInfoExcel(records, exportColumns);
+					break;
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException("@Error@ generating export file: " + e.getLocalizedMessage());
+		}
+
+		// Upload as a temporary resource (same mechanism used by other exports)
+		String fileName = null;
+		try {
+			fileName = S3Manager.putTemporaryFile(exportFile);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getLocalizedMessage(), e);
+			throw new AdempiereException("@Error@ uploading file: " + e.getLocalizedMessage());
+		}
+
+		return ExportProductsInfoResponse.newBuilder()
+			.setRecordCount(
+				listBuilder.getRecordCount()
+			)
+			.setFileName(
+				TextManager.getValidString(fileName)
+			)
+		;
+	}
+
+
+	/**
+	 * Map an export request into a list request so both share the same query logic.
+	 * The export request mirrors {@link ListProductsInfoRequest}, only adding the
+	 * output format, so every filter is copied through as-is.
+	 * @param request export request
+	 * @return a list request builder with the same filters
+	 */
+	private static ListProductsInfoRequest.Builder toListProductsInfoRequest(ExportProductsInfoRequest request) {
+		ListProductsInfoRequest.Builder builder = ListProductsInfoRequest.newBuilder()
+			.setFilters(request.getFilters())
+			.setSortBy(request.getSortBy())
+			.addAllGroupColumns(request.getGroupColumnsList())
+			.addAllSelectColumns(request.getSelectColumnsList())
+			.setSearchValue(request.getSearchValue())
+			.setContextAttributes(request.getContextAttributes())
+			.setIsOnlyActiveRecords(request.getIsOnlyActiveRecords())
+			.setIsWithoutValidation(request.getIsWithoutValidation())
+			// references
+			.setReferenceId(request.getReferenceId())
+			.setTableName(request.getTableName())
+			.setColumnName(request.getColumnName())
+			.setColumnId(request.getColumnId())
+			.setFieldId(request.getFieldId())
+			.setProcessParameterId(request.getProcessParameterId())
+			.setBrowseFieldId(request.getBrowseFieldId())
+			.setDisplayDefinitionFieldId(request.getDisplayDefinitionFieldId())
+			// custom filters
+			.setValue(request.getValue())
+			.setName(request.getName())
+			.setUpc(request.getUpc())
+			.setSku(request.getSku())
+			.setWarehouseId(request.getWarehouseId())
+			.setPriceListVersionId(request.getPriceListVersionId())
+			.setProductCategoryId(request.getProductCategoryId())
+			.setProductGroupId(request.getProductGroupId())
+			.setProductClassId(request.getProductClassId())
+			.setProductClassificationId(request.getProductClassificationId())
+			.setAttributeSetId(request.getAttributeSetId())
+			.setAttributeSetInstanceId(request.getAttributeSetInstanceId())
+			.setVendorId(request.getVendorId())
+			.setIsStocked(request.getIsStocked())
+			.setIsOnlyStockAvailable(request.getIsOnlyStockAvailable())
+		;
+		if (request.hasCurrentValue()) {
+			builder.setCurrentValue(
+				request.getCurrentValue()
+			);
+		}
+		return builder;
+	}
+
+
+	/**
+	 * Definition of an exportable column of the product search result.
+	 * Maps a client column key to a translated header and a value extractor.
+	 */
+	private static class ExportColumn {
+		final String key;
+		// AD column used to translate the header (nullable when there is no matching element)
+		final String elementColumnName;
+		// fallback header when no translation is available
+		final String defaultHeader;
+		// numeric columns are written as numbers, the rest as text
+		final boolean isNumeric;
+		final Function<ProductInfo, String> valueProvider;
+
+		ExportColumn(String key, String elementColumnName, String defaultHeader, boolean isNumeric, Function<ProductInfo, String> valueProvider) {
+			this.key = key;
+			this.elementColumnName = elementColumnName;
+			this.defaultHeader = defaultHeader;
+			this.isNumeric = isNumeric;
+			this.valueProvider = valueProvider;
+		}
+
+		String getHeader() {
+			if (!Util.isEmpty(elementColumnName, true)) {
+				String translated = Msg.getElement(Env.getCtx(), elementColumnName);
+				if (!Util.isEmpty(translated, true) && !translated.equals(elementColumnName)) {
+					return translated;
+				}
+			}
+			return defaultHeader;
+		}
+	}
+
+
+	/**
+	 * Registry of every exportable column, keyed by the client column key and kept in
+	 * the same order shown by the list. Booleans are rendered as translated Yes/No text.
+	 * @return ordered registry of exportable columns
+	 */
+	private static Map<String, ExportColumn> getExportColumnRegistry() {
+		Map<String, ExportColumn> registry = new LinkedHashMap<String, ExportColumn>();
+		putExportColumn(registry, new ExportColumn("value", "Value", "Value", false, ProductInfo::getValue));
+		putExportColumn(registry, new ExportColumn("name", "Name", "Name", false, ProductInfo::getName));
+		putExportColumn(registry, new ExportColumn("upc", "UPC", "UPC/EAN", false, ProductInfo::getUpc));
+		putExportColumn(registry, new ExportColumn("sku", "SKU", "SKU", false, ProductInfo::getSku));
+		putExportColumn(registry, new ExportColumn("product_category", "M_Product_Category_ID", "Product Category", false, ProductInfo::getProductCategory));
+		putExportColumn(registry, new ExportColumn("product_group", "M_Product_Group_ID", "Product Group", false, ProductInfo::getProductGroup));
+		putExportColumn(registry, new ExportColumn("product_class", "M_Product_Class_ID", "Product Class", false, ProductInfo::getProductClass));
+		putExportColumn(registry, new ExportColumn("product_classification", "M_Product_Classification_ID", "Product Classification", false, ProductInfo::getProductClassification));
+		putExportColumn(registry, new ExportColumn("uom", "C_UOM_ID", "UOM", false, ProductInfo::getUom));
+		putExportColumn(registry, new ExportColumn("list_price", "PriceList", "List Price", true, ProductInfo::getListPrice));
+		putExportColumn(registry, new ExportColumn("standard_price", "PriceStd", "Standard Price", true, ProductInfo::getStandardPrice));
+		putExportColumn(registry, new ExportColumn("limit_price", "PriceLimit", "Limit Price", true, ProductInfo::getLimitPrice));
+		putExportColumn(registry, new ExportColumn("margin", null, "Margin", true, ProductInfo::getMargin));
+		putExportColumn(registry, new ExportColumn("is_stocked", "IsStocked", "Is Stocked", false, product -> BooleanManager.getDisplayValue(product.getIsStocked())));
+		putExportColumn(registry, new ExportColumn("available_quantity", "QtyAvailable", "Available Quantity", true, ProductInfo::getAvailableQuantity));
+		putExportColumn(registry, new ExportColumn("on_hand_quantity", "QtyOnHand", "On Hand Quantity", true, ProductInfo::getOnHandQuantity));
+		putExportColumn(registry, new ExportColumn("reserved_quantity", "QtyReserved", "Reserved Quantity", true, ProductInfo::getReservedQuantity));
+		putExportColumn(registry, new ExportColumn("ordered_quantity", "QtyOrdered", "Ordered Quantity", true, ProductInfo::getOrderedQuantity));
+		putExportColumn(registry, new ExportColumn("unconfirmed_quantity", null, "Unconfirmed Quantity", true, ProductInfo::getUnconfirmedQuantity));
+		putExportColumn(registry, new ExportColumn("unconfirmed_move_quantity", null, "Unconfirmed Move Quantity", true, ProductInfo::getUnconfirmedMoveQuantity));
+		putExportColumn(registry, new ExportColumn("vendor", null, "Vendor", false, ProductInfo::getVendor));
+		putExportColumn(registry, new ExportColumn("description", "Description", "Description", false, ProductInfo::getDescription));
+		putExportColumn(registry, new ExportColumn("document_note", "DocumentNote", "Document Note", false, ProductInfo::getDocumentNote));
+		putExportColumn(registry, new ExportColumn("is_active", "IsActive", "Active", false, product -> BooleanManager.getDisplayValue(product.getIsActive())));
+		putExportColumn(registry, new ExportColumn("discontinued", "Discontinued", "Discontinued", false, product -> BooleanManager.getDisplayValue(product.getDiscontinued())));
+		putExportColumn(registry, new ExportColumn("currency", "C_Currency_ID", "Currency", false, ProductInfo::getCurrency));
+		return registry;
+	}
+
+	private static void putExportColumn(Map<String, ExportColumn> registry, ExportColumn column) {
+		registry.put(column.key, column);
+	}
+
+
+	/**
+	 * Resolve the columns to export. When the client sends specific columns they are used,
+	 * in the given order; unknown keys are ignored and columns not applicable to the current
+	 * filters are skipped (see {@link #isColumnApplicable}). Otherwise the default columns are
+	 * those the list shows for the current filters (price columns only with a price list
+	 * version, stock columns only with a warehouse, unconfirmed columns only when present).
+	 * @param selectedColumns optional client column keys
+	 * @param warehouseId selected warehouse (0 when none)
+	 * @param priceListVersionId selected price list version (0 when none)
+	 * @param records exported records, used to detect unconfirmed stock data
+	 * @return ordered list of columns to write
+	 */
+	private static List<ExportColumn> resolveExportColumns(List<String> selectedColumns, int warehouseId, int priceListVersionId, List<ProductInfo> records) {
+		Map<String, ExportColumn> registry = getExportColumnRegistry();
+		List<ExportColumn> columns = new ArrayList<ExportColumn>();
+
+		// Unconfirmed stock data is only present for some warehouse configurations
+		boolean hasUnconfirmed = records.stream().anyMatch(record ->
+			!Util.isEmpty(record.getUnconfirmedQuantity(), true)
+			|| !Util.isEmpty(record.getUnconfirmedMoveQuantity(), true)
+		);
+
+		// Custom columns: use exactly the requested ones, in the given order
+		if (selectedColumns != null && !selectedColumns.isEmpty()) {
+			for (String selectedColumn : selectedColumns) {
+				if (Util.isEmpty(selectedColumn, true)) {
+					continue;
+				}
+				final String key = selectedColumn.trim().toLowerCase();
+				ExportColumn column = registry.get(key);
+				if (column == null) {
+					log.warning("Export column not supported, ignored: " + selectedColumn);
+					continue;
+				}
+				// Skip columns whose value cannot be computed for the current filters
+				// (price columns need a price list version, stock columns need a warehouse)
+				if (!isColumnApplicable(key, warehouseId, priceListVersionId, hasUnconfirmed)) {
+					continue;
+				}
+				columns.add(column);
+			}
+			if (!columns.isEmpty()) {
+				return columns;
+			}
+			// none of the requested columns was valid/applicable: fall back to the defaults
+		}
+
+		// Default columns: same ones the list shows for the current filters
+		for (ExportColumn column : registry.values()) {
+			final String key = column.key;
+			if (!isColumnApplicable(key, warehouseId, priceListVersionId, hasUnconfirmed)) {
+				continue;
+			}
+			// columns not shown by the list are only exported when explicitly requested
+			if (key.equals("currency") || key.equals("description") || key.equals("document_note")) {
+				continue;
+			}
+			columns.add(column);
+		}
+		return columns;
+	}
+
+
+	/**
+	 * Whether a column can produce a value for the current filters. Price columns need a
+	 * selected price list version, stock columns need a selected warehouse, and unconfirmed
+	 * columns need a warehouse plus actual unconfirmed data; every other column always applies.
+	 * @param key column key
+	 * @param warehouseId selected warehouse (0 when none)
+	 * @param priceListVersionId selected price list version (0 when none)
+	 * @param hasUnconfirmed whether any record has unconfirmed stock data
+	 * @return true when the column should be included
+	 */
+	private static boolean isColumnApplicable(String key, int warehouseId, int priceListVersionId, boolean hasUnconfirmed) {
+		// price columns need a selected price list version
+		if (key.equals("list_price") || key.equals("standard_price") || key.equals("limit_price") || key.equals("margin")) {
+			return priceListVersionId > 0;
+		}
+		// stock columns need a selected warehouse
+		if (key.equals("available_quantity") || key.equals("on_hand_quantity") || key.equals("reserved_quantity") || key.equals("ordered_quantity")) {
+			return warehouseId > 0;
+		}
+		// unconfirmed columns need a warehouse and actual unconfirmed data
+		if (key.equals("unconfirmed_quantity") || key.equals("unconfirmed_move_quantity")) {
+			return warehouseId > 0 && hasUnconfirmed;
+		}
+		return true;
+	}
+
+
+	/**
+	 * Build the XLSX file with the given records and columns.
+	 * @param records exported records
+	 * @param exportColumns ordered columns to write
+	 * @return generated temporary Excel file
+	 * @throws Exception on write error
+	 */
+	private static File generateProductsInfoExcel(List<ProductInfo> records, List<ExportColumn> exportColumns) throws Exception {
+		File excelFile = File.createTempFile("ProductsInfo_" + System.currentTimeMillis(), ".xlsx");
+
+		XSSFWorkbook workBook = new XSSFWorkbook();
+		try {
+			org.apache.poi.ss.usermodel.Sheet sheet = workBook.createSheet("Products");
+
+			// Header row with bold style
+			org.apache.poi.ss.usermodel.CellStyle headerStyle = workBook.createCellStyle();
+			org.apache.poi.ss.usermodel.Font headerFont = workBook.createFont();
+			headerFont.setBold(true);
+			headerStyle.setFont(headerFont);
+
+			org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+			int cellIndex = 0;
+			for (ExportColumn column : exportColumns) {
+				org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(cellIndex++);
+				cell.setCellValue(
+					column.getHeader()
+				);
+				cell.setCellStyle(headerStyle);
+			}
+
+			// Data rows
+			int rowNum = 1;
+			for (ProductInfo record : records) {
+				org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowNum++);
+				cellIndex = 0;
+				for (ExportColumn column : exportColumns) {
+					org.apache.poi.ss.usermodel.Cell cell = row.createCell(cellIndex++);
+					String rawValue = column.valueProvider.apply(record);
+					if (column.isNumeric) {
+						BigDecimal numericValue = NumberManager.getBigDecimalFromString(rawValue);
+						if (numericValue != null) {
+							cell.setCellValue(
+								numericValue.doubleValue()
+							);
+						} else {
+							cell.setCellValue("");
+						}
+					} else {
+						cell.setCellValue(
+							TextManager.getValidString(rawValue)
+						);
+					}
+				}
+			}
+
+			// Auto-size columns
+			for (int i = 0; i < exportColumns.size(); i++) {
+				sheet.autoSizeColumn(i);
+			}
+
+			try (FileOutputStream outputStream = new FileOutputStream(excelFile)) {
+				workBook.write(outputStream);
+			}
+		} finally {
+			workBook.close();
+		}
+
+		return excelFile;
+	}
 
 
 	/**
