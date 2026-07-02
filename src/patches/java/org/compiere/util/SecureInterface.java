@@ -36,7 +36,7 @@ public interface SecureInterface
 	/** Class Name implementing SecureInterface	*/
 	public static final String	ADEMPIERE_SECURE = "ADEMPIERE_SECURE";
 	/** Default Class Name implementing SecureInterface (BCrypt provider, Sabana-compatible) */
-	public static final String	ADEMPIERE_SECURE_DEFAULT = "org.solop.secure.SecureBCrypt"; // `org.compiere.util.Secure` is the legacy SHA-512 + salt provider
+	public static final String	ADEMPIERE_SECURE_DEFAULT = "org.solop.security.SecureBCrypt"; // `org.compiere.util.Secure` is the legacy SHA-512 + salt provider
 
 	
 	/** Clear Text Indicator xyz	*/
@@ -150,8 +150,7 @@ public interface SecureInterface
 	 * 	Self-contained password hash (e.g. BCrypt) for providers that support it.
 	 * 	The legacy provider returns null, signalling the caller to use the SHA-512 +
 	 * 	salt mechanism; the BCrypt provider ({@code SecureBCrypt}) returns a BCrypt
-	 * 	hash. The write-policy is decided by the caller via the SysConfig
-	 * 	USER_PASSWORD_HASH_BCRYPT.
+	 * 	hash. The active provider decides the stored format; there is no separate flag.
 	 * 	@param plainPassword plain text password
 	 * 	@return self-contained hash, or null when this provider has no self-contained hashing
 	 */

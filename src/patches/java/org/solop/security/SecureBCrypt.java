@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License              *
  * along with this program. If not, see <https://www.gnu.org/licenses/>.          *
  ************************************************************************************/
-package org.solop.secure;
+package org.solop.security;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
