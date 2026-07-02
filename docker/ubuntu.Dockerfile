@@ -40,6 +40,8 @@ RUN apt-get update && \
 		fontconfig \
 		fontconfig-config \
 		fonts-dejavu \
+		libfreetype6 \
+		libfreetype-dev \
 		ttf-mscorefonts-installer \
 		tzdata && \
 	echo "Install Microsoft Fonts..." && \
