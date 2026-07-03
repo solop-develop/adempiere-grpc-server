@@ -450,6 +450,7 @@ message ExportProductsInfoRequest {
 	// export options
 	// Output format, case-insensitive (only "xlsx" for now); empty defaults to Excel.
 	string format = 35;
+	bool is_export_all_records = 36;
 }
 message ExportProductsInfoResponse {
 	int64 record_count = 1;

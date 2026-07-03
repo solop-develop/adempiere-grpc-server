@@ -952,12 +952,14 @@ public class ProductInfoLogic {
 	/**
 	 * Export the product search result into an Excel (XLSX) file.
 	 * Reuses the same filters and query as {@link #listProductsInfo(ListProductsInfoRequest)},
-	 * so the export mirrors exactly what the search shows. When `select_columns` is empty
-	 * the default columns (the ones displayed by the list for the current filters) are
-	 * exported; otherwise only the requested columns are included, in the given order.
+	 * so the export mirrors what the search shows. When `select_columns` is empty the default
+	 * columns (the ones displayed by the list for the current filters) are exported; otherwise
+	 * only the requested columns are included, in the given order. When `is_export_all_records`
+	 * is true every matching record is exported; otherwise only the current page
+	 * (`page_size` + `page_token`) is written, while `record_count` stays the total match count.
 	 * The file is uploaded as a temporary resource and its name/URL is returned.
 	 * @param request export request, `select_columns` carries the columns to include
-	 * @return record count and the exported file name
+	 * @return total record count and the exported file name
 	 */
 	public static ExportProductsInfoResponse.Builder exportProductsInfo(ExportProductsInfoRequest request) {
 		// Output format (case-insensitive). Only Excel/xlsx exists for now; an empty
@@ -966,14 +968,19 @@ public class ProductInfoLogic {
 			request.getFormat()
 		).trim().toLowerCase();
 
-		// Reuse the list query (same filters) to get every matching record without
-		// pagination, so the export contains all the rows the search would return.
-		ListProductsInfoRequest listRequest = toListProductsInfoRequest(request)
-			.setPageSize(Integer.MAX_VALUE)
-			.setPageToken("")
-			.build()
-		;
-		ListProductsInfoResponse.Builder listBuilder = listProductsInfo(listRequest);
+		// Reuse the list query (same filters). When exporting all records we bypass
+		// pagination; otherwise the request's page_size/page_token are kept so only
+		// that page is exported. record_count is always the total matching count.
+		ListProductsInfoRequest.Builder listRequestBuilder = toListProductsInfoRequest(request);
+		if (request.getIsExportAllRecords()) {
+			listRequestBuilder
+				.setPageSize(Integer.MAX_VALUE)
+				.setPageToken("")
+			;
+		}
+		ListProductsInfoResponse.Builder listBuilder = listProductsInfo(
+			listRequestBuilder.build()
+		);
 		List<ProductInfo> records = listBuilder.getRecordsList();
 
 		// Resolve the columns to export: custom ones when provided, else the list defaults
@@ -1032,6 +1039,8 @@ public class ProductInfoLogic {
 			.setSortBy(request.getSortBy())
 			.addAllGroupColumns(request.getGroupColumnsList())
 			.addAllSelectColumns(request.getSelectColumnsList())
+			.setPageSize(request.getPageSize())
+			.setPageToken(request.getPageToken())
 			.setSearchValue(request.getSearchValue())
 			.setContextAttributes(request.getContextAttributes())
 			.setIsOnlyActiveRecords(request.getIsOnlyActiveRecords())
@@ -1112,32 +1121,32 @@ public class ProductInfoLogic {
 	 */
 	private static Map<String, ExportColumn> getExportColumnRegistry() {
 		Map<String, ExportColumn> registry = new LinkedHashMap<String, ExportColumn>();
-		putExportColumn(registry, new ExportColumn("value", "Value", "Value", false, ProductInfo::getValue));
-		putExportColumn(registry, new ExportColumn("name", "Name", "Name", false, ProductInfo::getName));
-		putExportColumn(registry, new ExportColumn("upc", "UPC", "UPC/EAN", false, ProductInfo::getUpc));
-		putExportColumn(registry, new ExportColumn("sku", "SKU", "SKU", false, ProductInfo::getSku));
-		putExportColumn(registry, new ExportColumn("product_category", "M_Product_Category_ID", "Product Category", false, ProductInfo::getProductCategory));
-		putExportColumn(registry, new ExportColumn("product_group", "M_Product_Group_ID", "Product Group", false, ProductInfo::getProductGroup));
-		putExportColumn(registry, new ExportColumn("product_class", "M_Product_Class_ID", "Product Class", false, ProductInfo::getProductClass));
-		putExportColumn(registry, new ExportColumn("product_classification", "M_Product_Classification_ID", "Product Classification", false, ProductInfo::getProductClassification));
-		putExportColumn(registry, new ExportColumn("uom", "C_UOM_ID", "UOM", false, ProductInfo::getUom));
-		putExportColumn(registry, new ExportColumn("list_price", "PriceList", "List Price", true, ProductInfo::getListPrice));
-		putExportColumn(registry, new ExportColumn("standard_price", "PriceStd", "Standard Price", true, ProductInfo::getStandardPrice));
-		putExportColumn(registry, new ExportColumn("limit_price", "PriceLimit", "Limit Price", true, ProductInfo::getLimitPrice));
-		putExportColumn(registry, new ExportColumn("margin", null, "Margin", true, ProductInfo::getMargin));
+		putExportColumn(registry, new ExportColumn("value", "Value", "Value", false, product -> product.getValue()));
+		putExportColumn(registry, new ExportColumn("name", "Name", "Name", false, product -> product.getName()));
+		putExportColumn(registry, new ExportColumn("upc", "UPC", "UPC/EAN", false, product -> product.getUpc()));
+		putExportColumn(registry, new ExportColumn("sku", "SKU", "SKU", false, product -> product.getSku()));
+		putExportColumn(registry, new ExportColumn("product_category", "M_Product_Category_ID", "Product Category", false, product -> product.getProductCategory()));
+		putExportColumn(registry, new ExportColumn("product_group", "M_Product_Group_ID", "Product Group", false, product -> product.getProductGroup()));
+		putExportColumn(registry, new ExportColumn("product_class", "M_Product_Class_ID", "Product Class", false, product -> product.getProductClass()));
+		putExportColumn(registry, new ExportColumn("product_classification", "M_Product_Classification_ID", "Product Classification", false, product -> product.getProductClassification()));
+		putExportColumn(registry, new ExportColumn("uom", "C_UOM_ID", "UOM", false, product -> product.getUom()));
+		putExportColumn(registry, new ExportColumn("list_price", "PriceList", "List Price", true, product -> product.getListPrice()));
+		putExportColumn(registry, new ExportColumn("standard_price", "PriceStd", "Standard Price", true, product -> product.getStandardPrice()));
+		putExportColumn(registry, new ExportColumn("limit_price", "PriceLimit", "Limit Price", true, product -> product.getLimitPrice()));
+		putExportColumn(registry, new ExportColumn("margin", null, "Margin", true, product -> product.getMargin()));
 		putExportColumn(registry, new ExportColumn("is_stocked", "IsStocked", "Is Stocked", false, product -> BooleanManager.getDisplayValue(product.getIsStocked())));
-		putExportColumn(registry, new ExportColumn("available_quantity", "QtyAvailable", "Available Quantity", true, ProductInfo::getAvailableQuantity));
-		putExportColumn(registry, new ExportColumn("on_hand_quantity", "QtyOnHand", "On Hand Quantity", true, ProductInfo::getOnHandQuantity));
-		putExportColumn(registry, new ExportColumn("reserved_quantity", "QtyReserved", "Reserved Quantity", true, ProductInfo::getReservedQuantity));
-		putExportColumn(registry, new ExportColumn("ordered_quantity", "QtyOrdered", "Ordered Quantity", true, ProductInfo::getOrderedQuantity));
-		putExportColumn(registry, new ExportColumn("unconfirmed_quantity", null, "Unconfirmed Quantity", true, ProductInfo::getUnconfirmedQuantity));
-		putExportColumn(registry, new ExportColumn("unconfirmed_move_quantity", null, "Unconfirmed Move Quantity", true, ProductInfo::getUnconfirmedMoveQuantity));
-		putExportColumn(registry, new ExportColumn("vendor", null, "Vendor", false, ProductInfo::getVendor));
-		putExportColumn(registry, new ExportColumn("description", "Description", "Description", false, ProductInfo::getDescription));
-		putExportColumn(registry, new ExportColumn("document_note", "DocumentNote", "Document Note", false, ProductInfo::getDocumentNote));
+		putExportColumn(registry, new ExportColumn("available_quantity", "QtyAvailable", "Available Quantity", true, product -> product.getAvailableQuantity()));
+		putExportColumn(registry, new ExportColumn("on_hand_quantity", "QtyOnHand", "On Hand Quantity", true, product -> product.getOnHandQuantity()));
+		putExportColumn(registry, new ExportColumn("reserved_quantity", "QtyReserved", "Reserved Quantity", true, product -> product.getReservedQuantity()));
+		putExportColumn(registry, new ExportColumn("ordered_quantity", "QtyOrdered", "Ordered Quantity", true, product -> product.getOrderedQuantity()));
+		putExportColumn(registry, new ExportColumn("unconfirmed_quantity", null, "Unconfirmed Quantity", true, product -> product.getUnconfirmedQuantity()));
+		putExportColumn(registry, new ExportColumn("unconfirmed_move_quantity", null, "Unconfirmed Move Quantity", true, product -> product.getUnconfirmedMoveQuantity()));
+		putExportColumn(registry, new ExportColumn("vendor", null, "Vendor", false, product -> product.getVendor()));
+		putExportColumn(registry, new ExportColumn("description", "Description", "Description", false, product -> product.getDescription()));
+		putExportColumn(registry, new ExportColumn("document_note", "DocumentNote", "Document Note", false, product -> product.getDocumentNote()));
 		putExportColumn(registry, new ExportColumn("is_active", "IsActive", "Active", false, product -> BooleanManager.getDisplayValue(product.getIsActive())));
 		putExportColumn(registry, new ExportColumn("discontinued", "Discontinued", "Discontinued", false, product -> BooleanManager.getDisplayValue(product.getDiscontinued())));
-		putExportColumn(registry, new ExportColumn("currency", "C_Currency_ID", "Currency", false, ProductInfo::getCurrency));
+		putExportColumn(registry, new ExportColumn("currency", "C_Currency_ID", "Currency", false, product -> product.getCurrency()));
 		return registry;
 	}
 
@@ -1277,6 +1286,9 @@ public class ProductInfoLogic {
 					if (column.isNumeric) {
 						BigDecimal numericValue = NumberManager.getBigDecimalFromString(rawValue);
 						if (numericValue != null) {
+							// MVP: native numeric cell without a presentation format.
+							// TODO: apply a CellStyle/DataFormat (quantities by the product UOM
+							// precision, amounts by the price list currency). See docs/export-search-fields.md
 							cell.setCellValue(
 								numericValue.doubleValue()
 							);
