@@ -1085,9 +1085,15 @@ public class ProductInfoLogic {
 	 * Maps a client column key to a translated header and a value extractor.
 	 */
 	private static class ExportColumn {
+		// canonical key = proto field name (what select_columns expects)
 		final String key;
-		// AD column used to translate the header (nullable when there is no matching element)
+		// DB/AD column name: used to translate the header via AD_Element AND accepted as an
+		// alternative name in select_columns (besides `key`). Nullable when there is no DB column.
 		final String elementColumnName;
+		// optional AD_Message key: when set, its translation wins over the element label.
+		// Used for computed/aliased columns whose element label would be misleading
+		// (e.g. "Margin" the amount vs the "Margin %" element). Nullable.
+		final String messageKey;
 		// fallback header when no translation is available
 		final String defaultHeader;
 		// numeric columns are written as numbers, the rest as text
@@ -1095,18 +1101,31 @@ public class ProductInfoLogic {
 		final Function<ProductInfo, String> valueProvider;
 
 		ExportColumn(String key, String elementColumnName, String defaultHeader, boolean isNumeric, Function<ProductInfo, String> valueProvider) {
+			this(key, elementColumnName, null, defaultHeader, isNumeric, valueProvider);
+		}
+
+		ExportColumn(String key, String elementColumnName, String messageKey, String defaultHeader, boolean isNumeric, Function<ProductInfo, String> valueProvider) {
 			this.key = key;
 			this.elementColumnName = elementColumnName;
+			this.messageKey = messageKey;
 			this.defaultHeader = defaultHeader;
 			this.isNumeric = isNumeric;
 			this.valueProvider = valueProvider;
 		}
 
 		String getHeader() {
+			// An explicit AD_Message key wins (computed/aliased columns, e.g. Margin, Vendor)
+			if (!Util.isEmpty(messageKey, true)) {
+				String message = Msg.getMsg(Env.getCtx(), messageKey);
+				if (!Util.isEmpty(message, true) && !message.equals(messageKey)) {
+					return message;
+				}
+			}
+			// Otherwise the translated AD_Element label of the DB column
 			if (!Util.isEmpty(elementColumnName, true)) {
-				String translated = Msg.getElement(Env.getCtx(), elementColumnName);
-				if (!Util.isEmpty(translated, true) && !translated.equals(elementColumnName)) {
-					return translated;
+				String element = Msg.getElement(Env.getCtx(), elementColumnName);
+				if (!Util.isEmpty(element, true) && !element.equals(elementColumnName)) {
+					return element;
 				}
 			}
 			return defaultHeader;
@@ -1133,15 +1152,15 @@ public class ProductInfoLogic {
 		putExportColumn(registry, new ExportColumn("list_price", "PriceList", "List Price", true, product -> product.getListPrice()));
 		putExportColumn(registry, new ExportColumn("standard_price", "PriceStd", "Standard Price", true, product -> product.getStandardPrice()));
 		putExportColumn(registry, new ExportColumn("limit_price", "PriceLimit", "Limit Price", true, product -> product.getLimitPrice()));
-		putExportColumn(registry, new ExportColumn("margin", null, "Margin", true, product -> product.getMargin()));
+		putExportColumn(registry, new ExportColumn("margin", null, "Margin", "Margin", true, product -> product.getMargin()));
 		putExportColumn(registry, new ExportColumn("is_stocked", "IsStocked", "Is Stocked", false, product -> BooleanManager.getDisplayValue(product.getIsStocked())));
 		putExportColumn(registry, new ExportColumn("available_quantity", "QtyAvailable", "Available Quantity", true, product -> product.getAvailableQuantity()));
 		putExportColumn(registry, new ExportColumn("on_hand_quantity", "QtyOnHand", "On Hand Quantity", true, product -> product.getOnHandQuantity()));
 		putExportColumn(registry, new ExportColumn("reserved_quantity", "QtyReserved", "Reserved Quantity", true, product -> product.getReservedQuantity()));
 		putExportColumn(registry, new ExportColumn("ordered_quantity", "QtyOrdered", "Ordered Quantity", true, product -> product.getOrderedQuantity()));
-		putExportColumn(registry, new ExportColumn("unconfirmed_quantity", null, "Unconfirmed Quantity", true, product -> product.getUnconfirmedQuantity()));
-		putExportColumn(registry, new ExportColumn("unconfirmed_move_quantity", null, "Unconfirmed Move Quantity", true, product -> product.getUnconfirmedMoveQuantity()));
-		putExportColumn(registry, new ExportColumn("vendor", null, "Vendor", false, product -> product.getVendor()));
+		putExportColumn(registry, new ExportColumn("unconfirmed_quantity", "QtyUnconfirmed", "QtyUnconfirmed", "Unconfirmed Quantity", true, product -> product.getUnconfirmedQuantity()));
+		putExportColumn(registry, new ExportColumn("unconfirmed_move_quantity", "QtyUnconfirmedMove", "QtyUnconfirmedMove", "Unconfirmed Move Quantity", true, product -> product.getUnconfirmedMoveQuantity()));
+		putExportColumn(registry, new ExportColumn("vendor", "Vendor", "Vendor", "Vendor", false, product -> product.getVendor()));
 		putExportColumn(registry, new ExportColumn("description", "Description", "Description", false, product -> product.getDescription()));
 		putExportColumn(registry, new ExportColumn("document_note", "DocumentNote", "Document Note", false, product -> product.getDocumentNote()));
 		putExportColumn(registry, new ExportColumn("is_active", "IsActive", "Active", false, product -> BooleanManager.getDisplayValue(product.getIsActive())));
@@ -1156,11 +1175,33 @@ public class ProductInfoLogic {
 
 
 	/**
+	 * Build a case-insensitive lookup that accepts, for each column, both the proto field
+	 * name (the column `key`) and the DB column name, so `select_columns` works with either.
+	 * @param registry ordered column registry
+	 * @return map from proto key and DB column name (both lowercase) to column
+	 */
+	private static Map<String, ExportColumn> buildColumnLookup(Map<String, ExportColumn> registry) {
+		Map<String, ExportColumn> lookup = new HashMap<String, ExportColumn>();
+		for (ExportColumn column : registry.values()) {
+			lookup.put(column.key, column);
+			if (!Util.isEmpty(column.elementColumnName, true)) {
+				lookup.put(
+					column.elementColumnName.toLowerCase(),
+					column
+				);
+			}
+		}
+		return lookup;
+	}
+
+
+	/**
 	 * Resolve the columns to export. When the client sends specific columns they are used,
-	 * in the given order; unknown keys are ignored and columns not applicable to the current
-	 * filters are skipped (see {@link #isColumnApplicable}). Otherwise the default columns are
-	 * those the list shows for the current filters (price columns only with a price list
-	 * version, stock columns only with a warehouse, unconfirmed columns only when present).
+	 * in the given order; each is matched by its proto field name or its DB column name,
+	 * unknown names are ignored and columns not applicable to the current filters are skipped
+	 * (see {@link #isColumnApplicable}). Otherwise the default columns are those the list shows
+	 * for the current filters (price columns only with a price list version, stock columns only
+	 * with a warehouse, unconfirmed columns only when present).
 	 * @param selectedColumns optional client column keys
 	 * @param warehouseId selected warehouse (0 when none)
 	 * @param priceListVersionId selected price list version (0 when none)
@@ -1177,21 +1218,24 @@ public class ProductInfoLogic {
 			|| !Util.isEmpty(record.getUnconfirmedMoveQuantity(), true)
 		);
 
-		// Custom columns: use exactly the requested ones, in the given order
+		// Custom columns: use exactly the requested ones, in the given order.
+		// Both the proto field name and the DB column name are accepted.
 		if (selectedColumns != null && !selectedColumns.isEmpty()) {
+			Map<String, ExportColumn> columnsByName = buildColumnLookup(registry);
 			for (String selectedColumn : selectedColumns) {
 				if (Util.isEmpty(selectedColumn, true)) {
 					continue;
 				}
-				final String key = selectedColumn.trim().toLowerCase();
-				ExportColumn column = registry.get(key);
+				ExportColumn column = columnsByName.get(
+					selectedColumn.trim().toLowerCase()
+				);
 				if (column == null) {
 					log.warning("Export column not supported, ignored: " + selectedColumn);
 					continue;
 				}
 				// Skip columns whose value cannot be computed for the current filters
 				// (price columns need a price list version, stock columns need a warehouse)
-				if (!isColumnApplicable(key, warehouseId, priceListVersionId, hasUnconfirmed)) {
+				if (!isColumnApplicable(column.key, warehouseId, priceListVersionId, hasUnconfirmed)) {
 					continue;
 				}
 				columns.add(column);
