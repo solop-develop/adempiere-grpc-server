@@ -19,17 +19,17 @@
 package org.adempiere.core.domains.models;
 
 import org.compiere.model.I_Persistent;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.POInfo;
 
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.Properties;
 
-/** Generated Model for R_Release
+/** Generated Model for R_ReleaseRelated
  *  @author Adempiere (generated) 
  *  @version Release 3.9.4 - $Id$ */
-public class X_R_Release extends PO implements I_R_Release, I_Persistent 
+public class X_R_ReleaseRelated extends PO implements I_R_ReleaseRelated, I_Persistent 
 {
 
 	/**
@@ -38,19 +38,19 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 	private static final long serialVersionUID = 20260706L;
 
     /** Standard Constructor */
-    public X_R_Release (Properties ctx, int R_Release_ID, String trxName)
+    public X_R_ReleaseRelated (Properties ctx, int R_ReleaseRelated_ID, String trxName)
     {
-      super (ctx, R_Release_ID, trxName);
-      /** if (R_Release_ID == 0)
+      super (ctx, R_ReleaseRelated_ID, trxName);
+      /** if (R_ReleaseRelated_ID == 0)
         {
+			setR_ReferenceRelease_ID (0);
 			setR_Release_ID (0);
-			setTitle (null);
-			setValue (null);
+			setR_ReleaseRelated_ID (0);
         } */
     }
 
     /** Load Constructor */
-    public X_R_Release (Properties ctx, ResultSet rs, String trxName)
+    public X_R_ReleaseRelated (Properties ctx, ResultSet rs, String trxName)
     {
       super (ctx, rs, trxName);
     }
@@ -72,103 +72,40 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 
     public String toString()
     {
-      StringBuffer sb = new StringBuffer ("X_R_Release[")
+      StringBuffer sb = new StringBuffer ("X_R_ReleaseRelated[")
         .append(get_ID()).append("]");
       return sb.toString();
     }
 
-	/** Set Date Published.
-		@param DatePublished Date Published	  */
-	public void setDatePublished (Timestamp DatePublished)
+	public I_R_Release getR_ReferenceRelease() throws RuntimeException
+    {
+		return (I_R_Release)MTable.get(getCtx(), I_R_Release.Table_Name)
+			.getPO(getR_ReferenceRelease_ID(), get_TrxName());	}
+
+	/** Set Reference Release.
+		@param R_ReferenceRelease_ID Reference Release	  */
+	public void setR_ReferenceRelease_ID (int R_ReferenceRelease_ID)
 	{
-		set_Value (COLUMNNAME_DatePublished, DatePublished);
+		if (R_ReferenceRelease_ID < 1) 
+			set_Value (COLUMNNAME_R_ReferenceRelease_ID, null);
+		else 
+			set_Value (COLUMNNAME_R_ReferenceRelease_ID, Integer.valueOf(R_ReferenceRelease_ID));
 	}
 
-	/** Get Date Published.
-		@return Date Published	  */
-	public Timestamp getDatePublished () 
+	/** Get Reference Release.
+		@return Reference Release	  */
+	public int getR_ReferenceRelease_ID () 
 	{
-		return (Timestamp)get_Value(COLUMNNAME_DatePublished);
+		Integer ii = (Integer)get_Value(COLUMNNAME_R_ReferenceRelease_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
 	}
 
-	/** Set Memo.
-		@param Memo 
-		Memo Text
-	  */
-	public void setMemo (String Memo)
-	{
-		set_Value (COLUMNNAME_Memo, Memo);
-	}
-
-	/** Get Memo.
-		@return Memo Text
-	  */
-	public String getMemo () 
-	{
-		return (String)get_Value(COLUMNNAME_Memo);
-	}
-
-	/** Set Processed.
-		@param Processed 
-		The document has been processed
-	  */
-	public void setProcessed (boolean Processed)
-	{
-		set_ValueNoCheck (COLUMNNAME_Processed, Boolean.valueOf(Processed));
-	}
-
-	/** Get Processed.
-		@return The document has been processed
-	  */
-	public boolean isProcessed () 
-	{
-		Object oo = get_Value(COLUMNNAME_Processed);
-		if (oo != null) 
-		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
-			return "Y".equals(oo);
-		}
-		return false;
-	}
-
-	/** Set Process Release.
-		@param ProcessRelease 
-		Process the release: close linked requests and mark as processed
-	  */
-	public void setProcessRelease (String ProcessRelease)
-	{
-		set_Value (COLUMNNAME_ProcessRelease, ProcessRelease);
-	}
-
-	/** Get Process Release.
-		@return Process the release: close linked requests and mark as processed
-	  */
-	public String getProcessRelease () 
-	{
-		return (String)get_Value(COLUMNNAME_ProcessRelease);
-	}
-
-	/** ReleaseType AD_Reference_ID=54537 */
-	public static final int RELEASETYPE_AD_Reference_ID=54537;
-	/** Stable = ST */
-	public static final String RELEASETYPE_Stable = "ST";
-	/** Test = TS */
-	public static final String RELEASETYPE_Test = "TS";
-	/** Set Release Type.
-		@param ReleaseType Release Type	  */
-	public void setReleaseType (String ReleaseType)
-	{
-
-		set_Value (COLUMNNAME_ReleaseType, ReleaseType);
-	}
-
-	/** Get Release Type.
-		@return Release Type	  */
-	public String getReleaseType () 
-	{
-		return (String)get_Value(COLUMNNAME_ReleaseType);
-	}
+	public I_R_Release getR_Release() throws RuntimeException
+    {
+		return (I_R_Release)MTable.get(getCtx(), I_R_Release.Table_Name)
+			.getPO(getR_Release_ID(), get_TrxName());	}
 
 	/** Set Release.
 		@param R_Release_ID Release	  */
@@ -190,21 +127,24 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 		return ii.intValue();
 	}
 
-	/** Set Title.
-		@param Title 
-		Name this entity is referred to as
-	  */
-	public void setTitle (String Title)
+	/** Set Release Related.
+		@param R_ReleaseRelated_ID Release Related	  */
+	public void setR_ReleaseRelated_ID (int R_ReleaseRelated_ID)
 	{
-		set_Value (COLUMNNAME_Title, Title);
+		if (R_ReleaseRelated_ID < 1) 
+			set_ValueNoCheck (COLUMNNAME_R_ReleaseRelated_ID, null);
+		else 
+			set_ValueNoCheck (COLUMNNAME_R_ReleaseRelated_ID, Integer.valueOf(R_ReleaseRelated_ID));
 	}
 
-	/** Get Title.
-		@return Name this entity is referred to as
-	  */
-	public String getTitle () 
+	/** Get Release Related.
+		@return Release Related	  */
+	public int getR_ReleaseRelated_ID () 
 	{
-		return (String)get_Value(COLUMNNAME_Title);
+		Integer ii = (Integer)get_Value(COLUMNNAME_R_ReleaseRelated_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
 	}
 
 	/** Set Immutable Universally Unique Identifier.
@@ -222,22 +162,5 @@ public class X_R_Release extends PO implements I_R_Release, I_Persistent
 	public String getUUID () 
 	{
 		return (String)get_Value(COLUMNNAME_UUID);
-	}
-
-	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value)
-	{
-		set_Value (COLUMNNAME_Value, Value);
-	}
-
-	/** Get Search Key.
-		@return Search key for the record in the format required - must be unique
-	  */
-	public String getValue () 
-	{
-		return (String)get_Value(COLUMNNAME_Value);
 	}
 }

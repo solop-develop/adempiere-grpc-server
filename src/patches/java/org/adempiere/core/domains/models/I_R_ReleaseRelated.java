@@ -23,17 +23,17 @@ import org.compiere.util.KeyNamePair;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
-/** Generated Interface for R_Release
+/** Generated Interface for R_ReleaseRelated
  *  @author Adempiere (generated) 
  *  @version Release 3.9.4
  */
-public interface I_R_Release 
+public interface I_R_ReleaseRelated 
 {
 
-    /** TableName=R_Release */
-    public static final String Table_Name = "R_Release";
+    /** TableName=R_ReleaseRelated */
+    public static final String Table_Name = "R_ReleaseRelated";
 
-    /** AD_Table_ID=55060 */
+    /** AD_Table_ID=55181 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -81,15 +81,6 @@ public interface I_R_Release
 	  */
 	public int getCreatedBy();
 
-    /** Column name DatePublished */
-    public static final String COLUMNNAME_DatePublished = "DatePublished";
-
-	/** Set Date Published	  */
-	public void setDatePublished (Timestamp DatePublished);
-
-	/** Get Date Published	  */
-	public Timestamp getDatePublished();
-
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 
@@ -103,53 +94,16 @@ public interface I_R_Release
 	  */
 	public boolean isActive();
 
-    /** Column name Memo */
-    public static final String COLUMNNAME_Memo = "Memo";
+    /** Column name R_ReferenceRelease_ID */
+    public static final String COLUMNNAME_R_ReferenceRelease_ID = "R_ReferenceRelease_ID";
 
-	/** Set Memo.
-	  * Memo Text
-	  */
-	public void setMemo (String Memo);
+	/** Set Reference Release	  */
+	public void setR_ReferenceRelease_ID (int R_ReferenceRelease_ID);
 
-	/** Get Memo.
-	  * Memo Text
-	  */
-	public String getMemo();
+	/** Get Reference Release	  */
+	public int getR_ReferenceRelease_ID();
 
-    /** Column name Processed */
-    public static final String COLUMNNAME_Processed = "Processed";
-
-	/** Set Processed.
-	  * The document has been processed
-	  */
-	public void setProcessed (boolean Processed);
-
-	/** Get Processed.
-	  * The document has been processed
-	  */
-	public boolean isProcessed();
-
-    /** Column name ProcessRelease */
-    public static final String COLUMNNAME_ProcessRelease = "ProcessRelease";
-
-	/** Set Process Release.
-	  * Process the release: close linked requests and mark as processed
-	  */
-	public void setProcessRelease (String ProcessRelease);
-
-	/** Get Process Release.
-	  * Process the release: close linked requests and mark as processed
-	  */
-	public String getProcessRelease();
-
-    /** Column name ReleaseType */
-    public static final String COLUMNNAME_ReleaseType = "ReleaseType";
-
-	/** Set Release Type	  */
-	public void setReleaseType (String ReleaseType);
-
-	/** Get Release Type	  */
-	public String getReleaseType();
+	public I_R_Release getR_ReferenceRelease() throws RuntimeException;
 
     /** Column name R_Release_ID */
     public static final String COLUMNNAME_R_Release_ID = "R_Release_ID";
@@ -160,18 +114,16 @@ public interface I_R_Release
 	/** Get Release	  */
 	public int getR_Release_ID();
 
-    /** Column name Title */
-    public static final String COLUMNNAME_Title = "Title";
+	public I_R_Release getR_Release() throws RuntimeException;
 
-	/** Set Title.
-	  * Name this entity is referred to as
-	  */
-	public void setTitle (String Title);
+    /** Column name R_ReleaseRelated_ID */
+    public static final String COLUMNNAME_R_ReleaseRelated_ID = "R_ReleaseRelated_ID";
 
-	/** Get Title.
-	  * Name this entity is referred to as
-	  */
-	public String getTitle();
+	/** Set Release Related	  */
+	public void setR_ReleaseRelated_ID (int R_ReleaseRelated_ID);
+
+	/** Get Release Related	  */
+	public int getR_ReleaseRelated_ID();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
@@ -201,17 +153,4 @@ public interface I_R_Release
 	  * Immutable Universally Unique Identifier
 	  */
 	public String getUUID();
-
-    /** Column name Value */
-    public static final String COLUMNNAME_Value = "Value";
-
-	/** Set Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value);
-
-	/** Get Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public String getValue();
 }
