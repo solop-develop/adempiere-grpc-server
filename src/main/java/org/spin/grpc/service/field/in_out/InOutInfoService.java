@@ -24,6 +24,7 @@ import org.spin.backend.grpc.field.inout.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoResponse;
 import org.spin.backend.grpc.field.inout.ListInvoicesRequest;
+import org.spin.backend.grpc.field.inout.ListOrdersRequest;
 import org.spin.backend.grpc.field.inout.ListShippersRequest;
 
 import io.grpc.Status;
@@ -92,6 +93,29 @@ public class InOutInfoService extends InOutInfoServiceImplBase {
 				throw new AdempiereException("Object ListInvoicesRequest Null");
 			}
 			ListLookupItemsResponse.Builder entityValueList = InOutInfoLogic.listInvoices(request);
+			responseObserver.onNext(
+				entityValueList.build()
+			);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(Status.INTERNAL
+				.withDescription(e.getLocalizedMessage())
+				.withCause(e)
+				.asRuntimeException()
+			);
+		}
+	}
+
+
+	@Override
+	public void listOrders(ListOrdersRequest request, StreamObserver<ListLookupItemsResponse> responseObserver) {
+		try {
+			if(request == null) {
+				throw new AdempiereException("Object ListOrdersRequest Null");
+			}
+			ListLookupItemsResponse.Builder entityValueList = InOutInfoLogic.listOrders(request);
 			responseObserver.onNext(
 				entityValueList.build()
 			);
