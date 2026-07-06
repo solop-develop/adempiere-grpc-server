@@ -25,6 +25,7 @@ import org.compiere.model.MRequestType;
 import org.compiere.model.MStatus;
 import org.compiere.model.Query;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 /** Generated Process for (Publish Release)
@@ -78,7 +79,8 @@ public class PublishRelease extends PublishReleaseAbstract
 			request.saveEx();
 			closedCount++;
 		}
-
+		release.setProcessed(true);
+		release.setDatePublished(new Timestamp(System.currentTimeMillis()));
 		release.saveEx();
 
 		return "@Closed@: " + closedCount;
