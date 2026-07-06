@@ -36,6 +36,7 @@ import org.spin.backend.grpc.field.inout.ListBusinessPartnersRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoRequest;
 import org.spin.backend.grpc.field.inout.ListInOutInfoResponse;
 import org.spin.backend.grpc.field.inout.ListInvoicesRequest;
+import org.spin.backend.grpc.field.inout.ListOrdersRequest;
 import org.spin.backend.grpc.field.inout.ListShippersRequest;
 import org.spin.base.db.WhereClauseUtil;
 import org.spin.base.util.ContextManager;
@@ -132,6 +133,42 @@ public class InOutInfoLogic {
 			0, 0, 0,
 			0,
 			I_M_InOut.COLUMNNAME_C_Invoice_ID, I_M_InOut.Table_Name,
+			0,
+			whereClause
+		);
+
+		ListLookupItemsResponse.Builder builderList = FieldManagementLogic.listLookupItems(
+			reference,
+			null,
+			request.getPageSize(),
+			request.getPageToken(),
+			request.getSearchValue(),
+			true
+		);
+
+		return builderList;
+	}
+
+
+
+	public static ListLookupItemsResponse.Builder listOrders(ListOrdersRequest request) {
+		String whereClause = "";
+		if (!Util.isEmpty(request.getIsSalesTransaction(), true)) {
+			boolean isSalesTransaction = BooleanManager.getBooleanFromString(
+				request.getIsSalesTransaction()
+			);
+			if (isSalesTransaction) {
+				whereClause = " C_Order.IsSOTrx = 'Y' ";
+			} else {
+				whereClause = " C_Order.IsSOTrx = 'N' ";
+			}
+		}
+		// Sales Order
+		MLookupInfo reference = ReferenceInfo.getInfoFromRequest(
+			DisplayType.TableDir,
+			0, 0, 0,
+			0,
+			I_M_InOut.COLUMNNAME_C_Order_ID, I_M_InOut.Table_Name,
 			0,
 			whereClause
 		);
@@ -250,13 +287,50 @@ public class InOutInfoLogic {
 			)
 		).strip();
 		if(!Util.isEmpty(searchValue, true)) {
+			// Search also by related Invoice No and Sales Order No,
+			// each one matched by the delivery header (order) and by the delivery lines.
+			// Correlated EXISTS against M_InOut so the invoice/order lookups are
+			// evaluated only for the already-filtered deliveries (by partner/validation)
+			// instead of full-scanning C_Invoice/C_InvoiceLine/C_Order/C_OrderLine.
 			whereClause.append(" AND ("
-				+ "UPPER(DocumentNo) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(POReference) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(Description) LIKE '%' || UPPER(?) || '%'"
+				+ "UPPER(M_InOut.DocumentNo) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(M_InOut.POReference) LIKE '%' || UPPER(?) || '%' "
+				+ "OR UPPER(M_InOut.Description) LIKE '%' || UPPER(?) || '%' "
+				// Invoice No -> via the order of the invoice
+				+ "OR EXISTS ("
+				+   "SELECT 1 FROM C_Invoice inv "
+				+   "WHERE inv.C_Order_ID = M_InOut.C_Order_ID "
+				+   "AND UPPER(inv.DocumentNo) LIKE '%' || UPPER(?) || '%'"
+				+ ") "
+				// Invoice No -> via the delivery lines
+				+ "OR EXISTS ("
+				+   "SELECT 1 FROM C_InvoiceLine cil "
+				+   "INNER JOIN M_InOutLine iol ON (iol.M_InOutLine_ID = cil.M_InOutLine_ID) "
+				+   "INNER JOIN C_Invoice inv ON (inv.C_Invoice_ID = cil.C_Invoice_ID) "
+				+   "WHERE iol.M_InOut_ID = M_InOut.M_InOut_ID "
+				+   "AND UPPER(inv.DocumentNo) LIKE '%' || UPPER(?) || '%'"
+				+ ") "
+				// Sales Order No -> via the delivery header
+				+ "OR EXISTS ("
+				+   "SELECT 1 FROM C_Order ord "
+				+   "WHERE ord.C_Order_ID = M_InOut.C_Order_ID "
+				+   "AND UPPER(ord.DocumentNo) LIKE '%' || UPPER(?) || '%'"
+				+ ") "
+				// Sales Order No -> via the delivery lines
+				+ "OR EXISTS ("
+				+   "SELECT 1 FROM M_InOutLine iol "
+				+   "INNER JOIN C_OrderLine ol ON (ol.C_OrderLine_ID = iol.C_OrderLine_ID) "
+				+   "INNER JOIN C_Order ord ON (ord.C_Order_ID = ol.C_Order_ID) "
+				+   "WHERE iol.M_InOut_ID = M_InOut.M_InOut_ID "
+				+   "AND UPPER(ord.DocumentNo) LIKE '%' || UPPER(?) || '%'"
+				+ ") "
 				+ ") "
 			);
 			//	Add parameters
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
+			parametersList.add(searchValue);
 			parametersList.add(searchValue);
 			parametersList.add(searchValue);
 			parametersList.add(searchValue);
@@ -335,13 +409,44 @@ public class InOutInfoLogic {
 				shipperId
 			);
 		}
-		// Invoice
+		// Invoice: match by direct link, by the invoice order (header)
+		// and by the delivery lines invoiced by that invoice.
 		final int invoiceId = request.getInvoiceId();
 		if (invoiceId > 0) {
-			whereClause.append(" AND C_Invoice_ID = ? ");
-			parametersList.add(
-				invoiceId
+			whereClause.append(" AND ("
+				+ "C_Invoice_ID = ? "
+				+ "OR C_Order_ID IN ("
+				+   "SELECT inv.C_Order_ID "
+				+   "FROM C_Invoice AS inv "
+				+   "WHERE inv.C_Invoice_ID = ? AND inv.C_Order_ID IS NOT NULL"
+				+ ") "
+				+ "OR M_InOut_ID IN ("
+				+   "SELECT iol.M_InOut_ID FROM C_InvoiceLine cil "
+				+   "INNER JOIN M_InOutLine iol ON (iol.M_InOutLine_ID = cil.M_InOutLine_ID) "
+				+   "WHERE cil.C_Invoice_ID = ?"
+				+ ") "
+				+ ") "
 			);
+			parametersList.add(invoiceId);
+			parametersList.add(invoiceId);
+			parametersList.add(invoiceId);
+		}
+		// Sales Order: match by the delivery header and by the
+		// delivery lines that belong to a line of that order.
+		final int orderId = request.getOrderId();
+		if (orderId > 0) {
+			whereClause.append(" AND ("
+				+ "C_Order_ID = ? "
+				+ "OR M_InOut_ID IN ("
+				+   "SELECT iol.M_InOut_ID "
+				+   "FROM M_InOutLine AS iol "
+				+   "INNER JOIN C_OrderLine ol ON (ol.C_OrderLine_ID = iol.C_OrderLine_ID) "
+				+   "WHERE ol.C_Order_ID = ?"
+				+ ") "
+				+ ") "
+			);
+			parametersList.add(orderId);
+			parametersList.add(orderId);
 		}
 
 		Query query = new Query(
@@ -376,12 +481,25 @@ public class InOutInfoLogic {
 			)
 		;
 
+		// Pagination and count stay at delivery level; a delivery related to
+		// several invoices is expanded to one row per invoice
 		query.setLimit(limit, offset)
 			.getIDsAsList()
 			.stream()
 			.forEach(inOutId -> {
-				InOutInfo.Builder builder = InOutInfoConvert.convertInOutInfo(inOutId);
-				responseBuilder.addRecords(builder);
+				MInOut inOut = new MInOut(context, inOutId, null);
+				List<Integer> invoiceIds = InOutInfoConvert.getRelatedInvoiceIds(inOut);
+				if (invoiceIds.isEmpty()) {
+					responseBuilder.addRecords(
+						InOutInfoConvert.convertInOutInfo(inOut, 0)
+					);
+				} else {
+					invoiceIds.forEach(relatedInvoiceId ->
+						responseBuilder.addRecords(
+							InOutInfoConvert.convertInOutInfo(inOut, relatedInvoiceId)
+						)
+					);
+				}
 			})
 		;
 
