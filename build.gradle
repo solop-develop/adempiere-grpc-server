@@ -16,7 +16,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.5.11'
+def adempiereCoreVersion = '1.5.12'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -74,19 +74,19 @@ dependencies {
 
 	//	ADempiere Core + Patches + Features
 	implementation "org.solop.adempiere:adempiere-core:${adempiereCoreVersion}"
-	implementation "com.solop.adempiere.tools:solop-core:core-1.5.10-1.0.1"
+	implementation "com.solop.adempiere.tools:solop-core:core-1.5.12-1.0.0"
 	implementation "com.solop.adempiere.tools:display-definition:core-1.5.5-1.0.0"
 	// Firebase Connector
 	implementation "com.solop.adempiere.tools:adempiere-firebase-connector:core-1.0.0-1.0.0"
 	// Time Control
-	implementation "com.solop.adempiere.tools:time-control:core-1.5.11-1.0.0"
+	implementation "com.solop.adempiere.tools:time-control:core-1.5.12-1.0.0"
 	implementation "com.solop.adempiere.tools:performance-analysis:core-1.5.9-1.0.0"
 	implementation "com.solop.adempiere.verticals:import-export-management:core-1.4.21-1.0.1"
-	implementation "com.solop.adempiere.verticals:agency-project:core-1.5.10-1.0.0"
+	implementation "com.solop.adempiere.verticals:agency-project:core-1.5.12-1.0.0"
 	// Electronic Invoicing
-	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.5.11-1.0.0"
+	implementation "com.solop.adempiere.tools:electronic-invoicing:core-1.5.12-1.0.0"
 	implementation "com.solop.adempiere.tools:shopping-admin-connection:core-1.5.2-1.0.0"
-	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-1.0.0-1.0.0"
+	implementation "com.solop.adempiere.tools:cloud-solop-notifier:core-1.5.12-1.0.0"
 	// Payment Processor
 	implementation "com.solop.adempiere.tools:payment-processor:core-1.4.9-1.0.0"
 	implementation "com.solop.adempiere.tools:warehouse-light:core-1.4.20-1.0.1"
@@ -96,16 +96,10 @@ dependencies {
 	implementation "com.solop.adempiere.tools:intercompany-management:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.verticals:delivery-management-service:core-1.0.0-1.0.0"
 	implementation "com.solop.adempiere.tools:adempiere-webhook:core-1.5.2-1.0.0"
-	implementation "com.solop.adempiere.tools:external-store:core-1.5.11-1.0.0"
+	implementation "com.solop.adempiere.tools:external-store:core-1.5.12-1.0.0"
 	implementation "com.solop.adempiere.tools:core-tools:core-1.4.2-1.0.0"
 	implementation "com.solop.adempiere.localization:luy:core-1.4.22-1.0.5"
 	implementation "com.solop.adempiere.tools:payroll-light:core-1.5.2-1.0.0"
-	//	Markdown to HTML rendering (+ GFM extensions)
-	implementation "org.commonmark:commonmark:0.29.0"
-	implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
-	implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
-	implementation "org.commonmark:commonmark-ext-task-list-items:0.29.0"
-	implementation "org.commonmark:commonmark-ext-autolink:0.29.0"
 	//	Password hashing: same BCryptPasswordEncoder used by Sabana (Spring Boot 3.5.x -> Spring Security 6.5.x)
 	implementation "org.springframework.security:spring-security-crypto:6.5.7"
 }
