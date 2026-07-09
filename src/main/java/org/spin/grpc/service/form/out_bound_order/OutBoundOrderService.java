@@ -41,6 +41,11 @@ import org.spin.backend.grpc.form.out_bound_order.OutBoundOrderServiceGrpc.OutBo
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
+/**
+ * Based on:
+ *  - org.spin.wms.form.OutBoundOrder
+ *  - org.spin.wms.form.WOutBoundOrder
+ */
 public class OutBoundOrderService extends OutBoundOrderServiceImplBase {
 
 	/**	Logger			*/

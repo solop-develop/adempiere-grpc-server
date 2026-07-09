@@ -18,7 +18,9 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,6 +35,7 @@ import org.compiere.model.MFreight;
 import org.compiere.model.MLocator;
 import org.compiere.model.MLookupInfo;
 import org.compiere.model.MMenu;
+import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
 import org.compiere.model.MOrg;
 import org.compiere.model.MProduct;
@@ -49,6 +52,7 @@ import org.compiere.util.Util;
 import org.eevolution.distribution.model.MDDDriver;
 import org.eevolution.distribution.model.MDDFreight;
 import org.eevolution.distribution.model.MDDFreightLine;
+import org.eevolution.distribution.model.MDDOrder;
 import org.eevolution.distribution.model.MDDOrderLine;
 import org.eevolution.distribution.model.MDDVehicle;
 import org.eevolution.wms.model.MWMInOutBound;
@@ -76,6 +80,7 @@ import org.spin.backend.grpc.form.out_bound_order.ListShippersRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListTargetDocumentTypesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListVehiclesRequest;
 import org.spin.backend.grpc.form.out_bound_order.ListWarehousesRequest;
+import org.spin.backend.grpc.form.out_bound_order.OrderLineRequest;
 import org.spin.base.util.ReferenceInfo;
 import org.spin.grpc.service.field.field_management.FieldManagementLogic;
 import org.spin.service.grpc.util.value.NumberManager;
@@ -1062,6 +1067,113 @@ public class OutBoundOrderLogic {
 
 
 
+	// Correlated subquery — do not rewrite as LEFT JOIN + GROUP BY (that form
+	// materializes the aggregate over all m_inoutline rows on every call; in
+	// this per-line hot path it degrades from ~0.5 ms to ~440 ms per line).
+	private static final String SO_AVAILABLE_QTY_SQL =
+			"SELECT COALESCE(SUM(CASE WHEN c.IsDelivered='N' AND c.DocStatus='CO' "
+		+	"                         THEN lc.MovementQty - COALESCE(( "
+		+	"                                 SELECT SUM(iol.MovementQty) "
+		+	"                                 FROM   M_InOutLine iol "
+		+	"                                 JOIN   M_InOut     io ON io.M_InOut_ID = iol.M_InOut_ID "
+		+	"                                 WHERE  io.DocStatus IN ('CO','CL') "
+		+	"                                   AND  iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID "
+		+	"                             ), 0) "
+		+	"                         ELSE 0 END), 0) "
+		+	"FROM   WM_InOutBoundLine lc "
+		+	"JOIN   WM_InOutBound     c ON c.WM_InOutBound_ID = lc.WM_InOutBound_ID "
+		+	"WHERE  lc.C_OrderLine_ID = ?"
+	;
+
+	private static final String DD_AVAILABLE_QTY_SQL =
+			"SELECT COALESCE(SUM(CASE WHEN c.IsDelivered='N' AND c.DocStatus='CO' "
+		+	"                         THEN lc.MovementQty ELSE 0 END), 0) "
+		+	"FROM   WM_InOutBoundLine lc "
+		+	"JOIN   WM_InOutBound     c ON c.WM_InOutBound_ID = lc.WM_InOutBound_ID "
+		+	"WHERE  lc.DD_OrderLine_ID = ?"
+	;
+
+	private static void validateAvailableQuantities(String movementType, List<OrderLineRequest> lines, String transactionName) {
+		final boolean isDistribution = I_DD_Order.Table_Name.equals(movementType);
+		final Map<Integer, String> deliveryRuleByOrder = new HashMap<Integer, String>();
+		final StringBuffer errors = new StringBuffer();
+		for (OrderLineRequest requestLine : lines) {
+			int orderLineId = requestLine.getId();
+			BigDecimal requested = NumberManager.getBigDecimalFromString(requestLine.getQuantity());
+			if (orderLineId <= 0 || requested == null || requested.signum() <= 0) {
+				continue;
+			}
+			BigDecimal available;
+			String deliveryRule;
+			int orderId;
+			if (isDistribution) {
+				MDDOrderLine ol = new MDDOrderLine(Env.getCtx(), orderLineId, transactionName);
+				if (ol.getDD_OrderLine_ID() <= 0) {
+					continue;
+				}
+				orderId = ol.getDD_Order_ID();
+				deliveryRule = deliveryRuleByOrder.get(orderId);
+				if (deliveryRule == null) {
+					MDDOrder ord = new MDDOrder(Env.getCtx(), orderId, transactionName);
+					deliveryRule = ord.getDeliveryRule() != null ? ord.getDeliveryRule() : "";
+					deliveryRuleByOrder.put(orderId, deliveryRule);
+				}
+				if (X_C_Order.DELIVERYRULE_Force.equals(deliveryRule) || X_C_Order.DELIVERYRULE_Manual.equals(deliveryRule)) {
+					continue;
+				}
+				BigDecimal asignada = DB.getSQLValueBD(transactionName, DD_AVAILABLE_QTY_SQL, orderLineId);
+				if (asignada == null) {
+					asignada = Env.ZERO;
+				}
+				available = ol.getQtyOrdered()
+					.subtract(ol.getQtyInTransit())
+					.subtract(ol.getQtyDelivered())
+					.subtract(asignada)
+				;
+			} else {
+				MOrderLine ol = new MOrderLine(Env.getCtx(), orderLineId, transactionName);
+				if (ol.getC_OrderLine_ID() <= 0) {
+					continue;
+				}
+				orderId = ol.getC_Order_ID();
+				deliveryRule = deliveryRuleByOrder.get(orderId);
+				if (deliveryRule == null) {
+					MOrder ord = new MOrder(Env.getCtx(), orderId, transactionName);
+					deliveryRule = ord.getDeliveryRule() != null ? ord.getDeliveryRule() : "";
+					deliveryRuleByOrder.put(orderId, deliveryRule);
+				}
+				if (X_C_Order.DELIVERYRULE_Force.equals(deliveryRule) || X_C_Order.DELIVERYRULE_Manual.equals(deliveryRule)) {
+					continue;
+				}
+				BigDecimal asignada = DB.getSQLValueBD(transactionName, SO_AVAILABLE_QTY_SQL, orderLineId);
+				if (asignada == null) {
+					asignada = Env.ZERO;
+				}
+				available = ol.getQtyOrdered()
+					.subtract(ol.getQtyDelivered())
+					.subtract(asignada);
+			}
+			if (requested.compareTo(available) > 0) {
+				if (errors.length() > 0) {
+					errors.append(Env.NL);
+				}
+				errors.append("@C_OrderLine_ID@=").append(orderLineId)
+					.append(": @Qty@=").append(requested.stripTrailingZeros().toPlainString())
+					.append(", @QtyAvailable@=").append(available.stripTrailingZeros().toPlainString())
+				;
+			}
+		}
+		if (errors.length() > 0) {
+			throw new AdempiereException(
+				Msg.parseTranslation(
+					Env.getCtx(),
+					"@Error@ @Qty@ > @QtyAvailable@" + Env.NL + errors.toString()
+				)
+			);
+		}
+	}
+
+
 	public static GenerateLoadOrderResponse.Builder generateLoadOrder(GenerateLoadOrderRequest request) {
 		final String movementType = request.getMovementType();
 		if (Util.isEmpty(movementType, true) ||
@@ -1136,6 +1248,8 @@ public class OutBoundOrderLogic {
 		AtomicInteger linesQuantity = new AtomicInteger();
 		final int locatorId = request.getLocatorId();
 		Trx.run(transactionName -> {
+			validateAvailableQuantities(movementType, request.getLinesList(), transactionName);
+
 			AtomicReference<BigDecimal> totalWeightReference = new AtomicReference<BigDecimal>(
 				Env.ZERO
 			);
