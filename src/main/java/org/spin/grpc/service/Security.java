@@ -1369,8 +1369,12 @@ public class Security extends SecurityImplBase {
 	private SessionInfo.Builder getSessionInfo(SessionInfoRequest request) {
 		Properties context = Env.getCtx();
 		MSession session = MSession.get(context, false);
-		//	Load default preference values
-		SessionManager.loadDefaultSessionValues(context, Env.getAD_Language(context));
+		//	Default preference values are already loaded per-request by the auth interceptor
+		//	(SessionManager.getSessionFromToken / Keycloak resolveSession -> loadDefaultSessionValues),
+		//	so we must not reload them here: doing so repeated a full AcctSchema/Preference/default-values
+		//	pass (~10-20 ms) on every session-info reload.
+		// SessionManager.loadDefaultSessionValues(context, Env.getAD_Language(context));
+
 		//	Session values
 		SessionInfo.Builder builder = SessionInfo.newBuilder();
 		builder.setId(
