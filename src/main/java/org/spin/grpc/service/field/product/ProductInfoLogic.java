@@ -1532,195 +1532,113 @@ public class ProductInfoLogic {
 		);
 
 		boolean isShowDetail = request.getIsShowDetail();
+		boolean isIncludeOrderedQuantity = request.getIsIncludeOrderedQuantity();
 		int productId = request.getProductId();
 		int warehouseId = request.getWarehouseId();
 
-		//	Create the SELECT ..UNION. clause
-		//  This is done in-line rather than using prepareTable() so we can add a running sum to the data.
-		String sql;
-		if (!isShowDetail) {
-			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, 0 AS ID, null AS Date,"
-				+ " sum(s.QtyOnHand) AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
-				+ " null AS sumPASI," // " s.PASI,"
-				+ " 0 AS ASI,"
-				+ " null AS BP_Name, null AS DocumentNo, 10 AS SeqNo";
-		}
-		else {
-			sql = "(SELECT s.M_Product_ID, w.Name AS warehouse, l.value AS locator, s.M_AttributeSetInstance_ID AS ID, null AS Date,"
-				+ " s.QtyOnHand AS AvailQty, 0 AS DeltaQty, 0 AS QtyOrdered, 0 AS QtyReserved,"
-				+ " CASE WHEN s.PASI  = '' THEN '{' || COALESCE(s.M_AttributeSetInstance_ID,0) || '}' ELSE s.PASI END AS sumPASI,"
-				+ " COALESCE(M_AttributeSetInstance_ID,0) AS ASI,"
-				+ " null AS BP_Name, null AS DocumentNo,  10 AS SeqNo";
-		}
-		sql += " FROM (SELECT M_Product_ID, M_Locator_ID, QtyOnHand, QtyReserved, QtyOrdered,"
-			+ 		 " COALESCE(productAttribute(M_AttributeSetInstance_ID)::varchar, '') AS PASI,"
-			+		 " COALESCE(M_AttributeSetInstance_ID,0) AS M_AttributeSetInstance_ID FROM M_Storage) s "
-			+ " INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID)"
-			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
-			+ " AND s.M_Product_ID=" + productId;
+		// Purchases feed the ordered quantity and everything else (sales, distribution,
+		// production) feeds the reserved one, the same split that `UpdateStorage` applies.
+		final String reservationFamily = "CASE WHEN r.ReservationType IN ('PO+', 'PO-') THEN 'PO' ELSE 'RES' END";
+
+		//	Stock on hand from the `M_Storage` snapshot, grouped by locator.
+		//	On detail the reserved/ordered quantities are left to the reservation rows
+		//	below, otherwise they would be counted twice.
+		String sql = "(SELECT s.M_Product_ID, w.Name AS Warehouse, l.Value AS Locator,"
+			+ " SUM(s.QtyOnHand) AS QtyOnHand,"
+			+ (isShowDetail
+				? " 0 AS QtyReserved, 0 AS QtyOrdered,"
+				: " SUM(s.QtyReserved) AS QtyReserved, SUM(s.QtyOrdered) AS QtyOrdered,")
+			+ " null AS DateTrx, null AS BP_Name, null AS DocumentNo, 0 AS ASI, 10 AS SeqNo"
+			+ " FROM M_Storage s"
+			+ " INNER JOIN M_Locator l ON (s.M_Locator_ID = l.M_Locator_ID)"
+			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID = w.M_Warehouse_ID)"
+			+ " WHERE s.M_Product_ID = " + productId;
 		if (warehouseId > 0) {
-			sql += " AND l.M_Warehouse_ID=" + warehouseId;
+			sql += " AND l.M_Warehouse_ID = " + warehouseId;
 		}
-		//if (m_M_AttributeSetInstance_ID > 0)
-		//	sql += " AND s.M_AttributeSetInstance_ID=?";
-		if (!isShowDetail) {
-			//sql += " AND (s.QtyOnHand<>0)";
-			sql += " GROUP BY s.M_Product_ID, w.Name, l.value, s.M_Locator_ID, sumPASI, ASI, BP_Name, DocumentNo, SeqNo ";
-		}
-		sql += " UNION ALL ";
+		sql += " GROUP BY s.M_Product_ID, w.Name, l.Value";
 
-		//	Orders
-		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, null AS locator, ol.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
-			+ " 0 AS AvailQty,"
-			+ " ol.QtyDelivered  AS DeltaQty,"
-			+ " CASE WHEN o.IsSOTrx = 'N' THEN ol.QtyReserved ELSE 0 END AS QtyOrdered,"
-			+ " CASE WHEN o.IsSOTrx = 'Y' THEN ol.QtyReserved ELSE 0 END AS QtyReserved,"
-			+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
-			+ " ol.M_AttributeSetInstance_ID AS ASI,"
-			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo AS DocumentNo, 20 AS SeqNo "
-			+ "FROM C_Order o"
-			+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)"
-			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
-			+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
-			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
-			+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO')"
-			+ " AND ol.M_Product_ID=" + productId;
-		if (warehouseId > 0) {
-			sql += " AND w.M_Warehouse_ID=" + warehouseId;
-		}
-		//if (m_M_AttributeSetInstance_ID > 0) {
-		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
-		//}
-		//sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator";
-
-		sql += " UNION ALL ";
-		//	Manufacturing Orders Ordered
-		sql += "SELECT o.M_Product_ID, w.Name AS warehouse, null AS locator, o.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
-				+ " 0 AS AvailQty,"
-				+ " o.QtyDelivered AS DeltaQty,"
-				+ " o.QtyOrdered AS QtyOrdered,"
-				+ " 0 AS QtyReserved,"
-				+ " productAttribute(o.M_AttributeSetInstance_ID) AS sumPASI,"
-				+ " o.M_AttributeSetInstance_ID AS ASI,"
-				+ " null AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 30 AS SeqNo "
-				+ "FROM PP_Order o"
-				+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
-				+ " INNER JOIN M_Warehouse w ON (o.M_Warehouse_ID=w.M_Warehouse_ID)"
-				+ "WHERE o.DocStatus in ('IP','CO')"
-				+ " AND o.M_Product_ID=" + productId;
-		if (warehouseId > 0) {
-			sql += " AND w.M_Warehouse_ID=" + warehouseId;
+		if (isShowDetail) {
+			//	Pending reservations netted by document and family: the `+` rows commit the
+			//	quantity and the `-` rows fulfill it, so only a positive balance is still pending.
+			sql += " UNION ALL "
+				+ "SELECT r.M_Product_ID, w.Name AS Warehouse, l.Value AS Locator,"
+				+ " 0 AS QtyOnHand,"
+				+ " CASE WHEN " + reservationFamily + " = 'PO' THEN 0 ELSE SUM(r.Qty) END AS QtyReserved,"
+				+ " CASE WHEN " + reservationFamily + " = 'PO' THEN SUM(r.Qty) ELSE 0 END AS QtyOrdered,"
+				+ " MAX(r.DateTrx) AS DateTrx,"
+				+ " COALESCE(obp.Name, dbp.Name) AS BP_Name,"
+				+ " COALESCE(odt.PrintName || ' ' || o.DocumentNo, ddt.PrintName || ' ' || d.DocumentNo) AS DocumentNo,"
+				+ " MAX(COALESCE(r.M_AttributeSetInstance_ID, 0)) AS ASI, 20 AS SeqNo"
+				+ " FROM M_Reservation r"
+				+ " INNER JOIN M_Locator l ON (r.M_Locator_ID = l.M_Locator_ID)"
+				+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID = w.M_Warehouse_ID)"
+				+ " LEFT JOIN C_Order o ON (r.C_Order_ID = o.C_Order_ID)"
+				+ " LEFT JOIN C_DocType odt ON (o.C_DocType_ID = odt.C_DocType_ID)"
+				+ " LEFT JOIN C_BPartner obp ON (o.C_BPartner_ID = obp.C_BPartner_ID)"
+				+ " LEFT JOIN DD_Order d ON (r.DD_Order_ID = d.DD_Order_ID)"
+				+ " LEFT JOIN C_DocType ddt ON (d.C_DocType_ID = ddt.C_DocType_ID)"
+				+ " LEFT JOIN C_BPartner dbp ON (d.C_BPartner_ID = dbp.C_BPartner_ID)"
+				+ " WHERE r.IsActive = 'Y' AND r.M_Product_ID = " + productId;
+			if (warehouseId > 0) {
+				sql += " AND l.M_Warehouse_ID = " + warehouseId;
+			}
+			sql += " GROUP BY r.M_Product_ID, w.Name, l.Value, " + reservationFamily + ","
+				+ " r.C_Order_ID, r.DD_Order_ID, r.M_ProductionBatch_ID, r.M_Production_ID,"
+				+ " obp.Name, dbp.Name, odt.PrintName, o.DocumentNo, ddt.PrintName, d.DocumentNo"
+				+ " HAVING SUM(r.Qty) > 0";
 		}
 
-		sql += " UNION ALL ";
-		//	Manufacturing Order Reserved
-		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, null AS locator, ol.M_AttributeSetInstance_ID AS ID, o.DatePromised AS date,"
-				+ " 0 AS AvailQty,"
-				+ " ol.QtyDelivered  AS DeltaQty,"
-				+ " 0 AS QtyOrdered,"
-				+ " ol.QtyReserved AS QtyReserved,"
-				+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
-				+ " ol.M_AttributeSetInstance_ID AS ASI,"
-				+ " null AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 40 AS SeqNo "
-				+ "FROM PP_Order o"
-				+ " INNER JOIN PP_Order_BOMLine ol ON (o.PP_Order_ID=ol.PP_Order_ID)"
-				+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
-				+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
-				+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO')"
-				+ " AND ol.M_Product_ID=" + productId;
-		if (warehouseId > 0) {
-			sql += " AND w.M_Warehouse_ID=" + warehouseId;
-		}
-
-		sql += " UNION ALL ";
-		
-		//	Distribution Orders Reserved
-		sql += "SELECT ol.M_Product_ID, wf.Name AS warehouse, lf.value AS locator, ol.M_AttributeSetInstance_ID AS ID, ol.DatePromised AS date,"
-			+ " 0 AS AvailQty,"
-			+ " ol.QtyInTransit AS DeltaQty,"
-			+ " 0 AS QtyOrdered,"
-			+ " ol.QtyReserved AS QtyReserved,"
-			+ " productAttribute(ol.M_AttributeSetInstance_ID) AS sumPASI,"
-			+ " ol.M_AttributeSetInstance_ID AS ASI,"
-			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 50 AS SeqNo "
-			+ "FROM DD_Order o"
-			+ " INNER JOIN DD_OrderLine ol ON (o.DD_Order_ID=ol.DD_Order_ID)"
-			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
-			+ " INNER JOIN M_Locator lf on (lf.M_Locator_ID = ol.M_Locator_ID)"
-			+ " INNER JOIN M_Warehouse wf ON (lf.M_Warehouse_ID=wf.M_Warehouse_ID)"
-			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID = bp.C_BPartner_ID) "
-			+ "WHERE ol.QtyReserved<>0 AND o.DocStatus in ('IP','CO') AND o.IsDelivered = 'N'"
-			+ " AND ol.M_Product_ID=" + productId;
-		if (warehouseId > 0) {
-			sql += " AND wf.M_Warehouse_ID=" + warehouseId;
-		}
-		//if (m_M_AttributeSetInstance_ID > 0)
-		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
-
-		sql += " UNION ALL ";
-		
-		//	Distribution Orders Ordered
-		sql += "SELECT ol.M_Product_ID, w.Name AS warehouse, l.value AS locator, ol.M_AttributeSetInstanceTo_ID AS ID, ol.DatePromised AS date,"
-			+ " 0 AS AvailQty,"
-			+ " ol.QtyDelivered AS DeltaQty,"
-			+ " ol.QtyOrdered AS QtyOrdered,"
-			+ " 0 AS QtyReserved,"
-			+ " productAttribute(ol.M_AttributeSetInstanceTo_ID) AS sumPASI,"
-			+ " ol.M_AttributeSetInstanceTo_ID AS ASI,"
-			+ " bp.Name AS BP_Name, dt.PrintName || ' ' || o.DocumentNo As DocumentNo, 60 AS SeqNo "
-			+ "FROM DD_Order o"
-			+ " INNER JOIN DD_OrderLine ol ON (o.DD_Order_ID=ol.DD_Order_ID)"
-			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
-			+ " INNER JOIN M_Locator l ON (l.M_Locator_ID = ol.M_LocatorTo_ID)"
-			+ " INNER JOIN M_Warehouse w ON (l.M_Warehouse_ID=w.M_Warehouse_ID)"
-			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID = bp.C_BPartner_ID) "
-			+ "WHERE ol.QtyOrdered - ol.Qtydelivered > 0 AND o.DocStatus in ('IP','CO') AND o.IsDelivered='N'" 
-			+ " AND ol.M_Product_ID=" + productId;
-		if (warehouseId > 0) {
-			sql += " AND w.M_Warehouse_ID=" + warehouseId;
-		}
-		//if (m_M_AttributeSetInstance_ID > 0) {
-		//	sql += " AND ol.M_AttributeSetInstance_ID=?";
-		//}
-		sql += " ORDER BY M_Product_ID, SeqNo, ID, date, locator)";
-
-		// List<Object> filtersList = new ArrayList<>();
-		// filtersList.add(
-		// 	request.getProductId()
-		// );
-
-		// int count = CountUtil.countRecords(sql, "M_PRODUCT_STOCK_V", filtersList);
+		//	Stock first and then its documents, so the running balance reads as a ledger.
+		sql += " ORDER BY Warehouse, Locator, SeqNo, DateTrx, DocumentNo)";
 
 		ListAvailableToPromisesResponse.Builder builderList = ListAvailableToPromisesResponse.newBuilder();
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		int countRecords = 0;
-		// Running Available to Promise balance per warehouse (ledger, like ZK).
-		// Rows come ordered as stock first and then documents, so the balance
-		// accumulates the per-row ATP (on hand + ordered - reserved) and is
-		// reset for each warehouse.
-		Map<String, BigDecimal> runningBalanceByWarehouse = new HashMap<String, BigDecimal>();
+		//	Running available balance per locator (ledger, like ZK)
+		Map<String, BigDecimal> runningBalanceByLocator = new HashMap<String, BigDecimal>();
 		try {
 			pstmt = DB.prepareStatement(sql, null);
-			// ParameterUtil.setParametersFromObjectsList(pstmt, filtersList);
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				AvailableToPromise.Builder builder = ProductInfoConvert.convertAvaliableToPromise(rs);
 
-				String warehouseKey = builder.getName();
-				BigDecimal rowAvailableToPromise = Optional.ofNullable(
-					NumberManager.getBigDecimalFromString(
-						builder.getAvailableToPromiseQuantity()
-					)
-				).orElse(BigDecimal.ZERO);
-				BigDecimal runningBalance = runningBalanceByWarehouse.getOrDefault(
-					warehouseKey, BigDecimal.ZERO
-				).add(rowAvailableToPromise);
-				runningBalanceByWarehouse.put(warehouseKey, runningBalance);
-				builder.setAvailableQuantity(
-					NumberManager.getBigDecimalToString(runningBalance)
+				//	Available = OnHand - Reserved (+ Ordered when requested)
+				BigDecimal onHandQuantity = NumberManager.getBigDecimalFromString(
+					builder.getOnHandQuantity()
 				);
+				BigDecimal reservedQuantity = NumberManager.getBigDecimalFromString(
+					builder.getReservedQuantity()
+				);
+				BigDecimal orderedQuantity = NumberManager.getBigDecimalFromString(
+					builder.getOrderedQuantity()
+				);
+				BigDecimal rowBalance = Optional.ofNullable(onHandQuantity).orElse(BigDecimal.ZERO)
+					.subtract(
+						Optional.ofNullable(reservedQuantity).orElse(BigDecimal.ZERO)
+					)
+				;
+				if (isIncludeOrderedQuantity) {
+					rowBalance = rowBalance.add(
+						Optional.ofNullable(orderedQuantity).orElse(BigDecimal.ZERO)
+					);
+				}
+
+				String locatorKey = builder.getName() + "|" + builder.getLocator();
+				BigDecimal runningBalance = runningBalanceByLocator.getOrDefault(
+					locatorKey, BigDecimal.ZERO
+				).add(rowBalance);
+				runningBalanceByLocator.put(locatorKey, runningBalance);
+
+				builder.setAvailableQuantity(
+						NumberManager.getBigDecimalToString(runningBalance)
+					)
+					.setAvailableToPromiseQuantity(
+						NumberManager.getBigDecimalToString(rowBalance)
+					)
+				;
 
 				builderList.addRecords(builder);
 				countRecords++;
@@ -1737,8 +1655,6 @@ public class ProductInfoLogic {
 
 		return builderList;
 	}
-
-
 
 	public static ListVendorPurchasesResponse.Builder listVendorPurchases(ListVendorPurchasesRequest request) {
 		validateAndGetProduct(

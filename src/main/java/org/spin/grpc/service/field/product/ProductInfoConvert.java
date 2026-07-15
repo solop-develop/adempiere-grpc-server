@@ -460,31 +460,15 @@ public class ProductInfoConvert {
 			return builder;
 		}
 
-		// AvailQty
 		BigDecimal onHandQuantity = Optional.ofNullable(
-			rs.getBigDecimal(6)
+			rs.getBigDecimal("QtyOnHand")
 		).orElse(BigDecimal.ZERO);
-
-		// // DeltaQty
-		// BigDecimal deliveredQuantity = Optional.ofNullable(
-		// 	rs.getBigDecimal(7)
-		// ).orElse(BigDecimal.ZERO);
-
-		// QtyOrdered
-		BigDecimal orderedQuantity = Optional.ofNullable(
-			rs.getBigDecimal(8)
-		).orElse(BigDecimal.ZERO);
-
-		// QtyReserved
 		BigDecimal reservedQuantity = Optional.ofNullable(
-			rs.getBigDecimal(9)
+			rs.getBigDecimal("QtyReserved")
 		).orElse(BigDecimal.ZERO);
-
-		BigDecimal availableQuantiy = onHandQuantity.subtract(reservedQuantity);
-
-		BigDecimal expectedQuantity = onHandQuantity.add(orderedQuantity)
-			.subtract(reservedQuantity)
-		;
+		BigDecimal orderedQuantity = Optional.ofNullable(
+			rs.getBigDecimal("QtyOrdered")
+		).orElse(BigDecimal.ZERO);
 
 		builder.setId(
 				rs.getInt(
@@ -496,21 +480,16 @@ public class ProductInfoConvert {
 					rs.getString("Warehouse")
 				)
 			)
-			.setDocumentNo(
-				TextManager.getValidString(
-					rs.getString(
-						I_C_Order.COLUMNNAME_DocumentNo
-					)
-				)
-			)
 			.setLocator(
 				TextManager.getValidString(
 					rs.getString("Locator")
 				)
 			)
-			.setAvailableQuantity(
-				NumberManager.getBigDecimalToString(
-					availableQuantiy
+			.setDocumentNo(
+				TextManager.getValidString(
+					rs.getString(
+						I_C_Order.COLUMNNAME_DocumentNo
+					)
 				)
 			)
 			.setOnHandQuantity(
@@ -528,11 +507,6 @@ public class ProductInfoConvert {
 					orderedQuantity
 				)
 			)
-			.setAvailableToPromiseQuantity(
-				NumberManager.getBigDecimalToString(
-					expectedQuantity
-				)
-			)
 			.setBusinessPartner(
 				TextManager.getValidString(
 					rs.getString("BP_Name")
@@ -545,15 +519,17 @@ public class ProductInfoConvert {
 			)
 		;
 
-		// Only set the date when there is a real one (e.g. documents).
-		// Stock rows have no date, so the field is left empty instead of "now".
-		Timestamp dateValue = rs.getTimestamp(5);
+		//	Only set the date when there is a real one (documents).
+		//	Stock rows have no date, so the field is left empty.
+		Timestamp dateValue = rs.getTimestamp("DateTrx");
 		if (dateValue != null) {
 			builder.setDate(
 				TimeManager.getProtoTimestampFromTimestamp(dateValue)
 			);
 		}
 
+		//	`AvailableQuantity` and `AvailableToPromiseQuantity` are set by the caller,
+		//	which owns the running balance and the include-ordered flag.
 		return builder;
 	}
 

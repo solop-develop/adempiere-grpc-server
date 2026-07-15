@@ -593,6 +593,8 @@ message ListAvailableToPromisesRequest {
 	int32 product_id = 9;
 	int32 warehouse_id = 10;
 	bool is_show_detail = 11;
+	// When true: Available = OnHand - Reserved + Ordered, otherwise Available = OnHand - Reserved
+	bool is_include_ordered_quantity = 12;
 }
 
 
