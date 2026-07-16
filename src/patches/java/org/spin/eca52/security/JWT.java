@@ -19,7 +19,7 @@ package org.spin.eca52.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.adempiere.core.domains.models.X_AD_TokenDefinition;
+import org.adempiere.core.domains.models.*;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.Query;
