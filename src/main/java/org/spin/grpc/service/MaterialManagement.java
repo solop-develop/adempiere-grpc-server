@@ -921,6 +921,12 @@ public class MaterialManagement extends MaterialManagementImplBase {
 	}
 
 	private Warehouse.Builder convertAvailableWarehouse(int warehouseId) {
+		return convertAvailableWarehouse(
+			warehouseId,
+			true
+		);
+	}
+	private Warehouse.Builder convertAvailableWarehouse(int warehouseId, boolean includeSource) {
 		MWarehouse warehouse = MWarehouse.get(Env.getCtx(), warehouseId);
 		if (warehouseId == 0) {
 			warehouse = new Query(
@@ -933,10 +939,17 @@ public class MaterialManagement extends MaterialManagementImplBase {
 			;
 		}
 		return convertAvailableWarehouse(
-			warehouse
+			warehouse,
+			includeSource
 		);
 	}
 	private Warehouse.Builder convertAvailableWarehouse(MWarehouse warehouse) {
+		return convertAvailableWarehouse(
+			warehouse,
+			true
+		);
+	}
+	private Warehouse.Builder convertAvailableWarehouse(MWarehouse warehouse, boolean includeSource) {
 		Warehouse.Builder builder = Warehouse.newBuilder();
 		if (warehouse == null) {
 			return builder;
@@ -964,9 +977,16 @@ public class MaterialManagement extends MaterialManagementImplBase {
 				warehouse.isInTransit()
 			)
 		;
-		if (warehouse.getM_WarehouseSource_ID() > 0) {
+		// Only resolve one nesting level for the source warehouse. The Warehouse
+		// message references itself (warehouse_source), so recursing again would
+		// loop forever when a warehouse points to itself or forms a cycle
+		// (e.g. A -> B -> A). includeSource is false on the nested call to stop.
+		if (includeSource
+				&& warehouse.getM_WarehouseSource_ID() > 0
+				&& warehouse.getM_WarehouseSource_ID() != warehouse.getM_Warehouse_ID()) {
 			Warehouse.Builder builderSource = convertAvailableWarehouse(
-				warehouse.getM_WarehouseSource_ID()
+				warehouse.getM_WarehouseSource_ID(),
+				false
 			);
 			builder.setWarehouseSource(builderSource);
 		}
