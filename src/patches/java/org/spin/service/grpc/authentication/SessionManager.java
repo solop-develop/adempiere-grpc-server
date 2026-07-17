@@ -70,6 +70,7 @@ import org.spin.eca52.util.JWTUtil;
 import org.spin.model.MADToken;
 import org.spin.model.MADTokenDefinition;
 import org.spin.service.grpc.util.base.PreferenceUtil;
+import org.spin.service.grpc.util.value.BooleanManager;
 import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.util.IThirdPartyAccessGenerator;
 import org.spin.util.ITokenGenerator;
@@ -298,18 +299,21 @@ public class SessionManager {
 				closeExpiredSessionQuietly(expired);
 				throw expired;
 			}
-			// Opportunistic validation: if the token carries a tenant_id claim
-			// (issued by a build with ECA52_JWT_BIND_TO_DATABASE=Y), require it
-			// to match this installation's tenant. Tokens without the claim
-			// (pre-2026-05-14 builds) are allowed through — the rest of the
-			// flow still cross-validates the JWT user/client against the
-			// AD_Session row loaded from DB.
-			String tokenTenantId = claims.getPayload().get(CLAIM_TENANT_ID, String.class);
-			if (tokenTenantId != null) {
-				String currentTenantId = getTenantId();
-				if (!tokenTenantId.equals(currentTenantId)) {
-					log.warning("JWT tenant_id mismatch");
-					throw new AdempiereException("@Invalid@ @AD_Session_ID@");
+			// Tenant binding is symmetric with claim emission: only enforce the
+			// tenant_id claim when this installation binds tokens to its database
+			// (ECA52_JWT_BIND_TO_DATABASE=Y) — the same flag that gates emission.
+			// With binding off (default), tokens minted by another service against
+			// the same database (e.g. Sabana, whose tenant_id is a readable routing
+			// key, not this installation's hash) must be accepted; the flow still
+			// cross-validates the JWT user/client against the AD_Session row below.
+			if (isDatabaseBindingEnabled()) {
+				String tokenTenantId = claims.getPayload().get(CLAIM_TENANT_ID, String.class);
+				if (tokenTenantId != null) {
+					String currentTenantId = getTenantId();
+					if (!tokenTenantId.equals(currentTenantId)) {
+						log.warning("JWT tenant_id mismatch");
+						throw new AdempiereException("@Invalid@ @AD_Session_ID@");
+					}
 				}
 			}
 			sessionId = NumberManager.getIntFromString(
@@ -629,7 +633,7 @@ public class SessionManager {
 		if (Util.isEmpty(value, true)) {
 			value = Ini.getProperty("ECA52_JWT_BIND_TO_DATABASE");
 		}
-		return "Y".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+		return BooleanManager.getBooleanFromString(value);
 	}
 
 	private static SecretKey getJWT_SecretKey() {
