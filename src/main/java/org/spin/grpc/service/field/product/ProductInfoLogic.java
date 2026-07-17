@@ -1568,7 +1568,15 @@ public class ProductInfoLogic {
 				+ " CASE WHEN " + reservationFamily + " = 'PO' THEN SUM(r.Qty) ELSE 0 END AS QtyOrdered,"
 				+ " MAX(r.DateTrx) AS DateTrx,"
 				+ " COALESCE(obp.Name, dbp.Name) AS BP_Name,"
-				+ " COALESCE(odt.PrintName || ' ' || o.DocumentNo, ddt.PrintName || ' ' || d.DocumentNo) AS DocumentNo,"
+				//	Purchase/Sales orders, distribution orders and production
+				//	(order or batch); production has no business partner.
+				//	The bare DocumentNo is a fallback when the document type has no print name.
+				+ " COALESCE("
+					+ " odt.PrintName || ' ' || o.DocumentNo,"
+					+ " ddt.PrintName || ' ' || d.DocumentNo,"
+					+ " prdt.PrintName || ' ' || pr.DocumentNo, pr.DocumentNo,"
+					+ " pbdt.PrintName || ' ' || pb.DocumentNo, pb.DocumentNo"
+				+ " ) AS DocumentNo,"
 				+ " MAX(COALESCE(r.M_AttributeSetInstance_ID, 0)) AS ASI, 20 AS SeqNo"
 				+ " FROM M_Reservation r"
 				+ " INNER JOIN M_Locator l ON (r.M_Locator_ID = l.M_Locator_ID)"
@@ -1579,14 +1587,22 @@ public class ProductInfoLogic {
 				+ " LEFT JOIN DD_Order d ON (r.DD_Order_ID = d.DD_Order_ID)"
 				+ " LEFT JOIN C_DocType ddt ON (d.C_DocType_ID = ddt.C_DocType_ID)"
 				+ " LEFT JOIN C_BPartner dbp ON (d.C_BPartner_ID = dbp.C_BPartner_ID)"
+				+ " LEFT JOIN M_Production pr ON (r.M_Production_ID = pr.M_Production_ID)"
+				+ " LEFT JOIN C_DocType prdt ON (pr.C_DocType_ID = prdt.C_DocType_ID)"
+				+ " LEFT JOIN M_ProductionBatch pb ON (r.M_ProductionBatch_ID = pb.M_ProductionBatch_ID)"
+				+ " LEFT JOIN C_DocType pbdt ON (pb.C_DocType_ID = pbdt.C_DocType_ID)"
 				+ " WHERE r.IsActive = 'Y' AND r.M_Product_ID = " + productId;
 			if (warehouseId > 0) {
 				sql += " AND l.M_Warehouse_ID = " + warehouseId;
 			}
 			sql += " GROUP BY r.M_Product_ID, w.Name, l.Value, " + reservationFamily + ","
 				+ " r.C_Order_ID, r.DD_Order_ID, r.M_ProductionBatch_ID, r.M_Production_ID,"
-				+ " obp.Name, dbp.Name, odt.PrintName, o.DocumentNo, ddt.PrintName, d.DocumentNo"
-				+ " HAVING SUM(r.Qty) > 0";
+				+ " obp.Name, dbp.Name, odt.PrintName, o.DocumentNo, ddt.PrintName, d.DocumentNo,"
+				+ " prdt.PrintName, pr.DocumentNo, pbdt.PrintName, pb.DocumentNo"
+				// Keep any non-zero net (positive or negative) so the detail reconciles
+				// with the grouped M_Storage totals; a negative net signals a data anomaly
+				// (e.g. a duplicated delivery) and is shown instead of being hidden.
+				+ " HAVING SUM(r.Qty) <> 0";
 		}
 
 		//	Stock first and then its documents, so the running balance reads as a ledger.
