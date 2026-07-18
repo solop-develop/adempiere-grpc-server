@@ -168,14 +168,15 @@ public class StorageUpdaterBuilder {
     private void createStoreFromSnapshot(MStorageSnapshotRun lastSnapshot) {
         List<Object> parameters = new ArrayList<>();
         StringBuilder transactionSQL = new StringBuilder("INSERT INTO M_Storage (M_Storage_ID, AD_Client_ID, AD_Org_ID, M_Product_ID, M_Locator_ID, M_AttributeSetInstance_ID, QtyOnHand, QtyReserved, QtyOrdered, IsActive, Created, CreatedBy, Updated, UpdatedBy, UUID) " +
-                "SELECT nextval('m_storage_seq'), ssr.AD_Client_ID, sl.AD_Org_ID, sl.M_Product_ID, sl.M_Locator_ID, sl.M_AttributeSetInstance_ID, SUM(sl.QtyOnHand), SUM(sl.QtyReserved), SUM(sl.QtyOrdered), 'Y', now(), ssr.CreatedBy, now(), ssr.UpdatedBy, getUUID() " +
+                "SELECT nextval('m_storage_seq'), ssr.AD_Client_ID, loc.AD_Org_ID, sl.M_Product_ID, sl.M_Locator_ID, sl.M_AttributeSetInstance_ID, SUM(sl.QtyOnHand), SUM(sl.QtyReserved), SUM(sl.QtyOrdered), 'Y', now(), ssr.CreatedBy, now(), ssr.UpdatedBy, getUUID() " +
                 "FROM M_StorageSnapshotRun ssr " +
                 "INNER JOIN M_StorageSnapshot sl ON(sl.M_StorageSnapshotRun_ID = ssr.M_StorageSnapshotRun_ID) " +
+                "INNER JOIN M_Locator loc ON(loc.M_Locator_ID = sl.M_Locator_ID) " +
                 "WHERE sl.AD_Client_ID = ? ");
         parameters.add(getClientId());
         //	Org
         if (getOrganizationId() != 0) {
-            transactionSQL.append("AND sl.AD_Org_ID = ? ");
+            transactionSQL.append("AND loc.AD_Org_ID = ? ");
             parameters.add(getOrganizationId());
         }
         //	Warehouse
@@ -203,7 +204,7 @@ public class StorageUpdaterBuilder {
         }
         transactionSQL.append("AND sl.M_StorageSnapshotRun_ID = ? ");
         //	Group By
-        transactionSQL.append("GROUP BY ssr.AD_Client_ID, sl.AD_Org_ID, sl.M_Product_ID, sl.M_Locator_ID, sl.M_AttributeSetInstance_ID, ssr.CreatedBy, ssr.UpdatedBy ");
+        transactionSQL.append("GROUP BY ssr.AD_Client_ID, loc.AD_Org_ID, sl.M_Product_ID, sl.M_Locator_ID, sl.M_AttributeSetInstance_ID, ssr.CreatedBy, ssr.UpdatedBy ");
         parameters.add(lastSnapshot.getM_StorageSnapshotRun_ID());
         log.fine("StorageSQL (Snapshot)=" + transactionSQL);
         int inserted = DB.executeUpdateEx(transactionSQL.toString(), parameters.toArray(), getTransactionName());
