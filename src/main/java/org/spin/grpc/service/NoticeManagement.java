@@ -266,7 +266,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		;
 
 		queryNotices
-			// .setLimit(limit, offset)
+			.setLimit(limit, offset)
 			.getIDsAsList()
 			.forEach(noticeId -> {
 				Notice.Builder builder = convertNotice(noticeId);
@@ -376,7 +376,7 @@ public class NoticeManagement extends NoticeManagementImplBase {
 		;
 
 		queryNotices
-			// .setLimit(limit, offset)
+			.setLimit(limit, offset)
 			.getIDsAsList()
 			.forEach(userId -> {
 				User.Builder builder = convertUser(userId);
