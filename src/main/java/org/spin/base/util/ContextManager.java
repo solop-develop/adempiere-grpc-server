@@ -112,7 +112,9 @@ public class ContextManager {
 		String END   = "\\@";  // A literal ")" character in regex
 
 		// Captures the word(s) between the above two character(s)
-		final String COLUMN_NAME_PATTERN = START + "(#|$|\\d|\\|){0,1}(\\w+)" + END;
+		// support the two-char tab-context prefix `\d+\|` (e.g. `@0|C_BPartner_ID@`);
+		// the previous single-char class only matched one char, so tab-context columns were never captured.
+		final String COLUMN_NAME_PATTERN = START + "(#|$|\\d+\\||\\|){0,1}(\\w+)" + END;
 
 		Pattern pattern = Pattern.compile(
 			COLUMN_NAME_PATTERN,
@@ -121,7 +123,13 @@ public class ContextManager {
 		Matcher matcher = pattern.matcher(context);
 		Map<String, Boolean> columnNamesMap = new HashMap<String, Boolean>();
 		while(matcher.find()) {
-			columnNamesMap.put(matcher.group().replace("@", "").replace("@", ""), true);
+			// strip the tab-context prefix (`0|C_BPartner_ID` -> `C_BPartner_ID`) so the bare
+			// column name is advertised to the frontend and its value is sent back on lookups/browsers.
+			String columnName = matcher.group()
+				.replace("@", "")
+				.replaceFirst("^\\d+\\|", "")
+			;
+			columnNamesMap.put(columnName, true);
 		}
 		return new ArrayList<String>(columnNamesMap.keySet());
 	}
