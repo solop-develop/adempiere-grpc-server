@@ -2049,7 +2049,7 @@ public class MOrder extends X_C_Order implements DocAction
 		//	are added on top of the SQL aggregation instead of being found by it.
 		Map<Integer, BigDecimal[]> projectLineAmtQty = new HashMap<Integer, BigDecimal[]>();
 		for (MOrderLine orderLine : getLines()) {
-			int projectLineId = orderLine.get_ValueAsInt("C_ProjectLine_ID");
+			int projectLineId = orderLine.getC_ProjectLine_ID();
 			if (projectLineId > 0) {
 				BigDecimal[] amtQty = projectLineAmtQty.computeIfAbsent(projectLineId, id -> new BigDecimal[] { Env.ZERO, Env.ZERO });
 				amtQty[0] = amtQty[0].add(orderLine.getLineNetAmt());
@@ -2163,8 +2163,8 @@ public class MOrder extends X_C_Order implements DocAction
 			poLine.setC_Project_ID(line.getC_Project_ID());
 			poLine.setC_ProjectPhase_ID(line.getC_ProjectPhase_ID());
 			poLine.setC_ProjectTask_ID(line.getC_ProjectTask_ID());
-			if (line.get_ValueAsInt("C_ProjectLine_ID") > 0) {
-				poLine.set_ValueOfColumn("C_ProjectLine_ID", line.get_ValueAsInt("C_ProjectLine_ID"));
+			if (line.getC_ProjectLine_ID() > 0) {
+				poLine.setC_ProjectLine_ID(line.getC_ProjectLine_ID());
 			}
 			poLine.setPrice();
 			if (line.getCost().signum() != 0) {
