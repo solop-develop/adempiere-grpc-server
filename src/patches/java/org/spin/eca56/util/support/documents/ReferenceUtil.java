@@ -19,7 +19,6 @@ package org.spin.eca56.util.support.documents;
 
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,18 +111,34 @@ public class ReferenceUtil {
 
 
 	public static String joinStrings(String... stringValues) {
-		// StringBuilder stringBuilder = new StringBuilder();
-		// for (String stringValue : stringValues) {
-		// 	if (!Util.isEmpty(stringValue, true)) {
-		// 		stringBuilder.append(stringValue);
-		// 	}
-		// }
-		// return stringBuilder.toString();
-		return String.join(
-			"",
-			Arrays.stream(stringValues)
-				.filter(s -> !Util.isEmpty(s, true))
-				.toArray(String[]::new)
+		StringBuilder stringBuilder = new StringBuilder();
+		for (String stringValue : stringValues) {
+			if (!Util.isEmpty(stringValue, true)) {
+				stringBuilder.append(stringValue);
+			}
+		}
+		return stringBuilder.toString();
+		// return String.join(
+		// 	"",
+		// 	Arrays.stream(stringValues)
+		// 		.filter(s -> !Util.isEmpty(s, true))
+		// 		.toArray(String[]::new)
+		// );
+	}
+
+	/**
+	 * Varargs overload: extract context column names from several context strings.
+	 * Kept alongside getContextColumnNames(String) so callers compiled against the single-argument
+	 * signature (Window/Browser/Process/ReferenceValues in the jar) keep linking (binary compatibility).
+	 * @param values context strings
+	 * @return List<String>
+	 */
+	public static List<String> getContextColumnNames(String... values) {
+		if (values == null || values.length <= 0) {
+			return new ArrayList<String>();
+		}
+		return getContextColumnNames(
+			joinStrings(values)
 		);
 	}
 
@@ -133,11 +148,7 @@ public class ReferenceUtil {
 	 * @return
 	 * @return List<String>
 	 */
-	public static List<String> getContextColumnNames(String... values) {
-		if (values == null || values.length <= 0) {
-			return new ArrayList<String>();
-		}
-		String context = joinStrings(values);
+	public static List<String> getContextColumnNames(String context) {
 		if (Util.isEmpty(context, true)) {
 			return new ArrayList<String>();
 		}
