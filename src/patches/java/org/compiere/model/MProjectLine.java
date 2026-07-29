@@ -17,6 +17,7 @@
 package org.compiere.model;
 
 import org.adempiere.core.domains.models.*;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.TimeUtil;
@@ -269,14 +270,30 @@ public class MProjectLine extends X_C_ProjectLine
 					setPlannedPrice(pp.getPriceStd());
 				}
 			}
-			if(Optional.ofNullable(getPlannedQty()).orElse(Env.ZERO).compareTo(Env.ZERO) == 0) {
-				BigDecimal quantity = (BigDecimal) get_Value("QtyEntered");
-				setPlannedQty(Optional.ofNullable(quantity).orElse(Env.ZERO));
-			}
 			if(get_ValueAsInt("C_UOM_ID") <= 0 && getM_Product_ID() > 0) {
 				MProduct product = MProduct.get(getCtx(), getM_Product_ID());
 				set_ValueOfColumn("C_UOM_ID", product.getC_UOM_ID());
 			}
+		}
+		//	QtyEntered is expressed in the line's own C_UOM_ID; PlannedQty must be kept in the product's UOM
+		if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0 && getQtyEntered() != null && getQtyEntered().signum() != 0
+			&& (newRecord || is_ValueChanged("M_Product_ID") || is_ValueChanged("C_UOM_ID") || is_ValueChanged(COLUMNNAME_QtyEntered)))
+		{
+			BigDecimal plannedQty = MUOMConversion.convertProductFrom(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getQtyEntered());
+			if (plannedQty == null)
+				throw new AdempiereException("@Error@ @C_UOM_Conversion_ID@ @NotFound@");
+			setPlannedQty(plannedQty);
+		}
+		//	No QtyEntered yet (e.g. PlannedQty entered directly): derive it back from PlannedQty in the product's UOM
+		else if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0
+			&& (getQtyEntered() == null || getQtyEntered().signum() == 0)
+			&& getPlannedQty() != null && getPlannedQty().signum() != 0
+			&& (newRecord || is_ValueChanged("M_Product_ID") || is_ValueChanged("C_UOM_ID") || is_ValueChanged(COLUMNNAME_PlannedQty)))
+		{
+			BigDecimal qtyEntered = MUOMConversion.convertProductTo(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getPlannedQty());
+			if (qtyEntered == null)
+				throw new AdempiereException("@Error@ @C_UOM_Conversion_ID@ @NotFound@");
+			setQtyEntered(qtyEntered);
 		}
 		//	Planned Amount
 		if (isCostBased()) {
