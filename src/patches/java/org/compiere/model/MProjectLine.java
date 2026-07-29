@@ -329,13 +329,15 @@ public class MProjectLine extends X_C_ProjectLine
 		} else {
 			//	Margin <-> Planned Price interdependency, anchored on the fixed Cost (#2843)
 			if (!isSummary() && getCost() != null && getCost().signum() > 0) {
-				if (is_ValueChanged(COLUMNNAME_PlannedPrice)) {
+				if (is_ValueChanged(COLUMNNAME_PlannedPrice)
+					|| (is_ValueChanged(COLUMNNAME_Cost) && getMargin().signum() == 0)) {
 					//	Price edited -> derive Margin %
 					BigDecimal margin = getPlannedPrice().subtract(getCost())
 						.divide(getCost(), 4, RoundingMode.HALF_UP)
 						.multiply(Env.ONEHUNDRED);
 					setMargin(margin);
-				} else if (is_ValueChanged(COLUMNNAME_Margin)) {
+				} else if (is_ValueChanged(COLUMNNAME_Margin)
+					|| (is_ValueChanged(COLUMNNAME_Cost) && getPlannedPrice().signum() == 0)) {
 					//	Margin edited -> derive Planned Price
 					BigDecimal price = getCost().multiply(Env.ONEHUNDRED.add(getMargin()))
 						.divide(Env.ONEHUNDRED, 4, RoundingMode.HALF_UP);
