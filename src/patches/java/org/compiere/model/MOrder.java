@@ -2138,9 +2138,7 @@ public class MOrder extends X_C_Order implements DocAction
 		purchaseOrder.setC_Activity_ID(getC_Activity_ID());
 		purchaseOrder.setC_Campaign_ID(getC_Campaign_ID());
 		purchaseOrder.setC_Project_ID(getC_Project_ID());
-		if (get_ValueAsInt("C_ProjectLine_ID") > 0) {
-			purchaseOrder.set_ValueOfColumn("C_ProjectLine_ID", get_ValueAsInt("C_ProjectLine_ID"));
-		}
+
 		purchaseOrder.setUser1_ID(getUser1_ID());
 		purchaseOrder.setUser2_ID(getUser2_ID());
 		purchaseOrder.setUser3_ID(getUser3_ID());
@@ -2178,6 +2176,10 @@ public class MOrder extends X_C_Order implements DocAction
 			line.setLink_OrderLine_ID(poLine.getC_OrderLine_ID());
 			line.saveEx();
 		}
+		if (get_ValueAsInt("C_ProjectLine_ID") > 0) {
+			purchaseOrder.set_ValueOfColumn("C_ProjectLine_ID", get_ValueAsInt("C_ProjectLine_ID"));
+		}
+		purchaseOrder.saveEx();
 		setLink_Order_ID(purchaseOrder.getC_Order_ID());
 		saveEx();
 		if(!purchaseOrder.processIt(DOCACTION_Complete)) {
