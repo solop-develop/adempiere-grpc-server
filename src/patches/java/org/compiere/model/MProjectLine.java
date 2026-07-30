@@ -276,21 +276,29 @@ public class MProjectLine extends X_C_ProjectLine
 			}
 		}
 		//	QtyEntered is expressed in the line's own C_UOM_ID; PlannedQty must be kept in the product's UOM
-		if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0 && getQtyEntered() != null && getQtyEntered().signum() != 0
-			&& (newRecord || is_ValueChanged("M_Product_ID") || is_ValueChanged("C_UOM_ID") || is_ValueChanged(COLUMNNAME_QtyEntered)))
+		boolean uomOrProductChanged = is_ValueChanged("M_Product_ID") || is_ValueChanged("C_UOM_ID");
+		//	On a new record every column reads as "changed" (old value is null), so is_ValueChanged can't tell
+		//	which field the user actually meant to drive off of; fall back to "which one has a non-zero value"
+		boolean qtyEnteredBased = newRecord
+			? (getQtyEntered() != null && getQtyEntered().signum() != 0)
+			: (uomOrProductChanged || is_ValueChanged(COLUMNNAME_QtyEntered));
+		boolean plannedQtyBased = !qtyEnteredBased && (newRecord
+			? (getPlannedQty() != null && getPlannedQty().signum() != 0)
+			: is_ValueChanged(COLUMNNAME_PlannedQty));
+		if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0 && getQtyEntered() != null && qtyEnteredBased)
 		{
-			BigDecimal plannedQty = MUOMConversion.convertProductFrom(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getQtyEntered());
+			//	Driven by QtyEntered, including the case where it was explicitly zeroed
+			BigDecimal plannedQty = getQtyEntered().signum() == 0 ? Env.ZERO
+				: MUOMConversion.convertProductFrom(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getQtyEntered());
 			if (plannedQty == null)
 				throw new AdempiereException("@Error@ @C_UOM_Conversion_ID@ @NotFound@");
 			setPlannedQty(plannedQty);
 		}
-		//	No QtyEntered yet (e.g. PlannedQty entered directly): derive it back from PlannedQty in the product's UOM
-		else if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0
-			&& (getQtyEntered() == null || getQtyEntered().signum() == 0)
-			&& getPlannedQty() != null && getPlannedQty().signum() != 0
-			&& (newRecord || is_ValueChanged("M_Product_ID") || is_ValueChanged("C_UOM_ID") || is_ValueChanged(COLUMNNAME_PlannedQty)))
+		//	No QtyEntered-driven change (e.g. PlannedQty entered/zeroed directly): derive it back from PlannedQty in the product's UOM
+		else if (getM_Product_ID() > 0 && get_ValueAsInt("C_UOM_ID") > 0 && getPlannedQty() != null && plannedQtyBased)
 		{
-			BigDecimal qtyEntered = MUOMConversion.convertProductTo(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getPlannedQty());
+			BigDecimal qtyEntered = getPlannedQty().signum() == 0 ? Env.ZERO
+				: MUOMConversion.convertProductTo(getCtx(), getM_Product_ID(), get_ValueAsInt("C_UOM_ID"), getPlannedQty());
 			if (qtyEntered == null)
 				throw new AdempiereException("@Error@ @C_UOM_Conversion_ID@ @NotFound@");
 			setQtyEntered(qtyEntered);
