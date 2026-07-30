@@ -15,20 +15,50 @@
  *************************************************************************************/
 package org.spin.util;
 
-import org.adempiere.core.domains.models.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.stream.Collectors;
+
+import org.adempiere.core.domains.models.I_AD_Browse;
+import org.adempiere.core.domains.models.I_AD_BrowseCustom;
+import org.adempiere.core.domains.models.I_AD_Browse_Field;
+import org.adempiere.core.domains.models.I_AD_Field;
+import org.adempiere.core.domains.models.I_AD_Process;
+import org.adempiere.core.domains.models.I_AD_ProcessCustom;
+import org.adempiere.core.domains.models.I_AD_Process_Para;
+import org.adempiere.core.domains.models.I_AD_Tab;
+import org.adempiere.core.domains.models.I_AD_Window;
+import org.adempiere.core.domains.models.I_AD_WindowCustom;
+import org.adempiere.core.domains.models.I_ASP_Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.model.MBrowse;
 import org.adempiere.model.MBrowseField;
 import org.compiere.Adempiere;
-import org.compiere.model.*;
+import org.compiere.model.MBrowseCustom;
+import org.compiere.model.MBrowseFieldCustom;
+import org.compiere.model.MColumn;
+import org.compiere.model.MField;
+import org.compiere.model.MFieldCustom;
+import org.compiere.model.MProcess;
+import org.compiere.model.MProcessCustom;
+import org.compiere.model.MProcessPara;
+import org.compiere.model.MProcessParaCustom;
+import org.compiere.model.MRole;
+import org.compiere.model.MTab;
+import org.compiere.model.MTabCustom;
+import org.compiere.model.MTable;
+import org.compiere.model.MWindow;
+import org.compiere.model.MWindowCustom;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Class for handle ASP Util as wrapper for standard process, window and smart browse
@@ -109,7 +139,7 @@ public class ASPUtil {
 	 * @return
 	 */
 	public static ASPUtil getInstance(Properties context, int clientId, int roleId, int userId, String language) {
-		// SABANA PATCH: the original static singleton (`instance` + loadValues()) let two
+		// Multi-Tenant PATCH: the original static singleton (`instance` + loadValues()) let two
 		// concurrent threads -- two scheduler tenants, or two HTTP requests -- stomp on each
 		// other's context/clientId/roleId/userId, causing an NPE in MRole.get() while looking up
 		// another tenant's role. Per-instance state is just 5 scalar fields; the heavy caches are
