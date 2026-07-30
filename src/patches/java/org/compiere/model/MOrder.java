@@ -2170,6 +2170,9 @@ public class MOrder extends X_C_Order implements DocAction
 			if (line.getCost().signum() != 0) {
 				poLine.setPrice(line.getCost());
 			}
+			if(poLine.getPriceEntered().signum() == 0) {
+				poLine.setPrice(line.getPriceActual());
+			}
 			poLine.saveEx();
 			//	Set link to source
 			line.setLink_OrderLine_ID(poLine.getC_OrderLine_ID());

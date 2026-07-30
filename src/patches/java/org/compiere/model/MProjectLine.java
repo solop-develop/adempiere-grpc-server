@@ -651,6 +651,8 @@ public class MProjectLine extends X_C_ProjectLine
 		addAmtQty(amtQty, newAmtQty);
 		setOrderedAmt(amtQty[0]);
 		setQtyOrdered(amtQty[1]);
+		setCommittedAmt(amtQty[0]);
+		setCommittedQty(amtQty[1]);
 	}	//	recalcSalesOrdered
 
 	/**	Ordered (purchase): CostOrderedAmt, CostOrderedQty from completed PO lines	*/
