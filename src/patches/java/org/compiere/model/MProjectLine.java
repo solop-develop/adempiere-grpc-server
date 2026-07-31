@@ -376,11 +376,11 @@ public class MProjectLine extends X_C_ProjectLine
 
 		//	Planned Margin
 		if (is_ValueChanged("M_Product_ID") || is_ValueChanged("M_Product_Category_ID")
-			|| is_ValueChanged("PlannedQty") || is_ValueChanged("PlannedPrice"))
+			|| is_ValueChanged("PlannedQty") || is_ValueChanged("Cost"))
 		{
 			if (getM_Product_ID() != 0 && getProject().getM_PriceList_ID() > 0)
 			{
-				BigDecimal marginEach = getPlannedPrice().subtract(getLimitPrice());
+				BigDecimal marginEach = getPlannedPrice().subtract(getCost());
 				setPlannedMarginAmt(marginEach.multiply(getPlannedQty()));
 			}
 			else if (getM_Product_Category_ID() != 0)
