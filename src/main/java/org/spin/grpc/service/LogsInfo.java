@@ -370,12 +370,23 @@ public class LogsInfo extends LogsImplBase {
 			.setParameters(parameters)
 		;
 
+		//	Get page and count
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
 		int count = query.count();
-		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder()
-			.setRecordCount(count)
-		;
+		builder.setRecordCount(count);
+		if(count > offset && count > limit) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+		builder.setNextPageToken(
+			TextManager.getValidString(nexPageToken)
+		);
 
 		List<MChangeLog> recordLogList = query
+			.setLimit(limit, offset)
+			.setOrderBy(I_AD_ChangeLog.COLUMNNAME_Updated + " DESC")
 			.<MChangeLog>list()
 		;
 
