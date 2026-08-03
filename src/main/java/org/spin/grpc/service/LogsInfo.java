@@ -15,6 +15,7 @@
 package org.spin.grpc.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.adempiere.core.domains.models.I_AD_ChangeLog;
@@ -398,6 +399,28 @@ public class LogsInfo extends LogsImplBase {
 		recordsLogsBuilderList.forEach(recordLog -> {
 			builder.addEntityLogs(recordLog);
 		});
+
+		// always include the creation (oldest) entry, regardless of the current page
+		MChangeLog firstChangeLog = new Query(
+			Env.getCtx(),
+			I_AD_ChangeLog.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
+			.setOrderBy(I_AD_ChangeLog.COLUMNNAME_Created + " ASC")
+			.first()
+		;
+		if (firstChangeLog != null) {
+			List<EntityLog.Builder> firstEntityLogBuilderList = LogsConvertUtil.convertRecordLog(
+				Arrays.asList(firstChangeLog)
+			);
+			if (!firstEntityLogBuilderList.isEmpty()) {
+				builder.setFirstEntityLog(
+					firstEntityLogBuilderList.get(0)
+				);
+			}
+		}
 
 		// created by
 		MUser createdUser = MUser.get(entity.getCtx(), entity.getCreatedBy());

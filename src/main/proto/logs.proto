@@ -164,6 +164,7 @@ message ListEntityLogsResponse {
 	google.protobuf.Timestamp updated = 7;
 	int32 updated_by = 8;
 	string updated_by_name = 9;
+	EntityLog first_entity_log = 10;
 }
 
 // Exists References Request
