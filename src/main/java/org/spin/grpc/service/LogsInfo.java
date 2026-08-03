@@ -376,7 +376,9 @@ public class LogsInfo extends LogsImplBase {
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
 		int count = query.count();
-		builder.setRecordCount(count);
+		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder()
+			.setRecordCount(count)
+		;
 		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
