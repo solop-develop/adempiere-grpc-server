@@ -36,15 +36,13 @@ public static int DAY_OF_WEEK_REFERENCE = 167;
     @Override
     protected boolean beforeSave (boolean newRecord)
     {
-        if (getS_Resource_ID() <= 0) {
-            throw new AdempiereException("@S_Resource_ID@ @NotFound@");
-        }
         if (getS_ServicePlan_ID() <= 0) {
             throw new AdempiereException("@S_ServicePlan_ID@ @NotFound@");
         }
         BigDecimal plannedHours = BigDecimal.valueOf(TimeUtil.getHoursBetween(getTimeFrom(), getTimeTo()));
         setPlannedHours(plannedHours);
-        if (newRecord || is_ValueChanged(COLUMNNAME_TimeFrom) || is_ValueChanged(COLUMNNAME_TimeTo) || is_ValueChanged(COLUMNNAME_S_Resource_ID)) {
+        if (getS_Resource_ID() > 0
+                && (newRecord || is_ValueChanged(COLUMNNAME_TimeFrom) || is_ValueChanged(COLUMNNAME_TimeTo) || is_ValueChanged(COLUMNNAME_S_Resource_ID))) {
             String whereClause = " S_Resource_ID = ? " +
                 " AND DayOfWeek = ? " +
                 " AND S_ServiceSchedule_ID <> ? " +
