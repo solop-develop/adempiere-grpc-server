@@ -47,7 +47,7 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
         List<Integer> recordIds = getSelectionKeys();
 
         recordIds.stream().forEach(key -> {
-            MSContract contract = new MSContract(getCtx(), key, get_TrxName());//instancio contrato actual
+            MSContract contract = new MSContract(getCtx(), key, get_TrxName());
 
             if (getAction().equalsIgnoreCase("CLN")) {
                 closeContractAndCreate(contract);
@@ -68,7 +68,6 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
         contract.set_ValueOfColumn("S_ContractReason_ID", reasonID);
         contract.saveEx();
 
-        //cierro contrato actual, si esta en estado completo
         if (contract.getDocStatus().equals(MSContract.DOCSTATUS_Completed)) {
             try {
                 if (!contract.processIt(DocumentEngine.ACTION_Close)) {
@@ -164,7 +163,7 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
                     if (newProd != null && newProd.get_ID() > 0) {
                         line.setM_Product_ID(newProd.get_ID());
                     } else
-                        throw new AdempiereException("ERROR: No se obtuvo producto para el tipo de servicio seleccionado");
+                        throw new AdempiereException("@M_Product_ID@ @NotFound@ @To@ @S_ServiceType_ID@");
 
                 } else {
 
@@ -178,7 +177,7 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
                             line.setM_Product_ID(newProd.get_ID());
                         }
                     } else
-                        throw new AdempiereException("ERROR: No se obtuvo sustituto para el producto '" + prod.getName() + "'");
+                        throw new AdempiereException("@M_Substitute_ID@ @NotFound@ @To@ @M_Product_ID@: " + prod.getName());
                 }
 
                  MMemo memo = new Query(getCtx(), I_AD_Memo.Table_Name, I_M_Product.COLUMNNAME_M_Product_ID + "=?", get_TrxName())
@@ -190,7 +189,7 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
                     newContract.setC_Activity_ID(memo.getC_Activity_ID());
                     newContract.saveEx();
                 } else
-                    throw new AdempiereException("ERROR: No se obtuvo Actividad para el producto '" + newProd.getName() + "'");
+                    throw new AdempiereException("@C_Activity_ID@ @NotFound@ @To@ @M_Product_ID@: " + newProd.getName());
 
                 if (newProd.get_ValueAsInt("S_ServiceType_ID") > 0) {
                     MSServiceType serviceType = new MSServiceType(getCtx(), newProd.get_ValueAsInt("S_ServiceType_ID"), get_TrxName());
@@ -203,7 +202,7 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
                     }
 
                 } else
-                    throw new AdempiereException("ERROR: El producto '" + newProd.getName() + "' no tiene Tipo de Servicio definido");
+                    throw new AdempiereException(newProd.getName() + " @S_ServiceType_ID@ @NotFound@");
 
                 line.setS_Contract_ID(newContract.get_ID());
                 line.setC_BPartner_ID(mSContractLine.getC_BPartner_ID());
@@ -239,12 +238,12 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
 
         } else {
 
-            MSContractReason reasonFinal = MSContractReason.getFinalReason(getCtx(), getAD_Client_ID(), get_TrxName());
+            int finalReasonId = MContractReason.getFinalReasonId(getCtx(), getAD_Client_ID(), get_TrxName());
 
-            if (reasonFinal == null)
+            if (finalReasonId <= 0)
                 throw new AdempiereException("@S_ContractReason_ID@: @IsFinalClose@ @NotFound@");
 
-            contract.set_ValueOfColumn("S_ContractReason_ID", reasonFinal.get_ID());
+            contract.set_ValueOfColumn("S_ContractReason_ID", finalReasonId);
             contract.saveEx();
 
         }
