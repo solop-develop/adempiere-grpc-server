@@ -238,12 +238,12 @@ public class UpdateServiceContract extends UpdateServiceContractAbstract {
 
         } else {
 
-            MContractReason reasonFinal = MContractReason.getFinalReason(getCtx(), getAD_Client_ID(), get_TrxName());
+            int finalReasonId = MContractReason.getFinalReasonId(getCtx(), getAD_Client_ID(), get_TrxName());
 
-            if (reasonFinal == null)
+            if (finalReasonId <= 0)
                 throw new AdempiereException("@S_ContractReason_ID@: @IsFinalClose@ @NotFound@");
 
-            contract.set_ValueOfColumn("S_ContractReason_ID", reasonFinal.get_ID());
+            contract.set_ValueOfColumn("S_ContractReason_ID", finalReasonId);
             contract.saveEx();
 
         }

@@ -16,7 +16,7 @@ public class MContractReason extends X_S_ContractReason {
     }
 
 
-    public static MContractReason getFinalReason(Properties ctx, int ad_client_id, String trxName) {
+    public static int getFinalReasonId(Properties ctx, int ad_client_id, String trxName) {
         final String whereClause = COLUMNNAME_IsFinalClose + "='Y' AND " + COLUMNNAME_AD_Client_ID + "=?";
         int reasonId = new Query(ctx, I_S_ContractReason.Table_Name, whereClause, trxName)
                 .setOnlyActiveRecords(true)
@@ -24,9 +24,6 @@ public class MContractReason extends X_S_ContractReason {
                 .setClient_ID()
                 .firstId();
 
-        if (reasonId <= 0)
-            return null;
-
-        return new MContractReason(ctx, reasonId, trxName);
+        return reasonId;
     }
 }
