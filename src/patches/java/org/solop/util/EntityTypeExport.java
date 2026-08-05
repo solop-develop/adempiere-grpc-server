@@ -89,7 +89,9 @@ public class EntityTypeExport extends GenericPOHandler {
 		//	Workflow Node Next
 		createReferences(packOut, document, entityType.getEntityType(),  I_AD_WF_NodeNext.Table_Name, false, null);
 		//	Workflow Node Parameters
-		createWorkflowNodeParameters(packOut, document, entityType.getEntityType());
+		createReferences(packOut, document, entityType.getEntityType(),  I_AD_WF_Node_Para.Table_Name, false, null);
+		//	Workflow Next Conditions
+		createReferences(packOut, document, entityType.getEntityType(),  I_AD_WF_NextCondition.Table_Name, false, null);
 
 		//	Create Menu
 		createMenu(packOut, document, entityType.getEntityType());
@@ -157,15 +159,6 @@ public class EntityTypeExport extends GenericPOHandler {
 
 	private void createScriptValidators(PackOut packOut, TransformerHandler document, String entityType) throws SAXException {
 		List<PO> records = new Query(Env.getCtx(), I_AD_Table_ScriptValidator.Table_Name, "EXISTS(SELECT 1 FROM AD_Rule r WHERE r.AD_Rule_ID = AD_Table_ScriptValidator.AD_Rule_ID AND r.EntityType = ?)", null)
-				.setParameters(entityType)
-				.list();
-		for (PO record : records) {
-			packOut.createGenericPO(document, record, false, null);
-		}
-	}
-
-	private void createWorkflowNodeParameters(PackOut packOut, TransformerHandler document, String entityType) throws SAXException {
-		List<PO> records = new Query(Env.getCtx(), I_AD_WF_Node_Para.Table_Name, "EXISTS(SELECT 1 FROM AD_WF_Node n WHERE n.AD_WF_Node_ID = AD_WF_Node_Para.AD_WF_Node_ID AND n.EntityType = ?)", null)
 				.setParameters(entityType)
 				.list();
 		for (PO record : records) {
