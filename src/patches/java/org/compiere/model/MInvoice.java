@@ -2256,6 +2256,9 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						set_ValueOfColumn("ReferenceDocument_ID", invoiceToAllocateId);
 						explicitPlacedAmount = Optional.ofNullable((BigDecimal) AllocateInvoice.get_Value("AllocateAmount"))
 							.orElse(Env.ZERO);
+						if (explicitPlacedAmount.signum()==0) {
+							throw new AdempiereException("@AllocateAmount@ = 0");
+						}
 					}
 				}
 			}
@@ -2278,7 +2281,7 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 					//	otherwise this document is fully applied against the reference document
 					BigDecimal placedAmount = (explicitPlacedAmount != null && explicitPlacedAmount.signum() != 0)
 						? explicitPlacedAmount
-						: mainDocumentTotal;
+						: mainDocumentTotal.min(referenceOpenAmt);
 
 					if (placedAmount.compareTo(mainDocumentTotal) > 0) {
 						processMsg = "@AllocateAmount@ (" + placedAmount + ") > @Total@ (" + mainDocumentTotal + ") - " + getDocumentNo();
@@ -2316,6 +2319,12 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 					if (referenceOpenAmt.signum() == 0) {
 						continue;
 					}
+					BigDecimal placedAmount = Optional.ofNullable((BigDecimal) allocation.get_Value("AllocateAmount"))
+							.orElse(Env.ZERO);
+					if (placedAmount.signum()==0) {
+						processMsg = referenceInvoice.getDocumentNo() + " - @AllocateAmount@ = 0";
+						return DocAction.STATUS_Invalid;
+					}
 
 					int referenceCurrencyId = referenceInvoice.getC_Currency_ID();
 					if (referenceCurrencyId != getC_Currency_ID()) {
@@ -2323,17 +2332,12 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						if (rate == null) {
 							rate = MConversionRate.getRate(referenceCurrencyId, getC_Currency_ID(), getDateInvoiced(), getC_ConversionType_ID(), getAD_Client_ID(), getAD_Org_ID());
 							if (rate == null || rate.signum() == 0) {
-								throw new AdempiereException("@C_Conversion_Rate@ @NotFound@");
+								processMsg = "@C_Conversion_Rate@ @NotFound@";
+								return DocAction.STATUS_Invalid;
 							}
 							currencyConvertRate.put(referenceCurrencyId, rate);
 						}
 						referenceOpenAmt = referenceOpenAmt.multiply(rate);
-					}
-
-					BigDecimal placedAmount = Optional.ofNullable((BigDecimal) allocation.get_Value("AllocateAmount"))
-						.orElse(Env.ZERO);
-					if (placedAmount.signum() == 0) {
-						placedAmount = referenceOpenAmt;
 					}
 
 					qualifiedAllocationIds.add(allocationId);
