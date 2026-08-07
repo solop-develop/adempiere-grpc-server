@@ -491,32 +491,34 @@ public class MOrder extends X_C_Order implements DocAction
 		
 		//	Discount
 		setIsDiscountPrinted(bp.isDiscountPrinted());
+
 		//	Set Locations
 		MBPartnerLocation[] locs = bp.getLocations(false);
 		if (locs != null)
 		{
 			for (int i = 0; i < locs.length; i++)
 			{
-				if (locs[i].isShipTo())
+				if (getC_BPartner_Location_ID() <= 0 && locs[i].isShipTo()) {
 					super.setC_BPartner_Location_ID(locs[i].getC_BPartner_Location_ID());
-				if (locs[i].isBillTo())
+				}
+				if (getBill_Location_ID() <= 0 && locs[i].isBillTo()) {
 					setBill_Location_ID(locs[i].getC_BPartner_Location_ID());
+				}
 			}
 			//	set to first
-			if (getC_BPartner_Location_ID() == 0 && locs.length > 0)
+			if (getC_BPartner_Location_ID() <= 0 && locs.length > 0) {
 				super.setC_BPartner_Location_ID(locs[0].getC_BPartner_Location_ID());
-			if (getBill_Location_ID() == 0 && locs.length > 0)
+			}
+			if (getBill_Location_ID() <= 0 && locs.length > 0) {
 				setBill_Location_ID(locs[0].getC_BPartner_Location_ID());
+			}
 		}
-		if (getC_BPartner_Location_ID() == 0)
-		{	
+		if (getC_BPartner_Location_ID() <= 0) {
 			throw new BPartnerNoShipToAddressException(bp);
-		}	
-			
-		if (getBill_Location_ID() == 0)
-		{
+		}
+		if (getBill_Location_ID() <= 0) {
 			throw new BPartnerNoBillToAddressException(bp);
-		}	
+		}
 
 		//	Set Contact
 		MUser[] contacts = bp.getContacts(false);
