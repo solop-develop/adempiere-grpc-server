@@ -2257,7 +2257,8 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						explicitPlacedAmount = Optional.ofNullable((BigDecimal) AllocateInvoice.get_Value("AllocateAmount"))
 							.orElse(Env.ZERO);
 						if (explicitPlacedAmount.signum()==0) {
-							throw new AdempiereException("@AllocateAmount@ = 0");
+							throw new AdempiereException(Msg.getMsg(getCtx(), "AllocateAmountZero",
+									new Object[] { MInvoice.get(getCtx(), invoiceToAllocateId).getDocumentNo() }));
 						}
 					}
 				}
@@ -2284,12 +2285,14 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						: mainDocumentTotal.min(referenceOpenAmt);
 
 					if (placedAmount.compareTo(mainDocumentTotal) > 0) {
-						processMsg = "@AllocateAmount@ (" + placedAmount + ") > @Total@ (" + mainDocumentTotal + ") - " + getDocumentNo();
+						processMsg = Msg.getMsg(getCtx(), "AllocateAmountExceedsTotal",
+								new Object[] { placedAmount, mainDocumentTotal, getDocumentNo() });
 						return DocAction.STATUS_Invalid;
 					}
 
 					if (!isAllowOverdraftDocument && placedAmount.compareTo(referenceOpenAmt) > 0) {
-						processMsg = "@isAllowOverdraftDocument@: @false@ - @AllocateAmount@ (" + placedAmount + ") > @Open@ (" + referenceOpenAmt + ") - " + referenceInvoice.getDocumentNo();
+						processMsg = Msg.getMsg(getCtx(), "AllocateAmountExceedsOpen",
+								new Object[] { placedAmount, referenceOpenAmt, referenceInvoice.getDocumentNo() });
 						return DocAction.STATUS_Invalid;
 					}
 
@@ -2307,6 +2310,8 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 				List<Integer> qualifiedAllocationIds = new ArrayList<>();
 				Map<Integer, BigDecimal> placedAmountByAllocationId = new HashMap<>();
 				Map<Integer, Integer> referenceDocumentIdByAllocationId = new HashMap<>();
+				//	Open amount of each referenced document, converted to this invoice's currency and fetched only once
+				//	even if several allocation lines point to the same referenced document
 				Map<Integer, BigDecimal> openAmtByReferenceDocument = new HashMap<>();
 				Map<Integer, MInvoice> referenceInvoiceByReferenceDocument = new HashMap<>();
 				BigDecimal totalPlacedAmount = Env.ZERO;
@@ -2336,13 +2341,15 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						}
 						openAmtByReferenceDocument.put(referenceDocumentId, referenceOpenAmt);
 					}
+					//	No open amount on the reference document - nothing to allocate
 					if (referenceOpenAmt.signum() == 0) {
 						continue;
 					}
 					BigDecimal placedAmount = Optional.ofNullable((BigDecimal) allocation.get_Value("AllocateAmount"))
 							.orElse(Env.ZERO);
 					if (placedAmount.signum()==0) {
-						processMsg = referenceInvoice.getDocumentNo() + " - @AllocateAmount@ = 0";
+						processMsg = Msg.getMsg(getCtx(), "AllocateAmountZero",
+								new Object[] { referenceInvoice.getDocumentNo() });
 						return DocAction.STATUS_Invalid;
 					}
 
@@ -2353,7 +2360,8 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 				}
 
 				if (totalPlacedAmount.compareTo(mainDocumentTotal) > 0) {
-					processMsg = "@AllocateAmount@ (" + totalPlacedAmount + ") > @Total@ (" + mainDocumentTotal + ") - " + getDocumentNo();
+					processMsg = Msg.getMsg(getCtx(), "AllocateAmountExceedsTotal",
+							new Object[] { totalPlacedAmount, mainDocumentTotal, getDocumentNo() });
 					return DocAction.STATUS_Invalid;
 				}
 
@@ -2367,7 +2375,8 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 						BigDecimal remainingOpenAmt = remainingOpenAmtByReferenceDocument.get(referenceDocumentId).subtract(placedAmount);
 						if (remainingOpenAmt.signum() < 0) {
 							MInvoice referenceInvoice = referenceInvoiceByReferenceDocument.get(referenceDocumentId);
-							processMsg = "@AllocateAmount@ (" + placedAmount + ") > @Open@ (" + openAmtByReferenceDocument.get(referenceDocumentId) + ") - " + referenceInvoice.getDocumentNo();
+							processMsg = Msg.getMsg(getCtx(), "AllocateAmountExceedsOpen",
+									new Object[] { placedAmount, openAmtByReferenceDocument.get(referenceDocumentId), referenceInvoice.getDocumentNo() });
 							return DocAction.STATUS_Invalid;
 						}
 						remainingOpenAmtByReferenceDocument.put(referenceDocumentId, remainingOpenAmt);
