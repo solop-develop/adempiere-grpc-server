@@ -865,15 +865,18 @@ public class MInOut extends X_M_InOut implements DocAction , DocumentReversalEna
 		{
 			for (int i = 0; i < locs.length; i++)
 			{
-				if (locs[i].isShipTo())
+				if (getC_BPartner_Location_ID() <= 0 && locs[i].isShipTo()) {
 					setC_BPartner_Location_ID(locs[i].getC_BPartner_Location_ID());
+				}
 			}
 			//	set to first if not set
-			if (getC_BPartner_Location_ID() == 0 && locs.length > 0)
+			if (getC_BPartner_Location_ID() <= 0 && locs.length > 0) {
 				setC_BPartner_Location_ID(locs[0].getC_BPartner_Location_ID());
+			}
 		}
-		if (getC_BPartner_Location_ID() == 0)
+		if (getC_BPartner_Location_ID() <= 0) {
 			log.log(Level.SEVERE, "Has no To Address: " + bp);
+		}
 
 		//	Set Contact
 		MUser[] contacts = bp.getContacts(false);

@@ -433,23 +433,26 @@ public class MInvoice extends X_C_Invoice implements DocAction , DocumentReversa
 		if (ss != null)
 			setPaymentRule(ss);
 
-
 		//	Set Locations
 		MBPartnerLocation[] locs = bp.getLocations(false);
 		if (locs != null)
 		{
 			for (int i = 0; i < locs.length; i++)
 			{
-				if ((locs[i].isBillTo() && isSOTrx())
-				|| (locs[i].isPayFrom() && !isSOTrx()))
+				if (getC_BPartner_Location_ID() <= 0
+					&& ((locs[i].isBillTo() && isSOTrx())
+					|| (locs[i].isPayFrom() && !isSOTrx()))) {
 					setC_BPartner_Location_ID(locs[i].getC_BPartner_Location_ID());
+				}
 			}
 			//	set to first
-			if (getC_BPartner_Location_ID() == 0 && locs.length > 0)
+			if (getC_BPartner_Location_ID() <= 0 && locs.length > 0) {
 				setC_BPartner_Location_ID(locs[0].getC_BPartner_Location_ID());
+			}
 		}
-		if (getC_BPartner_Location_ID() == 0)
+		if (getC_BPartner_Location_ID() <= 0) {
 			log.log(Level.SEVERE, new BPartnerNoAddressException(bp).getLocalizedMessage()); //TODO: throw exception?
+		}
 
 		//	Set Contact
 		MUser[] contacts = bp.getContacts(false);
