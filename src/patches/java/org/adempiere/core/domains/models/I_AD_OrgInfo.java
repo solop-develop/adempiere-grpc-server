@@ -318,6 +318,24 @@ public interface I_AD_OrgInfo
 	/** Get Allows Overdraft Document	  */
 	public boolean isAllowOverdraftDocument();
 
+    /** Column name IsAutoCompleteAttendanceBatch */
+    public static final String COLUMNNAME_IsAutoCompleteAttendanceBatch = "IsAutoCompleteAttendanceBatch";
+
+	/** Set Auto Complete Attendance Batch	  */
+	public void setIsAutoCompleteAttendanceBatch (String IsAutoCompleteAttendanceBatch);
+
+	/** Get Auto Complete Attendance Batch	  */
+	public String getIsAutoCompleteAttendanceBatch();
+
+    /** Column name IsAutoCompleteIncidence */
+    public static final String COLUMNNAME_IsAutoCompleteIncidence = "IsAutoCompleteIncidence";
+
+	/** Set Auto Complete Incidence	  */
+	public void setIsAutoCompleteIncidence (String IsAutoCompleteIncidence);
+
+	/** Get Auto Complete Incidence	  */
+	public String getIsAutoCompleteIncidence();
+
     /** Column name IsRequiresToleranceApproval */
     public static final String COLUMNNAME_IsRequiresToleranceApproval = "IsRequiresToleranceApproval";
 

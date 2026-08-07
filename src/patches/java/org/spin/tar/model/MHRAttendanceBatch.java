@@ -22,6 +22,7 @@ import org.adempiere.core.domains.models.X_S_ServicePlan;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MBPartner;
 import org.compiere.model.MDocType;
+import org.compiere.model.MOrgInfo;
 import org.compiere.model.MPeriod;
 import org.compiere.model.MRule;
 import org.compiere.model.ModelValidationEngine;
@@ -791,10 +792,35 @@ public class MHRAttendanceBatch extends X_HR_AttendanceBatch implements DocActio
 		if(errorMessage.length() > 0) {
 			return errorMessage.toString();
 		}
+		completeIncidencesIfRequired();
 		//	default
 		return null;
 	}
-	
+
+	/**
+	 * Complete generated incidences when the organization is configured to create
+	 * them already completed (AD_OrgInfo.IsAutoCompleteIncidence = Y). When the
+	 * configuration is empty or N, the incidences keep their default draft status.
+	 */
+	private void completeIncidencesIfRequired() {
+		MOrgInfo orgInfo = MOrgInfo.get(getCtx(), getAD_Org_ID(), get_TrxName());
+		if(orgInfo == null
+				|| !"Y".equals(orgInfo.getIsAutoCompleteIncidence())) {
+			return;
+		}
+		int[] incidenceIds = new Query(getCtx(), MHRIncidence.Table_Name,
+				"HR_AttendanceBatch_ID = ? AND IsManual = 'N' AND DocStatus = ?", get_TrxName())
+			.setParameters(getHR_AttendanceBatch_ID(), DocAction.STATUS_Drafted)
+			.getIDs();
+		for(int incidenceId : incidenceIds) {
+			MHRIncidence incidence = new MHRIncidence(getCtx(), incidenceId, get_TrxName());
+			if(!incidence.processIt(DocAction.ACTION_Complete)) {
+				throw new AdempiereException("@ProcessRunError@ " + incidence.getProcessMsg());
+			}
+			incidence.saveEx();
+		}
+	}
+
 	/**
 	 * Get work shift for employee from:
 	 * - Shift Schedule for a Work Group

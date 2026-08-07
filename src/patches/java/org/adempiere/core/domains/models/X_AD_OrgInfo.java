@@ -491,6 +491,48 @@ public class X_AD_OrgInfo extends PO implements I_AD_OrgInfo, I_Persistent
 		return false;
 	}
 
+	/** IsAutoCompleteAttendanceBatch AD_Reference_ID=319 */
+	public static final int ISAUTOCOMPLETEATTENDANCEBATCH_AD_Reference_ID=319;
+	/** Yes = Y */
+	public static final String ISAUTOCOMPLETEATTENDANCEBATCH_Yes = "Y";
+	/** No = N */
+	public static final String ISAUTOCOMPLETEATTENDANCEBATCH_No = "N";
+	/** Set Auto Complete Attendance Batch.
+		@param IsAutoCompleteAttendanceBatch Auto Complete Attendance Batch	  */
+	public void setIsAutoCompleteAttendanceBatch (String IsAutoCompleteAttendanceBatch)
+	{
+
+		set_Value (COLUMNNAME_IsAutoCompleteAttendanceBatch, IsAutoCompleteAttendanceBatch);
+	}
+
+	/** Get Auto Complete Attendance Batch.
+		@return Auto Complete Attendance Batch	  */
+	public String getIsAutoCompleteAttendanceBatch ()
+	{
+		return (String)get_Value(COLUMNNAME_IsAutoCompleteAttendanceBatch);
+	}
+
+	/** IsAutoCompleteIncidence AD_Reference_ID=319 */
+	public static final int ISAUTOCOMPLETEINCIDENCE_AD_Reference_ID=319;
+	/** Yes = Y */
+	public static final String ISAUTOCOMPLETEINCIDENCE_Yes = "Y";
+	/** No = N */
+	public static final String ISAUTOCOMPLETEINCIDENCE_No = "N";
+	/** Set Auto Complete Incidence.
+		@param IsAutoCompleteIncidence Auto Complete Incidence	  */
+	public void setIsAutoCompleteIncidence (String IsAutoCompleteIncidence)
+	{
+
+		set_Value (COLUMNNAME_IsAutoCompleteIncidence, IsAutoCompleteIncidence);
+	}
+
+	/** Get Auto Complete Incidence.
+		@return Auto Complete Incidence	  */
+	public String getIsAutoCompleteIncidence ()
+	{
+		return (String)get_Value(COLUMNNAME_IsAutoCompleteIncidence);
+	}
+
 	/** IsRequiresToleranceApproval AD_Reference_ID=319 */
 	public static final int ISREQUIRESTOLERANCEAPPROVAL_AD_Reference_ID=319;
 	/** Yes = Y */
