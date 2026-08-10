@@ -22,7 +22,9 @@ import org.compiere.util.Env;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Generated Process for (Invoice Create From)
@@ -61,6 +63,9 @@ public class InvoiceCreateFrom extends InvoiceCreateFromAbstract {
 		if (createFromType == null || createFromType.isEmpty()) {
 			throw new AdempiereException("@CreateFromType@ @NotFound@");
 		}
+		//	Remaining open amount per referenced invoice, so the sum of the allocated amounts
+		//	across all lines pointing to the same invoice never exceeds its open balance
+		final Map<Integer, BigDecimal> remainingOpenByReference = new HashMap<>();
 		//	Loop
 		recordIds.forEach(key -> {
 			// variable values
@@ -143,11 +148,31 @@ public class InvoiceCreateFrom extends InvoiceCreateFromAbstract {
 				//Automatic Allocation
 				MTable allocateInvoiceTable = MTable.get(getCtx(), "C_AllocateInvoice");
 				if (allocateInvoiceTable != null && allocateInvoiceTable.getAD_Table_ID() > 0) {
-					PO allocateInvoice = allocateInvoiceTable.getPO(0, invoiceLine.get_TrxName());
-					allocateInvoice.set_ValueOfColumn("C_Invoice_ID", getRecord_ID());
-					allocateInvoice.set_ValueOfColumn("ReferenceDocument_ID", fromLine.getC_Invoice_ID());
-					allocateInvoice.set_ValueOfColumn("AllocateAmount", invoiceLine.getLineTotalAmt());
-					allocateInvoice.saveEx();
+					int referenceInvoiceId = fromLine.getC_Invoice_ID();
+					//	Whether an allocate line was already created for this referenced invoice in this run
+					boolean referenceAlreadyLinked = remainingOpenByReference.containsKey(referenceInvoiceId);
+					//	Open balance of the referenced invoice, fetched once and decremented per line
+					BigDecimal remainingOpenAmt = remainingOpenByReference.get(referenceInvoiceId);
+					if (remainingOpenAmt == null) {
+						remainingOpenAmt = new MInvoice(getCtx(), referenceInvoiceId, get_TrxName()).getOpenAmt(false, null);
+						if (remainingOpenAmt == null) {
+							remainingOpenAmt = Env.ZERO;
+						}
+					}
+					//	Allocate at most the still-open amount; once it is exhausted the line is allocated with zero
+					BigDecimal allocateAmount = remainingOpenAmt.signum() > 0
+							? invoiceLine.getLineTotalAmt().min(remainingOpenAmt)
+							: Env.ZERO;
+					remainingOpenByReference.put(referenceInvoiceId, remainingOpenAmt.subtract(allocateAmount));
+
+					//	Skip additional zero-amount allocate lines once the referenced invoice is already linked
+					if (allocateAmount.signum() != 0 || !referenceAlreadyLinked) {
+						PO allocateInvoice = allocateInvoiceTable.getPO(0, invoiceLine.get_TrxName());
+						allocateInvoice.set_ValueOfColumn("C_Invoice_ID", getRecord_ID());
+						allocateInvoice.set_ValueOfColumn("ReferenceDocument_ID", referenceInvoiceId);
+						allocateInvoice.set_ValueOfColumn("AllocateAmount", allocateAmount);
+						allocateInvoice.saveEx();
+					}
 				}
 				// MZ Goodwill
 				// copy the landed cost
