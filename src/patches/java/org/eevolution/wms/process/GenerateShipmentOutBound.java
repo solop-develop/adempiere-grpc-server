@@ -353,7 +353,7 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
     }
 
     private BigDecimal getSalesOrderQtyToDelivery(MWMInOutBoundLine outboundLine) {
-        return Optional.ofNullable(getSelectionAsBigDecimal(outboundLine.getWM_InOutBoundLine_ID(), "QtyToDeliver")).orElse(outboundLine.getQtyToDeliver());
+        return outboundLine.getQtyToDeliver();
     }
 
     private BigDecimal getManufacturingOrderQtyToDelivery(MWMInOutBoundLine outboundLine, MPPOrderBOMLine orderBOMLine) {
