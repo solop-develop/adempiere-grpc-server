@@ -353,6 +353,7 @@ public class GenerateShipmentOutBound extends GenerateShipmentOutBoundAbstract {
     }
 
     private BigDecimal getSalesOrderQtyToDelivery(MWMInOutBoundLine outboundLine) {
+        // Always recompute from the order line; never trust a client-supplied selection override, which can be stale.
         return outboundLine.getQtyToDeliver();
     }
 
