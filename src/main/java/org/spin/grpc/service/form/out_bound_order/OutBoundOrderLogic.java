@@ -318,7 +318,7 @@ public class OutBoundOrderLogic {
 				"	(COALESCE(lord.QtyOrdered, 0) - " +
 				"		SUM(" +
 				"				CASE WHEN (c.IsDelivered = 'N' AND lc.DD_Order_ID IS NOT NULL AND c.DocStatus = 'CO') " +
-				"						THEN COALESCE(lc.MovementQty, 0) " +
+				"						THEN COALESCE(lc.MovementQty, 0) - COALESCE(iol.MovementQty, 0) " +
 				"						ELSE 0 " +
 				"				END" +
 				"			)" +
@@ -326,6 +326,12 @@ public class OutBoundOrderLogic {
 				"	FROM DD_OrderLine lord " +
 				"	LEFT JOIN WM_InOutBoundLine lc ON(lc.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
 				"	LEFT JOIN WM_InOutBound c ON(c.WM_InOutBound_ID = lc.WM_InOutBound_ID) " +
+				"	LEFT JOIN (SELECT iol.WM_InOutBoundLine_ID, SUM(iol.MovementQty) MovementQty " +
+				"				FROM M_InOut io " +
+				"				INNER JOIN M_InOutLine iol ON(iol.M_InOut_ID = io.M_InOut_ID) " +
+				"				WHERE io.DocStatus IN('CO', 'CL') " +
+				"				AND iol.WM_InOutBoundLine_ID IS NOT NULL " +
+				"			GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
 				"	WHERE lord.M_Product_ID IS NOT NULL " +
 				"	GROUP BY lord.DD_Order_ID, lord.DD_OrderLine_ID, lord.QtyOrdered " +
 				"	ORDER BY lord.DD_OrderLine_ID ASC) qafl " +
@@ -387,7 +393,7 @@ public class OutBoundOrderLogic {
 				"	(COALESCE(lord.QtyOrdered, 0) - " +
 				"		SUM(" +
 				"				CASE WHEN (c.IsDelivered = 'N' AND lc.C_Order_ID IS NOT NULL AND c.DocStatus = 'CO') " +
-				"						THEN COALESCE(lc.MovementQty, 0) " +
+				"						THEN COALESCE(lc.MovementQty, 0) - COALESCE(iol.MovementQty, 0) " +
 				"						ELSE 0 " +
 				"				END" +
 				"			)" +
@@ -395,6 +401,12 @@ public class OutBoundOrderLogic {
 				"	FROM C_OrderLine lord " +
 				"	LEFT JOIN WM_InOutBoundLine lc ON(lc.C_OrderLine_ID = lord.C_OrderLine_ID) " +
 				"	LEFT JOIN WM_InOutBound c ON(c.WM_InOutBound_ID = lc.WM_InOutBound_ID) " +
+				"	LEFT JOIN (SELECT iol.WM_InOutBoundLine_ID, SUM(iol.MovementQty) MovementQty " +
+				"				FROM M_InOut io " +
+				"				INNER JOIN M_InOutLine iol ON(iol.M_InOut_ID = io.M_InOut_ID) " +
+				"				WHERE io.DocStatus IN('CO', 'CL') " +
+				"				AND iol.WM_InOutBoundLine_ID IS NOT NULL " +
+				"			GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
 				"	WHERE lord.M_Product_ID IS NOT NULL " +
 				"	GROUP BY lord.C_Order_ID, lord.C_OrderLine_ID, lord.QtyOrdered " +
 				"	ORDER BY lord.C_OrderLine_ID ASC) qafl " +
@@ -498,7 +510,7 @@ public class OutBoundOrderLogic {
 					"SUM(" +
 					"		COALESCE(CASE " +
 					"			WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
-					"			THEN lc.MovementQty " +
+					"			THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
 					"			ELSE 0 " +
 					"		END, 0)" +
 					") QtyLoc, " +
@@ -506,7 +518,7 @@ public class OutBoundOrderLogic {
 					"	SUM(" +
 					"		COALESCE(CASE " +
 					"			WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
-					"			THEN lc.MovementQty " +
+					"			THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
 					"			ELSE 0 " +
 					"		END, 0)" +
 					"		)" +
@@ -525,6 +537,12 @@ public class OutBoundOrderLogic {
 					"INNER JOIN C_UOM uomp ON(uomp.C_UOM_ID = pro.C_UOM_ID) " +
 					"LEFT JOIN WM_InOutBoundLine lc ON(lc.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
 					"LEFT JOIN WM_InOutBound c ON(c.WM_InOutBound_ID = lc.WM_InOutBound_ID) " +
+					"LEFT JOIN (SELECT iol.WM_InOutBoundLine_ID, SUM(iol.MovementQty) MovementQty " +
+					"						FROM M_InOut io " +
+					"						INNER JOIN M_InOutLine iol ON(iol.M_InOut_ID = io.M_InOut_ID) " +
+					"						WHERE io.DocStatus IN('CO', 'CL') " +
+					"						AND iol.WM_InOutBoundLine_ID IS NOT NULL" +
+					"				GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
 					"LEFT JOIN (" +
 					"				SELECT l.M_Warehouse_ID, st.M_Product_ID, " +
 					"					COALESCE(SUM(st.QtyOnHand), 0) QtyOnHand, " +
@@ -549,11 +567,11 @@ public class OutBoundOrderLogic {
 				.append(" ")
 			;
 			//	Having
-			sql.append("HAVING (COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyInTransit, 0) - COALESCE(lord.QtyDelivered, 0) - " + 
+			sql.append("HAVING (COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyInTransit, 0) - COALESCE(lord.QtyDelivered, 0) - " +
 					"								SUM(" +
 					"									COALESCE(CASE " +
 					"										WHEN (c.IsDelivered = 'N' AND lc.DD_OrderLine_ID IS NOT NULL AND c.DocStatus = 'CO') " +
-					"											THEN lc.MovementQty " +
+					"											THEN lc.MovementQty - COALESCE(iol.MovementQty, 0) " +
 					"											ELSE 0 " +
 					"										END, 0)" +
 					"								)" +
