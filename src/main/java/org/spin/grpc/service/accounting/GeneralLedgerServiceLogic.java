@@ -324,7 +324,7 @@ public class GeneralLedgerServiceLogic {
 		)
 			.stream()
 			.sorted(
-				Comparator.comparing(MOrg::getValue)
+				Comparator.comparing((MOrg orgItem) -> orgItem.getValue())
 			)
 			.collect(Collectors.toList())
 		;
@@ -1109,7 +1109,7 @@ public class GeneralLedgerServiceLogic {
 			} else if (request.getPaymentId() > 0) {
 				MPayment payment = new MPayment(Env.getCtx(), request.getPaymentId(), null);
 				if (payment != null && payment.getC_Payment_ID() > 0) {
-					whereClause += " AND C_Order_ID = ?";
+					whereClause += " AND C_Payment_ID = ?";
 					filtersList.add(
 						request.getPaymentId()
 					);
