@@ -340,11 +340,13 @@ public class MHRLeave extends X_HR_Leave implements DocAction, DocOptions {
 
 	/**
 	 * Generate the incidences for the leave.
-	 * Like the attendance batch does for attendance ({@code processAttendance}), it takes the
-	 * shift incidences of the employee work shift, but only those configured as
-	 * {@link X_HR_ShiftIncidence#EVENTTYPE_Leave Leave}, and creates one incidence for the total
-	 * duration of the leave (End Date - Start Date). Previously generated incidences for the same
-	 * leave are removed first, so the method is safe to call again after a re-activation.
+	 * The leave quantity is the whole leave duration, computed as the difference between
+	 * {@link #getStartDate()} and {@link #getEndDate()} (same criterion used for the leave duration),
+	 * and converted to the time unit configured on each shift incidence (typically hours). A single
+	 * incidence is created per shift incidence configured as
+	 * {@link X_HR_ShiftIncidence#EVENTTYPE_Leave Leave} on the work shift resolved for the leave start
+	 * day. Previously generated (non manual) incidences for the same leave are removed first, so the
+	 * method is safe to call again after a re-activation.
 	 */
 	private void generateIncidences() {
 		//	Remove previously generated (non manual) incidences for this leave
@@ -353,31 +355,38 @@ public class MHRLeave extends X_HR_Leave implements DocAction, DocOptions {
 		Timestamp startDate = getStartDate();
 		Timestamp endDate = getEndDate();
 		if(startDate == null
-				|| endDate == null) {
+				|| endDate == null
+				|| !endDate.after(startDate)) {
 			return;
 		}
-		long durationInMillis = endDate.getTime() - startDate.getTime();
-		if(durationInMillis <= 0) {
-			return;
-		}
-		//	Resolve employee and work shift
+		//	Resolve employee
 		MHREmployee employee = MHREmployee.getById(getCtx(), getHR_Employee_ID());
 		if(employee == null) {
 			return;
 		}
-		int workShiftId = getWorkShiftId(employee, startDate);
+		//	Resolve the work shift from the leave start day
+		Timestamp startDay = TimeUtil.getDay(startDate);
+		int workShiftId = getWorkShiftId(employee, startDay);
 		if(workShiftId <= 0) {
 			return;
 		}
-		//	Get leave configuration from the work shift
-		List<MHRShiftIncidence> shiftIncidenceList = MHRShiftIncidence.getShiftIncidenceList(getCtx(), workShiftId, X_HR_ShiftIncidence.EVENTTYPE_Leave, startDate);
+		//	Leave quantity = whole leave duration (End - Start); the unit comes from each shift incidence
+		long durationInMillis = TimeUtil.getMillisecondsBetween(startDate, endDate);
+		if(durationInMillis <= 0) {
+			return;
+		}
+		//	One incidence per shift incidence of type Leave applicable to the start day
+		List<MHRShiftIncidence> shiftIncidenceList = MHRShiftIncidence.getShiftIncidenceList(getCtx(), workShiftId, X_HR_ShiftIncidence.EVENTTYPE_Leave, startDay);
 		for(MHRShiftIncidence shiftIncidence : shiftIncidenceList) {
 			MHRIncidence incidence = new MHRIncidence(this, shiftIncidence, durationInMillis);
+			incidence.setServiceDate(startDay);
 			incidence.saveEx();
 		}
 		//	Complete when the organization is configured for it
 		completeIncidencesIfRequired();
 	}
+
+
 
 	/**
 	 * Resolve the work shift for the employee at a given date, using the same precedence as the
