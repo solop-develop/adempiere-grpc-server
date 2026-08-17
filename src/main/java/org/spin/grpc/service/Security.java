@@ -300,6 +300,13 @@ public class Security extends SecurityImplBase {
 		// Persist only what the request brought; no-op when payload is empty.
 		PreferenceUtil.saveSessionPreferences(userId, preferencesToPersist);
 
+		// Keep SessionManager's read-through language cache in sync so the next
+		// OpenID-resolved request (see SessionManager#loadValuesWithOpenID)
+		// picks up the change without a DB round-trip.
+		if (preferencesToPersist.containsKey(PreferenceUtil.P_LANGUAGE)) {
+			SessionManager.updateCachedLanguagePreference(userId, language);
+		}
+
 		builder.setToken(bearerToken);
 		return builder;
 	}

@@ -38,6 +38,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.adempiere.core.domains.models.I_AD_Language;
+import org.adempiere.core.domains.models.I_AD_Preference;
 import org.adempiere.core.domains.models.I_AD_Session;
 import org.adempiere.core.domains.models.I_AD_User_Authentication;
 import org.adempiere.core.domains.models.I_C_ConversionType;
@@ -135,6 +136,29 @@ public class SessionManager {
 	private static CCache<String, Integer> openIdSessionCache = new CCache<String, Integer>(I_AD_Session.Table_Name, 30, 0);	//	no time-out
 	private static CCache<Integer, String> sessionOpenIDCCache = new CCache<Integer, String>(I_AD_Session.Table_Name, 30, 0);	//	no time-out
 
+	/**
+	 * User's preferred AD_Language (AD_Preference), keyed by AD_User_ID.
+	 * Populated lazily by loadValuesWithOpenID and kept in sync by
+	 * updateCachedLanguagePreference, called right after setSessionAttribute
+	 * persists a new language — this avoids a synchronous AD_Preference query
+	 * on every single authenticated OpenID request, which sits in the
+	 * gRPC auth interceptor's hot path (AuthorizationServerInterceptor calls
+	 * getSessionFromToken before attaching SESSION_CONTEXT to the call).
+	 */
+	private static CCache<Integer, String> userLanguagePreferenceCache = new CCache<Integer, String>(I_AD_Preference.Table_Name, 100, 0);	//	no time-out
+
+	/**
+	 * Update (or seed) the cached language preference for a user. Call this
+	 * right after persisting a language change (e.g. setSessionAttribute) so
+	 * the next OpenID-resolved request picks it up without a DB round-trip.
+	 */
+	public static void updateCachedLanguagePreference(int userId, String language) {
+		if (userId <= 0 || Util.isEmpty(language, true)) {
+			return;
+		}
+		userLanguagePreferenceCache.put(userId, language);
+	}
+
 	/**	Session Context	*/
 	private static final Map<String, Properties> sessionsContext = Collections.synchronizedMap(new Hashtable<String, Properties>());
 
@@ -231,9 +255,21 @@ public class SessionManager {
 		// getCtx() returns the global context, not the session-specific one, so it
 		// never reflects a language change made via setSessionAttribute. Same fix
 		// already applied in KeycloakSessionHandler#loadExistingSessionContext.
-		String language = PreferenceUtil.getLanguagePreference(session.getCreatedBy());
+		//
+		// Read-through cache instead of a plain DB call: this runs on every
+		// OpenID-resolved request inside the auth interceptor, before
+		// SESSION_CONTEXT is attached to the call (AuthorizationServerInterceptor
+		// calls getSessionFromToken first) — a synchronous AD_Preference query
+		// here on every request added enough latency to that hot path to cause
+		// intermittent auth failures under bursty concurrent traffic.
+		int userId = session.getCreatedBy();
+		String language = userLanguagePreferenceCache.get(userId);
 		if (Util.isEmpty(language, true)) {
-			language = getDefaultLanguage(null);
+			language = PreferenceUtil.getLanguagePreference(userId);
+			if (Util.isEmpty(language, true)) {
+				language = getDefaultLanguage(null);
+			}
+			userLanguagePreferenceCache.put(userId, language);
 		}
 		sessionData.language = language;
 	}
