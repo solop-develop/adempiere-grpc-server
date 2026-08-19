@@ -219,7 +219,9 @@ public class InvoiceCreateFrom extends InvoiceCreateFromAbstract {
 			invoice.setRMA(rma);
 		} else if(createFromType.equals(RECEIPT)) {
 			MInOut inOut = new MInOut(getCtx(), referenceId, get_TrxName());
+			int originalDocTypeId = invoice.getC_DocTypeTarget_ID();
 			invoice.setShipment(inOut);
+			invoice.setC_DocTypeTarget_ID(originalDocTypeId);
 		}
 		//	Save
 		invoice.saveEx();
