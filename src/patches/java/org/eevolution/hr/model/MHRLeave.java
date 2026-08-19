@@ -390,35 +390,45 @@ public class MHRLeave extends X_HR_Leave implements DocAction, DocOptions {
 
 	/**
 	 * Resolve the work shift for the employee at a given date, using the same precedence as the
-	 * attendance batch: work group (direct shift, default from shift group or shift schedule) and,
-	 * as fallback, the employee shift group.
+	 * attendance import (ImportAttendance#getWorkShiftId): first the employee shift group, then the
+	 * work group (its direct shift regardless of the shift allocation flag, and as a last option the
+	 * default shift of its shift group). The rotating shift schedule of the work group is only used
+	 * as a final fallback, for configurations that actually rely on it. This keeps the leave
+	 * incidence generation consistent with how the attendance batch resolves the work shift, so it
+	 * no longer depends on the work group having IsShiftAllocation = Y or a shift schedule loaded.
 	 * @param employee
-	 * @param date
+	 * @param date used only for the shift schedule fallback
 	 * @return work shift id or 0 when it can not be resolved
 	 */
 	private int getWorkShiftId(MHREmployee employee, Timestamp date) {
 		int workShiftId = 0;
-		if(employee.getHR_WorkGroup_ID() > 0) {
+		//	Employee shift group (primary source, same as attendance import)
+		if(employee.getHR_ShiftGroup_ID() > 0) {
+			MHRWorkShift workShift = MHRWorkShift.getDefaultFromGroup(getCtx(), employee.getHR_ShiftGroup_ID(), get_TrxName());
+			if(workShift != null) {
+				workShiftId = workShift.getHR_WorkShift_ID();
+			}
+		}
+		//	Work group: direct shift, then the default shift of its shift group
+		if(workShiftId <= 0
+				&& employee.getHR_WorkGroup_ID() > 0) {
 			MHRWorkGroup workGroup = MHRWorkGroup.getById(getCtx(), employee.getHR_WorkGroup_ID(), get_TrxName());
-			if(workGroup.isShiftAllocation()) {
+			if(workGroup.getHR_WorkShift_ID() > 0) {
 				workShiftId = workGroup.getHR_WorkShift_ID();
-				if(workShiftId == 0
-						&& workGroup.getHR_ShiftGroup_ID() > 0) {
-					MHRWorkShift workShift = MHRWorkShift.getDefaultFromGroup(getCtx(), workGroup.getHR_ShiftGroup_ID(), get_TrxName());
-					if(workShift != null) {
-						workShiftId = workShift.getHR_WorkShift_ID();
-					}
+			}
+			if(workShiftId <= 0
+					&& workGroup.getHR_ShiftGroup_ID() > 0) {
+				MHRWorkShift workShift = MHRWorkShift.getDefaultFromGroup(getCtx(), workGroup.getHR_ShiftGroup_ID(), get_TrxName());
+				if(workShift != null) {
+					workShiftId = workShift.getHR_WorkShift_ID();
 				}
-			} else {
+			}
+			//	Last resort: rotating shift schedule of the work group
+			if(workShiftId <= 0) {
 				MHRShiftSchedule shiftSchedule = MHRShiftSchedule.getScheduleFromWorkGroup(getCtx(), workGroup.getHR_WorkGroup_ID(), date, get_TrxName());
 				if(shiftSchedule != null) {
 					workShiftId = shiftSchedule.getHR_WorkShift_ID();
 				}
-			}
-		} else if(employee.getHR_ShiftGroup_ID() > 0) {
-			MHRWorkShift workShift = MHRWorkShift.getDefaultFromGroup(getCtx(), employee.getHR_ShiftGroup_ID(), get_TrxName());
-			if(workShift != null) {
-				workShiftId = workShift.getHR_WorkShift_ID();
 			}
 		}
 		return workShiftId;
