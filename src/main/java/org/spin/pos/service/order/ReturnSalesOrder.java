@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInvoice;
 import org.compiere.model.MOrder;
@@ -218,6 +219,15 @@ public class ReturnSalesOrder {
 				throw new AdempiereException("@M_RMA_ID@ @Processed@");
 			}
 
+			if (manualDocumentTypeId > 0) {
+				// To change IsManualDocument on RMA by Document type, must be set before reading the flag below
+				MDocType manualDocType = MDocType.get(Env.getCtx(), manualDocumentTypeId);
+				if (manualDocType != null && manualDocType.getC_DocType_ID() > 0
+						&& manualDocType.get_ValueAsBoolean("IsGenerateManualDocument")) {
+					returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
+					returnOrder.saveEx(transactionName);
+				}
+			}
 			final boolean isManualReturnOrder = returnOrder.get_ValueAsBoolean(ColumnsAdded.COLUMNNAME_IsManualDocument);
 			/*
 			final int sourceOrderId = returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID);
@@ -235,9 +245,6 @@ public class ReturnSalesOrder {
 				returnOrder.set_ValueOfColumn("ManualInvoiceDocumentNo", manualInvoiceDocumentNo);
 				returnOrder.set_ValueOfColumn("ManualShipmentDocumentNo", manualShipmentDocumentNo);
 				// salesOrder.set_ValueOfColumn("ManualMovementDocumentNo", manualMovementDocumentNo);
-				if (manualDocumentTypeId > 0) {
-					returnOrder.setC_DocTypeTarget_ID(manualDocumentTypeId);
-				}
 				returnOrder.saveEx(transactionName);
 			}
 
