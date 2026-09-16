@@ -879,7 +879,11 @@ public class WhereClauseUtil {
 					.append("@").append(mainColumnName).append("@")
 				;
 				//	Add support to child
-				MTab parentTab = tablesMap.get(aliasIndex -1);
+				//	The direct parent is always the first table (t0), because `tabList`
+				//	is sorted by SeqNo descending. Using `aliasIndex - 1` points to the
+				//	top-most ancestor instead, which breaks the link column resolution
+				//	for tabs deeper than level 2 (e.g. C_PeriodControl -> C_Period).
+				MTab parentTab = tablesMap.get(0);
 				String parentColumnName = WindowUtil.getParentColumnNameFromTab(tab);
 				String linkColumnName = WindowUtil.getLinkColumnNameFromTab(tab);
 				if (Util.isEmpty(parentColumnName, true)) {
