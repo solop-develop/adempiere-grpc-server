@@ -592,22 +592,46 @@ public class ProductInfoLogic {
 			+ "bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
+		// Vendor join: with the flag, one row per product and vendor (optionally
+		// restricted to the filtered vendor); without it, one row per product with
+		// a single current vendor, so products with several M_Product_PO are not duplicated.
+		final int orgId = Env.getAD_Org_ID(context);
+		List<Object> vendorJoinParameters = new ArrayList<>();
+		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?) ";
+		vendorJoinParameters.add(orgId);
+		if (request.getIsIncludeAllVendors()) {
+			if (request.getVendorId() > 0) {
+				sqlVendorJoin += "AND ppo.C_BPartner_ID = ? ";
+				vendorJoinParameters.add(
+					request.getVendorId()
+				);
+			}
+		} else {
+			sqlVendorJoin += "AND ppo.IsCurrentVendor = 'Y' "
+				+ "AND ppo.C_BPartner_ID = ("
+					+ "SELECT MIN(cppo.C_BPartner_ID) FROM M_Product_PO AS cppo "
+					+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
+					+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
+					+ "AND cppo.AD_Org_ID in (0, ?)"
+				+ ") "
+			;
+			vendorJoinParameters.add(orgId);
+		}
+		sqlVendorJoin += ") ";
+
 		String sqlFrom = "FROM M_Product AS p "
 			+ "LEFT JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID = p.M_Product_Class_ID) "
 			+ "LEFT JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID = p.M_Product_Classification_ID) "
 			+ "LEFT JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID) "
 			+ "LEFT JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID = p.M_Product_Category_ID) "
 			+ "LEFT JOIN C_UOM AS u ON (p.C_UOM_ID = u.C_UOM_ID) "
-			+ "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?)) "
+			+ sqlVendorJoin
 			+ "LEFT JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID = bp.C_BPartner_ID) "
 			+ "LEFT JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID = p.M_AttributeSet_ID) "
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
-		List<Object> filtersList = new ArrayList<>();
-		filtersList.add(
-			Env.getAD_Org_ID(context)
-		);
+		List<Object> filtersList = new ArrayList<>(vendorJoinParameters);
 		filtersList.add(
 			Env.getAD_Client_ID(context)
 		);
@@ -1070,6 +1094,7 @@ public class ProductInfoLogic {
 			.setVendorId(request.getVendorId())
 			.setIsStocked(request.getIsStocked())
 			.setIsOnlyStockAvailable(request.getIsOnlyStockAvailable())
+			.setIsIncludeAllVendors(request.getIsIncludeAllVendors())
 		;
 		if (request.hasCurrentValue()) {
 			builder.setCurrentValue(
