@@ -116,7 +116,11 @@ public class LocationAddressConvertUtil {
 		if (address.getC_Country_ID() > 0) {
 			MCountry country = MCountry.get(Env.getCtx(), address.getC_Country_ID());
 			if (country != null && country.getC_Country_ID() > 0) {
-				countryName = country.getName();
+				countryName = TextManager.getValidString(
+					country.get_Translation(
+						I_C_Country.COLUMNNAME_Name
+					)
+				);
 				if (Util.isEmpty(countryName, true)) {
 					countryName = country.getCountryCode();
 				}
