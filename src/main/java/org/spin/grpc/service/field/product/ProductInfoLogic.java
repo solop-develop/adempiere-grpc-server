@@ -595,10 +595,15 @@ public class ProductInfoLogic {
 		// Vendor join: with the flag, one row per product and vendor (optionally
 		// restricted to the filtered vendor); without it, one row per product with
 		// a single current vendor, so products with several M_Product_PO are not duplicated.
+		// The same vendor can be loaded in several organizations, so a single M_Product_PO
+		// is picked per vendor: with a session organization only it and organization 0 are
+		// visible, preferring the session organization; with organization 0 every organization
+		// is visible, preferring organization 0 and then the lowest organization.
 		final int orgId = Env.getAD_Org_ID(context);
+		final boolean isOrgRestricted = orgId > 0;
+		final String sqlOrgOrder = isOrgRestricted ? "cppo.AD_Org_ID DESC" : "cppo.AD_Org_ID";
 		List<Object> vendorJoinParameters = new ArrayList<>();
-		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?) ";
-		vendorJoinParameters.add(orgId);
+		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' ";
 		if (request.getIsIncludeAllVendors()) {
 			if (request.getVendorId() > 0) {
 				sqlVendorJoin += "AND ppo.C_BPartner_ID = ? ";
@@ -606,15 +611,28 @@ public class ProductInfoLogic {
 					request.getVendorId()
 				);
 			}
-		} else {
-			sqlVendorJoin += "AND ppo.IsCurrentVendor = 'Y' "
-				+ "AND ppo.C_BPartner_ID = ("
-					+ "SELECT MIN(cppo.C_BPartner_ID) FROM M_Product_PO AS cppo "
-					+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
-					+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
-					+ "AND cppo.AD_Org_ID in (0, ?)"
+			sqlVendorJoin += "AND ppo.M_Product_PO_ID = ("
+					+ "SELECT cppo.M_Product_PO_ID FROM M_Product_PO AS cppo "
+					+ "WHERE cppo.M_Product_ID = ppo.M_Product_ID "
+					+ "AND cppo.C_BPartner_ID = ppo.C_BPartner_ID "
+					+ "AND cppo.IsActive = 'Y' "
+					+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
+					+ "ORDER BY " + sqlOrgOrder + ", cppo.M_Product_PO_ID "
+					+ "LIMIT 1"
 				+ ") "
 			;
+		} else {
+			sqlVendorJoin += "AND ppo.M_Product_PO_ID = ("
+					+ "SELECT cppo.M_Product_PO_ID FROM M_Product_PO AS cppo "
+					+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
+					+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
+					+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
+					+ "ORDER BY " + sqlOrgOrder + ", cppo.C_BPartner_ID, cppo.M_Product_PO_ID "
+					+ "LIMIT 1"
+				+ ") "
+			;
+		}
+		if (isOrgRestricted) {
 			vendorJoinParameters.add(orgId);
 		}
 		sqlVendorJoin += ") ";
@@ -774,12 +792,16 @@ public class ProductInfoLogic {
 					+ "SELECT 1 FROM M_Product_PO AS ppo "
 					+ "WHERE ppo.C_BPartner_ID = ? "
 					+ "AND ppo.M_Product_ID = p.M_Product_ID "
-					// + "AND ppo.IsActive = 'Y' "
+					+ "AND ppo.IsActive = 'Y' "
+					+ (isOrgRestricted ? "AND ppo.AD_Org_ID in (0, ?) " : "")
 				+ ")"
 			;
 			filtersList.add(
 				request.getVendorId()
 			);
+			if (isOrgRestricted) {
+				filtersList.add(orgId);
+			}
 		}
 
 		// Price List Version
