@@ -61,6 +61,7 @@ import org.spin.backend.grpc.record_management.ToggleIsActiveRecordsBatchRespons
 import org.spin.backend.grpc.record_management.ZoomWindow;
 import org.spin.base.util.RecordWriteGuard;
 import org.spin.service.grpc.util.base.RecordUtil;
+import org.spin.service.grpc.util.value.NumberManager;
 import org.spin.service.grpc.util.value.TextManager;
 import org.spin.service.grpc.util.value.ValueManager;
 
@@ -482,13 +483,7 @@ public class RecordManagementServiceLogic {
 			return builder;
 		}
 
-		List<ZoomInfoFactory.ZoomInfo> zoomInfos = ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
-			.parallelStream()
-			.filter(zoomInfo -> {
-				return zoomInfo.query.getRecordCount() > 0;
-			})
-			.collect(Collectors.toList())
-		;
+		List<ZoomInfoFactory.ZoomInfo> zoomInfos = getRecordZoomInfos(entity, tab);
 		if (zoomInfos == null || zoomInfos.isEmpty()) {
 			return builder;
 		}
@@ -508,22 +503,16 @@ public class RecordManagementServiceLogic {
 			if (referenceTable == null || referenceTable.getAD_Table_ID() <= 0) {
 				return;
 			}
+			MTab referenceTab = getReferenceTab(referenceWindow, referenceTable);
 
-			final String sql = "SELECT AD_Tab_ID "
-				+ "FROM AD_Tab "
-				+ "WHERE AD_Window_ID = ? AND AD_Table_ID = ? "
-				+ "ORDER BY SeqNo "
-				+ "LIMIT 1"
-			;
-			int tabId = DB.getSQLValue(
-				null,
-				sql,
-				referenceWindow.getAD_Window_ID(), referenceTable.getAD_Table_ID()
+			String uuidRerefenced = putReferenceQuery(
+				referenceWindow,
+				referenceTab,
+				referenceTable,
+				zoomQuery,
+				tab.getAD_Tab_ID(),
+				recordId
 			);
-			MTab referenceTab = MTab.get(Env.getCtx(), tabId);
-
-			String uuidRerefenced = referenceWindow.getUUID() + "|" + referenceTab.getUUID() + "|" + referenceTable.getTableName() + "|" + zoomQuery.getZoomColumnName();
-			org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery);
 
 			recordReferenceBuilder.setUuid(uuidRerefenced)
 				.setWindowId(
@@ -571,6 +560,122 @@ public class RecordManagementServiceLogic {
 
 		//	Return
 		return builder;
+	}
+
+	/**
+	 * Get zoom infos with records of a source record
+	 * @param entity source record
+	 * @param tab source tab
+	 * @return
+	 */
+	private static List<ZoomInfoFactory.ZoomInfo> getRecordZoomInfos(PO entity, MTab tab) {
+		return ZoomInfoFactory.retrieveZoomInfos(entity, tab.getAD_Window_ID())
+			.parallelStream()
+			.filter(zoomInfo -> {
+				return zoomInfo.query.getRecordCount() > 0;
+			})
+			.collect(Collectors.toList())
+		;
+	}
+
+	/**
+	 * Get first tab of reference window with reference table
+	 * @param referenceWindow
+	 * @param referenceTable
+	 * @return
+	 */
+	private static MTab getReferenceTab(MWindow referenceWindow, MTable referenceTable) {
+		final String sql = "SELECT AD_Tab_ID "
+			+ "FROM AD_Tab "
+			+ "WHERE AD_Window_ID = ? AND AD_Table_ID = ? "
+			+ "ORDER BY SeqNo "
+			+ "LIMIT 1"
+		;
+		int tabId = DB.getSQLValue(
+			null,
+			sql,
+			referenceWindow.getAD_Window_ID(), referenceTable.getAD_Table_ID()
+		);
+		return MTab.get(Env.getCtx(), tabId);
+	}
+
+	/**
+	 * Add zoom query to cache, the key is unique by source record and query, so
+	 * many references to same window, tab and column (e.g. relation types) not overwrite each other
+	 * Format: `Window UUID|Tab UUID|Table Name|Column Name|Source Tab ID|Source Record ID|Where Clause Hash`
+	 * @param referenceWindow
+	 * @param referenceTab
+	 * @param referenceTable
+	 * @param zoomQuery
+	 * @param sourceTabId
+	 * @param sourceRecordId
+	 * @return reference uuid
+	 */
+	private static String putReferenceQuery(MWindow referenceWindow, MTab referenceTab, MTable referenceTable, MQuery zoomQuery, int sourceTabId, int sourceRecordId) {
+		final String whereClauseHash = Integer.toHexString(
+			TextManager.getValidString(
+				zoomQuery.getWhereClause()
+			).hashCode()
+		);
+		final String uuidRerefenced = referenceWindow.getUUID()
+			+ "|" + referenceTab.getUUID()
+			+ "|" + referenceTable.getTableName()
+			+ "|" + zoomQuery.getZoomColumnName()
+			+ "|" + sourceTabId
+			+ "|" + sourceRecordId
+			+ "|" + whereClauseHash
+		;
+		org.spin.base.util.RecordUtil.referenceWhereClauseCache.put(uuidRerefenced, zoomQuery);
+		return uuidRerefenced;
+	}
+
+	/**
+	 * Get zoom query from reference uuid, if not exists on cache (expired, reset or other instance)
+	 * it is generated again from source tab and source record of uuid
+	 * @param referenceUuid
+	 * @return null if not found
+	 */
+	public static MQuery getReferenceQuery(String referenceUuid) {
+		if (Util.isEmpty(referenceUuid, true)) {
+			return null;
+		}
+		MQuery zoomQuery = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(referenceUuid);
+		if (zoomQuery != null) {
+			return zoomQuery;
+		}
+		// other formats (e.g. pending documents) can not be generated again
+		final String[] keys = referenceUuid.split("\\|");
+		if (keys.length != 7) {
+			return null;
+		}
+		final int sourceTabId = NumberManager.getIntFromString(keys[4]);
+		final int sourceRecordId = NumberManager.getIntFromString(keys[5]);
+		if (sourceTabId <= 0 || sourceRecordId < 0) {
+			return null;
+		}
+		MTab tab = MTab.get(Env.getCtx(), sourceTabId);
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			return null;
+		}
+		MTable table = MTable.get(Env.getCtx(), tab.getAD_Table_ID());
+		if (table == null || table.getAD_Table_ID() <= 0 || !table.isSingleKey()) {
+			return null;
+		}
+		PO entity = RecordUtil.getEntity(Env.getCtx(), table.getTableName(), sourceRecordId, null);
+		if (entity == null) {
+			return null;
+		}
+		getRecordZoomInfos(entity, tab).forEach(zoomInfo -> {
+			MQuery query = zoomInfo.query;
+			MTable referenceTable = MTable.get(Env.getCtx(), query.getZoomTableName());
+			if (referenceTable == null || referenceTable.getAD_Table_ID() <= 0) {
+				return;
+			}
+			MWindow referenceWindow = MWindow.get(Env.getCtx(), zoomInfo.windowId);
+			MTab referenceTab = getReferenceTab(referenceWindow, referenceTable);
+			putReferenceQuery(referenceWindow, referenceTab, referenceTable, query, sourceTabId, sourceRecordId);
+		});
+		return org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(referenceUuid);
 	}
 
 
