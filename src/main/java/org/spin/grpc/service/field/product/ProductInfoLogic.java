@@ -592,32 +592,30 @@ public class ProductInfoLogic {
 			+ "bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
-		// Vendor join: with the flag, one row per product and vendor (optionally
-		// restricted to the filtered vendor); without it, one row per product with
-		// a single current vendor, so products with several M_Product_PO are not duplicated.
+		// Vendor join: always a single row per product, with its current vendor, so
+		// products with several M_Product_PO are never duplicated.
+		// A single M_Product_PO is picked (also when data has several IsCurrentVendor):
+		// with a session organization only it and organization 0 are visible, preferring
+		// the session organization; with organization 0 every organization is visible,
+		// preferring organization 0 and then the lowest organization. Ties are solved by
+		// the most recently created record.
 		final int orgId = Env.getAD_Org_ID(context);
+		final boolean isOrgRestricted = orgId > 0;
+		final String sqlOrgOrder = isOrgRestricted ? "cppo.AD_Org_ID DESC" : "cppo.AD_Org_ID";
 		List<Object> vendorJoinParameters = new ArrayList<>();
-		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?) ";
-		vendorJoinParameters.add(orgId);
-		if (request.getIsIncludeAllVendors()) {
-			if (request.getVendorId() > 0) {
-				sqlVendorJoin += "AND ppo.C_BPartner_ID = ? ";
-				vendorJoinParameters.add(
-					request.getVendorId()
-				);
-			}
-		} else {
-			sqlVendorJoin += "AND ppo.IsCurrentVendor = 'Y' "
-				+ "AND ppo.C_BPartner_ID = ("
-					+ "SELECT MIN(cppo.C_BPartner_ID) FROM M_Product_PO AS cppo "
-					+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
-					+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
-					+ "AND cppo.AD_Org_ID in (0, ?)"
-				+ ") "
-			;
+		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' "
+			+ "AND ppo.M_Product_PO_ID = ("
+				+ "SELECT cppo.M_Product_PO_ID FROM M_Product_PO AS cppo "
+				+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
+				+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
+				+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
+				+ "ORDER BY " + sqlOrgOrder + ", cppo.Created DESC, cppo.M_Product_PO_ID DESC "
+				+ "LIMIT 1"
+			+ ")) "
+		;
+		if (isOrgRestricted) {
 			vendorJoinParameters.add(orgId);
 		}
-		sqlVendorJoin += ") ";
 
 		String sqlFrom = "FROM M_Product AS p "
 			+ "LEFT JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID = p.M_Product_Class_ID) "
@@ -768,15 +766,9 @@ public class ProductInfoLogic {
 			);
 			filtersList.add(isStocked);
 		}
-		// Vendor
+		// Vendor: match against the current vendor shown in the row (joined as ppo)
 		if (request.getVendorId() > 0) {
-			sqlWhere += " AND EXISTS("
-					+ "SELECT 1 FROM M_Product_PO AS ppo "
-					+ "WHERE ppo.C_BPartner_ID = ? "
-					+ "AND ppo.M_Product_ID = p.M_Product_ID "
-					// + "AND ppo.IsActive = 'Y' "
-				+ ")"
-			;
+			sqlWhere += " AND ppo.C_BPartner_ID = ? ";
 			filtersList.add(
 				request.getVendorId()
 			);
@@ -1094,7 +1086,6 @@ public class ProductInfoLogic {
 			.setVendorId(request.getVendorId())
 			.setIsStocked(request.getIsStocked())
 			.setIsOnlyStockAvailable(request.getIsOnlyStockAvailable())
-			.setIsIncludeAllVendors(request.getIsIncludeAllVendors())
 		;
 		if (request.hasCurrentValue()) {
 			builder.setCurrentValue(

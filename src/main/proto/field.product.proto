@@ -404,9 +404,6 @@ message ListProductsInfoRequest {
 	int32 vendor_id = 32;
 	string is_stocked = 33;
 	bool is_only_stock_available = 34;
-	// When true, returns one row per product and vendor (vendor breakdown).
-	// When false (default), returns one row per product with its current vendor.
-	bool is_include_all_vendors = 35;
 }
 
 // Export Products Info
@@ -454,8 +451,6 @@ message ExportProductsInfoRequest {
 	// Output format, case-insensitive (only "xlsx" for now); empty defaults to Excel.
 	string format = 35;
 	bool is_export_all_records = 36;
-	// Same meaning as in ListProductsInfoRequest
-	bool is_include_all_vendors = 37;
 }
 message ExportProductsInfoResponse {
 	int64 record_count = 1;
