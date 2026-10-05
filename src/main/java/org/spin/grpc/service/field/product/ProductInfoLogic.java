@@ -609,7 +609,9 @@ public class ProductInfoLogic {
 				+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
 				+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
 				+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
-				+ "ORDER BY " + sqlOrgOrder + ", cppo.Created DESC, cppo.M_Product_PO_ID DESC "
+				// newline instead of a space before ORDER BY: MRole.addAccessSQL cuts the SQL at the
+				// last " ORDER BY " (to re-append it at the end), which would break this subselect
+				+ "\nORDER BY " + sqlOrgOrder + ", cppo.Created DESC, cppo.M_Product_PO_ID DESC "
 				+ "LIMIT 1"
 			+ ")) "
 		;
