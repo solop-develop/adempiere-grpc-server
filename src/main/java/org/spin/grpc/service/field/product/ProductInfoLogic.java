@@ -599,23 +599,31 @@ public class ProductInfoLogic {
 		// the session organization; with organization 0 every organization is visible,
 		// preferring organization 0 and then the lowest organization. Ties are solved by
 		// the most recently created record.
+		// It is resolved with NOT EXISTS (no better record exists) instead of a sub-select
+		// with ORDER BY ... LIMIT 1, because MRole.addAccessSQL, CountUtil and LimitUtil
+		// cut the SQL at the first/last ORDER BY without looking at parentheses.
 		final int orgId = Env.getAD_Org_ID(context);
 		final boolean isOrgRestricted = orgId > 0;
-		final String sqlOrgOrder = isOrgRestricted ? "cppo.AD_Org_ID DESC" : "cppo.AD_Org_ID";
+		final String sqlOrgFilter = isOrgRestricted ? "AND %s.AD_Org_ID in (0, ?) " : "";
+		// session organization first (highest id); with organization 0, the lowest one first
+		final String sqlOrgBetter = isOrgRestricted ? "cppo.AD_Org_ID > ppo.AD_Org_ID" : "cppo.AD_Org_ID < ppo.AD_Org_ID";
 		List<Object> vendorJoinParameters = new ArrayList<>();
-		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsActive = 'Y' "
-			+ "AND ppo.M_Product_PO_ID = ("
-				+ "SELECT cppo.M_Product_PO_ID FROM M_Product_PO AS cppo "
-				+ "WHERE cppo.M_Product_ID = p.M_Product_ID "
+		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID "
+			+ "AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' "
+			+ String.format(sqlOrgFilter, "ppo")
+			+ "AND NOT EXISTS ("
+				+ "SELECT 1 FROM M_Product_PO AS cppo "
+				+ "WHERE cppo.M_Product_ID = ppo.M_Product_ID "
 				+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
-				+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
-				// newline instead of a space before ORDER BY: MRole.addAccessSQL cuts the SQL at the
-				// last " ORDER BY " (to re-append it at the end), which would break this subselect
-				+ "\nORDER BY " + sqlOrgOrder + ", cppo.Created DESC, cppo.M_Product_PO_ID DESC "
-				+ "LIMIT 1"
+				+ String.format(sqlOrgFilter, "cppo")
+				+ "AND (" + sqlOrgBetter + " "
+					+ "OR (cppo.AD_Org_ID = ppo.AD_Org_ID AND (cppo.Created > ppo.Created "
+						+ "OR (cppo.Created = ppo.Created AND cppo.M_Product_PO_ID > ppo.M_Product_PO_ID))))"
 			+ ")) "
 		;
 		if (isOrgRestricted) {
+			// one for the joined record and one for the records compared against it
+			vendorJoinParameters.add(orgId);
 			vendorJoinParameters.add(orgId);
 		}
 
