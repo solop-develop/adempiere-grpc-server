@@ -601,7 +601,8 @@ public class ProductInfoLogic {
 		// the most recently created record.
 		// It is resolved with NOT EXISTS (no better record exists) instead of a sub-select
 		// with ORDER BY ... LIMIT 1, because MRole.addAccessSQL, CountUtil and LimitUtil
-		// cut the SQL at the first/last ORDER BY without looking at parentheses.
+		// cut the SQL at the first/last ORDER BY without looking at parentheses. Kept even
+		// after adempiere-base#701 (which fixes them) so it does not depend on that version.
 		final int orgId = Env.getAD_Org_ID(context);
 		final boolean isOrgRestricted = orgId > 0;
 		final String sqlOrgFilter = isOrgRestricted ? "AND %s.AD_Org_ID in (0, ?) " : "";
