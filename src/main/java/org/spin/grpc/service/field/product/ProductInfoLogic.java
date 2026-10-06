@@ -605,18 +605,17 @@ public class ProductInfoLogic {
 		// after adempiere-base#701 (which fixes them) so it does not depend on that version.
 		final int orgId = Env.getAD_Org_ID(context);
 		final boolean isOrgRestricted = orgId > 0;
-		final String sqlOrgFilter = isOrgRestricted ? "AND %s.AD_Org_ID in (0, ?) " : "";
 		// session organization first (highest id); with organization 0, the lowest one first
 		final String sqlOrgBetter = isOrgRestricted ? "cppo.AD_Org_ID > ppo.AD_Org_ID" : "cppo.AD_Org_ID < ppo.AD_Org_ID";
 		List<Object> vendorJoinParameters = new ArrayList<>();
 		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID "
 			+ "AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' "
-			+ String.format(sqlOrgFilter, "ppo")
+			+ (isOrgRestricted ? "AND ppo.AD_Org_ID in (0, ?) " : "")
 			+ "AND NOT EXISTS ("
 				+ "SELECT 1 FROM M_Product_PO AS cppo "
 				+ "WHERE cppo.M_Product_ID = ppo.M_Product_ID "
 				+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
-				+ String.format(sqlOrgFilter, "cppo")
+				+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
 				+ "AND (" + sqlOrgBetter + " "
 					+ "OR (cppo.AD_Org_ID = ppo.AD_Org_ID AND (cppo.Created > ppo.Created "
 						+ "OR (cppo.Created = ppo.Created AND cppo.M_Product_PO_ID > ppo.M_Product_PO_ID))))"
