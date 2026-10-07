@@ -44,6 +44,8 @@ public class ReverseSalesTransaction {
 		AtomicReference<MOrder> returnOrderReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder sourceOrder = new MOrder(Env.getCtx(), sourceOrderId, transactionName);
+			//	Wait for a concurrent reverse of the same order and read its result
+			RMAUtil.lockAndReload(sourceOrder, transactionName);
   			if (sourceOrder.isReturnOrder()) {
 				throw new AdempiereException("@POSReturnDocumentType_ID@ @smenu.customer.returned.order@");
 			}
@@ -93,6 +95,12 @@ public class ReverseSalesTransaction {
 	 * @return
 	 */
 	public static MOrder processReverseSalesOrder(MPOS pos, MOrder sourceOrder, MOrder returnOrder, int manualDocumentTypeId, String manualInvoiceDocumentNo, String manualShipmentDocumentNo, String manualMovementDocumentNo,  String transactionName) {
+		//	Wait for a concurrent process of the same return order (double click or retry)
+		RMAUtil.lockAndReload(returnOrder, transactionName);
+		if (returnOrder.isProcessed()) {
+			//	Already processed, the return and credit memo exist
+			return returnOrder;
+		}
 		CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
 
 		if (manualDocumentTypeId > 0) {

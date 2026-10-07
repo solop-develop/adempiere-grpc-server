@@ -18,9 +18,11 @@ package org.spin.pos.service.order;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import org.adempiere.core.domains.models.I_C_Invoice;
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
 import org.adempiere.core.domains.models.I_C_Order;
 import org.adempiere.core.domains.models.I_C_OrderLine;
+import org.adempiere.core.domains.models.I_M_InOut;
 import org.adempiere.core.domains.models.I_M_InOutLine;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MDocType;
@@ -36,6 +38,7 @@ import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
@@ -61,6 +64,43 @@ public class RMAUtil {
 			throw new AdempiereException("@M_RMA_ID@ (" + rmaId + ") @NotFound@");
 		}
 		return rma;
+	}
+
+	/**
+	 * Lock the order row until the transaction ends and reload it, a concurrent request
+	 * (double click or retry) waits here and then reads the committed state instead of a stale one
+	 * @param order
+	 * @param transactionName
+	 */
+	public static void lockAndReload(MOrder order, String transactionName) {
+		order.set_TrxName(transactionName);
+		DB.getDatabase().forUpdate(order, 0);
+		order.load(transactionName);
+	}
+
+	/**
+	 * Validate that the return order does not have a completed document of the table yet
+	 * @param returnOrder
+	 * @param tableName C_Invoice or M_InOut
+	 * @param transactionName
+	 */
+	private static void validateNotGenerated(MOrder returnOrder, String tableName, String transactionName) {
+		PO document = new Query(
+			returnOrder.getCtx(),
+			tableName,
+			"C_Order_ID = ? AND DocStatus IN('CO','CL')",
+			transactionName
+		)
+			.setParameters(returnOrder.getC_Order_ID())
+			.setClient_ID()
+			.first()
+		;
+		if(document != null && document.get_ID() > 0) {
+			throw new AdempiereException(
+				"@M_RMA_ID@ (" + returnOrder.getDocumentNo() + ") @Processed@: "
+				+ "@" + tableName + "_ID@ " + document.get_ValueAsString("DocumentNo")
+			);
+		}
 	}
 
 
@@ -329,6 +369,8 @@ public class RMAUtil {
 		if(!OrderUtil.isInvoiced(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
 			return null;
 		}
+		//	Avoid a second credit memo for the same return order
+		validateNotGenerated(returnOrder, I_C_Invoice.Table_Name, transactionName);
 		MInvoice invoice = new MInvoice (returnOrder, 0, OrderUtil.getToday());
 		invoice.setC_POS_ID(returnOrder.getC_POS_ID());
 		invoice.saveEx();
@@ -365,6 +407,8 @@ public class RMAUtil {
     	if(!OrderUtil.isDelivered(returnOrder.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID), transactionName)) {
     		return;
     	}
+    	//	Avoid a second customer return for the same return order
+    	validateNotGenerated(returnOrder, I_M_InOut.Table_Name, transactionName);
     	MInOut shipment = new MInOut (returnOrder, 0, OrderUtil.getToday());
     	shipment.setC_POS_ID(returnOrder.getC_POS_ID());
 		shipment.setM_Warehouse_ID(returnOrder.getM_Warehouse_ID());	//	sets Org too
