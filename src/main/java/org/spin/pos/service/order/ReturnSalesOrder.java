@@ -114,7 +114,8 @@ public class ReturnSalesOrder {
 			if(sourcerOrderLine.getC_OrderLine_ID() <= 0) {
 				throw new AdempiereException("@" + ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + "@ @NotFound@");
 			}
-			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), rmaLineId, sourcerOrderLine.getQtyEntered(), quantity);
+			BigDecimal returnableQuantity = RMAUtil.getReturnableSourceQuantity(sourcerOrderLine, transactionName);
+			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), rmaLineId, returnableQuantity, quantity);
 			if(availableQuantity.compareTo(Env.ZERO) > 0) {
 				//	Update order quantity
 				OrderUtil.updateUomAndQuantity(rmaLine, rmaLine.getC_UOM_ID(), availableQuantity);
@@ -158,7 +159,8 @@ public class ReturnSalesOrder {
 				.filter(rmaLineTofind -> rmaLineTofind.get_ValueAsInt(ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID) == sourceOrderLineId)
 				.findFirst()
 			;
-			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), sourcerOrderLine.getQtyEntered(), quantity);
+			BigDecimal returnableQuantity = RMAUtil.getReturnableSourceQuantity(sourcerOrderLine, transactionName);
+			BigDecimal availableQuantity = RMAUtil.getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), returnableQuantity, quantity);
 			if(maybeOrderLine.isPresent()) {
 				MOrderLine rmaLine = maybeOrderLine.get();
 				//	Set Quantity
