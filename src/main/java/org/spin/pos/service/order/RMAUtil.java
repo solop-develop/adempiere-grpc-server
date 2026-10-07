@@ -16,6 +16,7 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
@@ -33,6 +34,7 @@ import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
+import org.compiere.model.MUOM;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
@@ -132,13 +134,44 @@ public class RMAUtil {
 		return new Query(
 			sourceOrderLine.getCtx(),
 			I_M_InOutLine.Table_Name,
-			"C_OrderLine_ID = ?",
+			"C_OrderLine_ID = ? "
+				+ "AND EXISTS(SELECT 1 FROM M_InOut io "
+					+ "WHERE io.M_InOut_ID = M_InOutLine.M_InOut_ID "
+					+ "AND io.DocStatus IN ('CO','CL') "
+					+ "AND io.MovementType = 'C-')",
 			transactionName
 		)
 			.setParameters(sourceOrderLine.getC_OrderLine_ID())
 			.setClient_ID()
+			.setOrderBy(I_M_InOutLine.COLUMNNAME_M_InOutLine_ID)
 			.firstId()
 		;
+	}
+
+	/**
+	 * Get the quantity of the source order line that can be returned, in the line UOM (QtyEntered):
+	 * the delivered quantity when the source order has deliveries, otherwise the invoiced quantity
+	 * @param sourceOrderLine
+	 * @param transactionName
+	 * @return
+	 */
+	public static BigDecimal getReturnableSourceQuantity(MOrderLine sourceOrderLine, String transactionName) {
+		BigDecimal quantity = OrderUtil.isDelivered(sourceOrderLine.getC_Order_ID(), transactionName)
+			? sourceOrderLine.getQtyDelivered()
+			: sourceOrderLine.getQtyInvoiced()
+		;
+		quantity = Optional.ofNullable(quantity).orElse(Env.ZERO);
+		BigDecimal quantityOrdered = sourceOrderLine.getQtyOrdered();
+		BigDecimal quantityEntered = sourceOrderLine.getQtyEntered();
+		// QtyDelivered/QtyInvoiced are in product UOM, convert to the line UOM
+		if (quantityOrdered != null && quantityOrdered.signum() != 0
+				&& quantityEntered != null && quantityEntered.compareTo(quantityOrdered) != 0) {
+			int precision = MUOM.getPrecision(sourceOrderLine.getCtx(), sourceOrderLine.getC_UOM_ID());
+			quantity = quantity.multiply(quantityEntered)
+				.divide(quantityOrdered, precision, RoundingMode.HALF_UP)
+			;
+		}
+		return quantity;
 	}
 
 
@@ -451,7 +484,8 @@ public class RMAUtil {
     		.getIDsAsList()
     		.forEach(sourceOrderLineId -> {
     			MOrderLine sourcerOrderLine = new MOrderLine(sourceOrder.getCtx(), sourceOrderLineId, transactionName);
-    			BigDecimal availableQuantity = getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), sourcerOrderLine.getQtyEntered(), sourcerOrderLine.getQtyEntered());
+    			BigDecimal returnableQuantity = getReturnableSourceQuantity(sourcerOrderLine, transactionName);
+    			BigDecimal availableQuantity = getAvailableQuantityForReturn(sourcerOrderLine.getC_OrderLine_ID(), returnableQuantity, returnableQuantity);
     			if(availableQuantity.compareTo(Env.ZERO) > 0) {
     				//	Create new Invoice Line
     				MOrderLine returnOrderLine = RMAUtil.copyRMALineFromOrder(returnOrder, sourcerOrderLine, transactionName);
