@@ -16,6 +16,7 @@
 package org.spin.pos.service.order;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.adempiere.core.domains.models.I_C_InvoiceLine;
@@ -33,9 +34,11 @@ import org.compiere.model.MOrderLine;
 import org.compiere.model.MPOS;
 import org.compiere.model.MPayment;
 import org.compiere.model.MTable;
+import org.compiere.model.MUOM;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.process.DocAction;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
@@ -486,24 +489,58 @@ public class RMAUtil {
     }
 
     /**
-     * Get sum of complete returned quantity for order
+     * Returned quantity (product UOM) of the source line by the status of each return order:
+     * a completed or closed return keeps its delivered or invoiced quantity, because closing it sets
+     * QtyOrdered to QtyDelivered (zero when the credit memo has no customer return);
+     * an open return keeps its ordered quantity; voided or reversed returns are ignored
+     */
+    private static final String RETURNED_QUANTITY_SQL = "SELECT COALESCE(SUM("
+    		+ "CASE WHEN o.DocStatus IN('CO','CL') THEN GREATEST(l.QtyDelivered, l.QtyInvoiced) "
+    		+ "ELSE l.QtyOrdered END), 0) "
+    		+ "FROM C_OrderLine l "
+    		+ "INNER JOIN C_Order o ON(o.C_Order_ID = l.C_Order_ID) "
+    		+ "WHERE l." + ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? "
+    		+ "AND o.DocStatus NOT IN('VO','RE') ";
+
+    /**
+     * Get sum of returned quantity for order line, in the UOM of the source line (QtyEntered)
      * @param sourceOrderLineId
      * @return
      */
     public static BigDecimal getReturnedQuantity(int sourceOrderLineId) {
-    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? "
-    			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
-    			.setParameters(sourceOrderLineId)
-    			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
-    	return Optional.ofNullable(quantity).orElse(Env.ZERO);
+    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL, sourceOrderLineId);
+    	return convertToLineUOM(new MOrderLine(Env.getCtx(), sourceOrderLineId, null), quantity);
     }
-    
+
+    /**
+     * Get sum of returned quantity for order line excluding a return line, in the UOM of the source line (QtyEntered)
+     * @param sourceOrderLineId
+     * @param rmaLineId
+     * @return
+     */
     public static BigDecimal getReturnedQuantityExcludeRMA(int sourceOrderLineId, int rmaLineId) {
-    	BigDecimal quantity = new Query(Env.getCtx(), I_C_OrderLine.Table_Name, ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? AND C_OrderLine_ID <> ? "
-    			+ "AND EXISTS(SELECT 1 FROM C_Order o WHERE o.C_Order_ID = C_OrderLine.C_Order_ID)", null)
-    			.setParameters(sourceOrderLineId, rmaLineId)
-    			.aggregate(I_C_OrderLine.COLUMNNAME_QtyEntered, Query.AGGREGATE_SUM);
-    	return Optional.ofNullable(quantity).orElse(Env.ZERO);
+    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL + "AND l.C_OrderLine_ID <> ?", sourceOrderLineId, rmaLineId);
+    	return convertToLineUOM(new MOrderLine(Env.getCtx(), sourceOrderLineId, null), quantity);
+    }
+
+    /**
+     * Convert a quantity in product UOM (QtyOrdered, QtyDelivered, QtyInvoiced) to the UOM of the source order line (QtyEntered)
+     * @param sourceOrderLine
+     * @param quantity
+     * @return
+     */
+    private static BigDecimal convertToLineUOM(MOrderLine sourceOrderLine, BigDecimal quantity) {
+    	quantity = Optional.ofNullable(quantity).orElse(Env.ZERO);
+    	BigDecimal quantityOrdered = sourceOrderLine.getQtyOrdered();
+    	BigDecimal quantityEntered = sourceOrderLine.getQtyEntered();
+    	if (quantityOrdered != null && quantityOrdered.signum() != 0
+    			&& quantityEntered != null && quantityEntered.compareTo(quantityOrdered) != 0) {
+    		int precision = MUOM.getPrecision(sourceOrderLine.getCtx(), sourceOrderLine.getC_UOM_ID());
+    		quantity = quantity.multiply(quantityEntered)
+    			.divide(quantityOrdered, precision, RoundingMode.HALF_UP)
+    		;
+    	}
+    	return quantity;
     }
 
     /**
