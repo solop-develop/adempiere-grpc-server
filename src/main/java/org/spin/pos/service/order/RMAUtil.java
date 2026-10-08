@@ -535,14 +535,17 @@ public class RMAUtil {
      * Returned quantity (product UOM) of the source line by the status of each return order:
      * a completed or closed return keeps its delivered or invoiced quantity, because closing it sets
      * QtyOrdered to QtyDelivered (zero when the credit memo has no customer return);
-     * an open return keeps its ordered quantity; voided or reversed returns are ignored
+     * an open return keeps its ordered quantity; voided or reversed returns are ignored.
+     * Lines of a return by product link the source line by ECA14_Source_OrderLine_ID and
+     * lines of a reverse sales transaction by Ref_OrderLine_ID, both are counted
      */
     private static final String RETURNED_QUANTITY_SQL = "SELECT COALESCE(SUM("
     		+ "CASE WHEN o.DocStatus IN('CO','CL') THEN GREATEST(l.QtyDelivered, l.QtyInvoiced) "
     		+ "ELSE l.QtyOrdered END), 0) "
     		+ "FROM C_OrderLine l "
     		+ "INNER JOIN C_Order o ON(o.C_Order_ID = l.C_Order_ID) "
-    		+ "WHERE l." + ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? "
+    		+ "WHERE (l." + ColumnsAdded.COLUMNNAME_ECA14_Source_OrderLine_ID + " = ? "
+    		+ "OR (l.Ref_OrderLine_ID = ? AND o." + ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID + " IS NOT NULL)) "
     		+ "AND o.DocStatus NOT IN('VO','RE') ";
 
     /**
@@ -551,7 +554,7 @@ public class RMAUtil {
      * @return
      */
     public static BigDecimal getReturnedQuantity(int sourceOrderLineId) {
-    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL, sourceOrderLineId);
+    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL, sourceOrderLineId, sourceOrderLineId);
     	return convertToLineUOM(new MOrderLine(Env.getCtx(), sourceOrderLineId, null), quantity);
     }
 
@@ -562,7 +565,7 @@ public class RMAUtil {
      * @return
      */
     public static BigDecimal getReturnedQuantityExcludeRMA(int sourceOrderLineId, int rmaLineId) {
-    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL + "AND l.C_OrderLine_ID <> ?", sourceOrderLineId, rmaLineId);
+    	BigDecimal quantity = DB.getSQLValueBDEx(null, RETURNED_QUANTITY_SQL + "AND l.C_OrderLine_ID <> ?", sourceOrderLineId, sourceOrderLineId, rmaLineId);
     	return convertToLineUOM(new MOrderLine(Env.getCtx(), sourceOrderLineId, null), quantity);
     }
 
