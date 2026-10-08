@@ -59,7 +59,7 @@ jobs:
           cp build/descriptors/adempiere-grpc-server.dsc flat_artifacts/ || echo "Warning: .dsc file not found"
           cp build/release/adempiere-grpc-server.* flat_artifacts/ || echo "Warning: release files not found"
           cp docker-compose/envoy/envoy.yaml flat_artifacts/ || echo "Warning: envoy.yaml not found"
-          cp resources/env.yaml flat_artifacts/ || echo "Warning: env.yaml not found"
+          cp docker/env.yaml flat_artifacts/ || echo "Warning: env.yaml not found"
           ls -la flat_artifacts/
 
       - name: Upload Artifacts
