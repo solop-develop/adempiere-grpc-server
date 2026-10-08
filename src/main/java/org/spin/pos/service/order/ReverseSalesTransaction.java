@@ -16,10 +16,14 @@
 package org.spin.pos.service.order;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+import org.adempiere.core.domains.models.I_C_Order;
+import org.adempiere.core.domains.models.I_C_Payment;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MOrder;
 import org.compiere.model.MPOS;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -58,15 +62,22 @@ public class ReverseSalesTransaction {
 
 			CashManagement.validatePreviousCashClosing(pos, sourceOrder.getDateOrdered(), transactionName);
 
-			MOrder returnOrder = RMAUtil.copyRMAFromOrder(pos, sourceOrder, transactionName);
-			if(!Util.isEmpty(description, true)) {
-				returnOrder.setDescription(description);
-			} else {
-				returnOrder.setDescription(sourceOrder.getDocumentNo());
+			//	Reuse a reverse of this order still waiting to be processed (e.g. online refund pending),
+			//	a second one would create other reversed payments and request another refund
+			MOrder returnOrder = getOpenReverseOrder(sourceOrder, transactionName);
+			if (returnOrder == null) {
+				//	A reverse returns the whole sale and all its payments, not allowed after a return by product
+				validateWithoutReturns(sourceOrder, transactionName);
+				returnOrder = RMAUtil.copyRMAFromOrder(pos, sourceOrder, transactionName);
+				if(!Util.isEmpty(description, true)) {
+					returnOrder.setDescription(description);
+				} else {
+					returnOrder.setDescription(sourceOrder.getDocumentNo());
+				}
+				returnOrder.saveEx();
+				RMAUtil.createReturnOrderLines(sourceOrder, returnOrder, transactionName);
+				RMAUtil.createReversedPayments(pos, sourceOrder, returnOrder, isManualDocument, transactionName);
 			}
-			returnOrder.saveEx();
-			RMAUtil.createReturnOrderLines(sourceOrder, returnOrder, transactionName);
-			RMAUtil.createReversedPayments(pos, sourceOrder, returnOrder, isManualDocument, transactionName);
 
 			//	Process return Order
 			if (processDocuments) {
@@ -85,6 +96,72 @@ public class ReverseSalesTransaction {
 			returnOrderReference.set(returnOrder);
 		});
 		return returnOrderReference.get();
+	}
+
+	/**
+	 * Get the open (not processed) return order of the source order created by a previous reverse
+	 * @param sourceOrder
+	 * @param transactionName
+	 * @return the open reverse or null when there is none
+	 */
+	private static MOrder getOpenReverseOrder(MOrder sourceOrder, String transactionName) {
+		MOrder openReturnOrder = new Query(
+			sourceOrder.getCtx(),
+			I_C_Order.Table_Name,
+			ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID + " = ? AND DocStatus IN('DR','IP') AND Processed = 'N'",
+			transactionName
+		)
+			.setParameters(sourceOrder.getC_Order_ID())
+			.setClient_ID()
+			.setOnlyActiveRecords(true)
+			.setOrderBy(I_C_Order.COLUMNNAME_C_Order_ID + " DESC")
+			.first()
+		;
+		if (openReturnOrder == null || openReturnOrder.getC_Order_ID() <= 0) {
+			return null;
+		}
+		//	A return without reversed payments is a draft of return by product, not a reverse
+		boolean isReverse = new Query(
+			sourceOrder.getCtx(),
+			I_C_Payment.Table_Name,
+			I_C_Payment.COLUMNNAME_C_Order_ID + " = ?",
+			transactionName
+		)
+			.setParameters(openReturnOrder.getC_Order_ID())
+			.match()
+		;
+		if (!isReverse) {
+			throw new AdempiereException(
+				"@ActionNotAllowedHere@ (@M_RMA_ID@: " + openReturnOrder.getDocumentNo() + ")"
+			);
+		}
+		return openReturnOrder;
+	}
+
+	/**
+	 * Validate that the source order has no completed or closed return orders
+	 * @param sourceOrder
+	 * @param transactionName
+	 */
+	private static void validateWithoutReturns(MOrder sourceOrder, String transactionName) {
+		String documentNos = new Query(
+			sourceOrder.getCtx(),
+			I_C_Order.Table_Name,
+			ColumnsAdded.COLUMNNAME_ECA14_Source_Order_ID + " = ? AND DocStatus IN('CO','CL')",
+			transactionName
+		)
+			.setParameters(sourceOrder.getC_Order_ID())
+			.setClient_ID()
+			.<MOrder>list()
+			.stream()
+			.map(MOrder::getDocumentNo)
+			.collect(Collectors.joining(", "))
+		;
+		if (!Util.isEmpty(documentNos, true)) {
+			throw new AdempiereException(
+				"@ActionNotAllowedHere@ (@M_RMA_ID@: " + documentNos + ")"
+			);
+		}
 	}
 
 	/**
