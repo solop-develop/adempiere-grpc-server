@@ -214,6 +214,8 @@ public class ReturnSalesOrder {
 		AtomicReference<MOrder> rmaReference = new AtomicReference<MOrder>();
 		Trx.run(transactionName -> {
 			MOrder returnOrder = RMAUtil.validateAndGetRMA(rmaId, transactionName);
+			//	Wait for a concurrent process of the same return order (double click or retry)
+			RMAUtil.lockAndReload(returnOrder, transactionName);
 			if(returnOrder.isProcessed()) {
 				throw new AdempiereException("@M_RMA_ID@ @Processed@");
 			}
