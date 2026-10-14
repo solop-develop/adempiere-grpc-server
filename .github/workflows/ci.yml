@@ -186,7 +186,7 @@ jobs:
     name: Push docker alpine image to Container Registry (CI)
     needs:
       - check-docker-secrets
-    # Only run if the secrets exist and it's a push to main, or a manual trigger (workflow_dispatch)
+    # Only run if the secrets exist and it's a push to main, a release/* branch, or a manual trigger (workflow_dispatch)
     if: >-
       needs.check-docker-secrets.outputs.is_have_secrets == 'true' &&
       (
@@ -198,6 +198,7 @@ jobs:
         github.ref_name == 'feat-*' ||
         github.ref_name == 'develop' ||
         github.ref_name == 'feature/adempiere-base' ||
+        startsWith(github.ref_name, 'release/') ||
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
@@ -252,7 +253,7 @@ jobs:
     name: Push docker ubuntu multiplatform image to Container Registry (CI)
     needs:
       - check-docker-secrets
-    # Only run if the secrets exist and it's a push to main, or a manual trigger (workflow_dispatch)
+    # Only run if the secrets exist and it's a push to main, a release/* branch, or a manual trigger (workflow_dispatch)
     if: >-
       needs.check-docker-secrets.outputs.is_have_secrets == 'true' &&
       (
@@ -264,6 +265,7 @@ jobs:
         github.ref_name == 'feat-*' ||
         github.ref_name == 'develop' ||
         github.ref_name == 'feature/adempiere-base' ||
+        startsWith(github.ref_name, 'release/') ||
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
@@ -349,7 +351,7 @@ jobs:
     name: Push grpc-proxy docker image to Container Registry
     needs:
       - check-proxy-docker-secrets
-    # Only run if the secrets exist and it's a push to main, or a manual trigger (workflow_dispatch)
+    # Only run if the secrets exist and it's a push to main, a release/* branch, or a manual trigger (workflow_dispatch)
     if: >-
       needs.check-proxy-docker-secrets.outputs.is_have_secrets == 'true' &&
       (
@@ -361,6 +363,7 @@ jobs:
         github.ref_name == 'feat-*' ||
         github.ref_name == 'develop' ||
         github.ref_name == 'feature/adempiere-base' ||
+        startsWith(github.ref_name, 'release/') ||
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
