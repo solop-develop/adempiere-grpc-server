@@ -70,7 +70,7 @@ public class RecordUtil {
 
 
 	/**	Reference cache	*/
-	public static CCache<String, MQuery> referenceWhereClauseCache = new CCache<String, MQuery>("Record_Reference_WhereClause", 30, 0);	//	no time-out
+	public static CCache<String, MQuery> referenceWhereClauseCache = new CCache<String, MQuery>("Record_Reference_WhereClause", 100, 120);	//	2 hours, it is generated again when not exists
 
 	public static CCache<String, LinkedHashMap<String, MColumn>> columnsMapCache = new CCache<String, LinkedHashMap<String, MColumn>>("Table_Columns_Map", 30, 0);	//	no time-out
 

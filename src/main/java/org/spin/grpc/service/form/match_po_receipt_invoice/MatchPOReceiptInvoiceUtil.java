@@ -479,7 +479,7 @@ public class MatchPOReceiptInvoiceUtil {
 
 						ReservationBuilder.newInstance(Env.getCtx(), transactionName)
 							.withInOutLine(shipmentLine)
-							.withQuantity(quantity)
+							.withQuantity(quantity.negate())
 							.build()
 						;
 

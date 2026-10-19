@@ -357,7 +357,7 @@ public class LocationAddressLogic {
 		}
 		if (!Util.isEmpty(request.getAddress4(), true)) {
 			address.setAddress4(
-				request.getAddress1()
+				request.getAddress4()
 			);
 		}
 		if (!Util.isEmpty(request.getPostalCode(), true)) {
@@ -427,8 +427,9 @@ public class LocationAddressLogic {
 			request.getAddress3()
 		);
 		address.setAddress4(
-			request.getAddress1()
+			request.getAddress4()
 		);
+
 		address.setPostal(
 			request.getPostalCode()
 		);

@@ -318,10 +318,9 @@ public class TabEntityLogic {
 
 		//	Add from reference
 		if(!Util.isEmpty(request.getRecordReferenceUuid(), true)) {
-			MQuery zoomQuery = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(
+			MQuery zoomQuery = org.spin.grpc.logic.RecordManagementServiceLogic.getReferenceQuery(
 				request.getRecordReferenceUuid()
 			);
-			//	TODO: When is null refresh cache
 			if (zoomQuery != null) {
 				final String referenceWhereClause = UserInterfaceLogic.getWhereClauseFromChildTab(
 					zoomQuery,

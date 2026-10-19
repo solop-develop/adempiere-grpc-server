@@ -1030,10 +1030,9 @@ public class BusinessData extends BusinessDataImplBase {
 		//	TODO: Add support to this functionality with a distinct scope
 		//	Add from reference
 		if(!Util.isEmpty(request.getRecordReferenceUuid())) {
-			MQuery zoomQuery = org.spin.base.util.RecordUtil.referenceWhereClauseCache.get(
+			MQuery zoomQuery = org.spin.grpc.logic.RecordManagementServiceLogic.getReferenceQuery(
 				request.getRecordReferenceUuid()
 			);
-			//	TODO: When is null refresh cache
 			if (zoomQuery != null) {
 				final String referenceWhereClause = zoomQuery.getWhereClause();
 				if(!Util.isEmpty(referenceWhereClause, true)) {
