@@ -315,7 +315,7 @@ public class OutBoundOrderLogic {
 				"LEFT JOIN C_Region reg ON(reg.C_Region_ID = loc.C_Region_ID) " +
 				"LEFT JOIN C_City cit ON(cit.C_City_ID = loc.C_City_ID) " +
 				"LEFT JOIN (SELECT lord.DD_OrderLine_ID, " +
-				"	(COALESCE(lord.QtyOrdered, 0) - " +
+				"	(COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyInTransit, 0) - COALESCE(lord.QtyDelivered, 0) - " +
 				"		SUM(" +
 				"				CASE WHEN (c.IsDelivered = 'N' AND lc.DD_Order_ID IS NOT NULL AND c.DocStatus = 'CO') " +
 				"						THEN COALESCE(lc.MovementQty, 0) - COALESCE(iol.MovementQty, 0) " +
@@ -333,7 +333,7 @@ public class OutBoundOrderLogic {
 				"				AND iol.WM_InOutBoundLine_ID IS NOT NULL " +
 				"			GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
 				"	WHERE lord.M_Product_ID IS NOT NULL " +
-				"	GROUP BY lord.DD_Order_ID, lord.DD_OrderLine_ID, lord.QtyOrdered " +
+				"	GROUP BY lord.DD_Order_ID, lord.DD_OrderLine_ID, lord.QtyOrdered, lord.QtyInTransit, lord.QtyDelivered " +
 				"	ORDER BY lord.DD_OrderLine_ID ASC) qafl " +
 				"	ON(qafl.DD_OrderLine_ID = lord.DD_OrderLine_ID) " +
 				"WHERE wr.IsActive = 'Y' " +
@@ -390,7 +390,7 @@ public class OutBoundOrderLogic {
 				"LEFT JOIN C_Region reg ON(reg.C_Region_ID = loc.C_Region_ID) " +
 				"LEFT JOIN C_City cit ON(cit.C_City_ID = loc.C_City_ID) " +
 				"LEFT JOIN (SELECT lord.C_OrderLine_ID, " +
-				"	(COALESCE(lord.QtyOrdered, 0) - " +
+				"	(COALESCE(lord.QtyOrdered, 0) - COALESCE(lord.QtyDelivered, 0) - " +
 				"		SUM(" +
 				"				CASE WHEN (c.IsDelivered = 'N' AND lc.C_Order_ID IS NOT NULL AND c.DocStatus = 'CO') " +
 				"						THEN COALESCE(lc.MovementQty, 0) - COALESCE(iol.MovementQty, 0) " +
@@ -408,7 +408,7 @@ public class OutBoundOrderLogic {
 				"				AND iol.WM_InOutBoundLine_ID IS NOT NULL " +
 				"			GROUP BY iol.WM_InOutBoundLine_ID) iol ON(iol.WM_InOutBoundLine_ID = lc.WM_InOutBoundLine_ID) " +
 				"	WHERE lord.M_Product_ID IS NOT NULL " +
-				"	GROUP BY lord.C_Order_ID, lord.C_OrderLine_ID, lord.QtyOrdered " +
+				"	GROUP BY lord.C_Order_ID, lord.C_OrderLine_ID, lord.QtyOrdered, lord.QtyDelivered " +
 				"	ORDER BY lord.C_OrderLine_ID ASC) qafl " +
 				"	ON(qafl.C_OrderLine_ID = lord.C_OrderLine_ID) " +
 				"WHERE ord.IsSOTrx = 'Y' " +

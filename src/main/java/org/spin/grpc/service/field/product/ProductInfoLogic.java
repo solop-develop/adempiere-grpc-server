@@ -592,22 +592,54 @@ public class ProductInfoLogic {
 			+ "bp.Name AS Vendor, "
 			+ "pa.IsInstanceAttribute AS IsInstanceAttribute "
 		;
+		// Vendor join: always a single row per product, with its current vendor, so
+		// products with several M_Product_PO are never duplicated.
+		// A single M_Product_PO is picked (also when data has several IsCurrentVendor):
+		// with a session organization only it and organization 0 are visible, preferring
+		// the session organization; with organization 0 every organization is visible,
+		// preferring organization 0 and then the lowest organization. Ties are solved by
+		// the most recently created record.
+		// It is resolved with NOT EXISTS (no better record exists) instead of a sub-select
+		// with ORDER BY ... LIMIT 1, because MRole.addAccessSQL, CountUtil and LimitUtil
+		// cut the SQL at the first/last ORDER BY without looking at parentheses. Kept even
+		// after adempiere-base#701 (which fixes them) so it does not depend on that version.
+		final int orgId = Env.getAD_Org_ID(context);
+		final boolean isOrgRestricted = orgId > 0;
+		// session organization first (highest id); with organization 0, the lowest one first
+		final String sqlOrgBetter = isOrgRestricted ? "cppo.AD_Org_ID > ppo.AD_Org_ID" : "cppo.AD_Org_ID < ppo.AD_Org_ID";
+		List<Object> vendorJoinParameters = new ArrayList<>();
+		String sqlVendorJoin = "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID "
+			+ "AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' "
+			+ (isOrgRestricted ? "AND ppo.AD_Org_ID in (0, ?) " : "")
+			+ "AND NOT EXISTS ("
+				+ "SELECT 1 FROM M_Product_PO AS cppo "
+				+ "WHERE cppo.M_Product_ID = ppo.M_Product_ID "
+				+ "AND cppo.IsCurrentVendor = 'Y' AND cppo.IsActive = 'Y' "
+				+ (isOrgRestricted ? "AND cppo.AD_Org_ID in (0, ?) " : "")
+				+ "AND (" + sqlOrgBetter + " "
+					+ "OR (cppo.AD_Org_ID = ppo.AD_Org_ID AND (cppo.Created > ppo.Created "
+						+ "OR (cppo.Created = ppo.Created AND cppo.M_Product_PO_ID > ppo.M_Product_PO_ID))))"
+			+ ")) "
+		;
+		if (isOrgRestricted) {
+			// one for the joined record and one for the records compared against it
+			vendorJoinParameters.add(orgId);
+			vendorJoinParameters.add(orgId);
+		}
+
 		String sqlFrom = "FROM M_Product AS p "
 			+ "LEFT JOIN M_Product_Class AS pcl ON (pcl.M_Product_Class_ID = p.M_Product_Class_ID) "
 			+ "LEFT JOIN M_Product_Classification AS pcls ON (pcls.M_Product_Classification_ID = p.M_Product_Classification_ID) "
 			+ "LEFT JOIN M_Product_Group AS pg ON (pg.M_Product_Group_ID = p.M_Product_Group_ID) "
 			+ "LEFT JOIN M_Product_Category AS pc ON (pc.M_Product_Category_ID = p.M_Product_Category_ID) "
 			+ "LEFT JOIN C_UOM AS u ON (p.C_UOM_ID = u.C_UOM_ID) "
-			+ "LEFT JOIN M_Product_PO AS ppo ON (ppo.M_Product_ID = p.M_Product_ID AND ppo.IsCurrentVendor = 'Y' AND ppo.IsActive = 'Y' AND ppo.AD_Org_ID in (0, ?)) "
+			+ sqlVendorJoin
 			+ "LEFT JOIN C_BPartner AS bp ON (ppo.C_BPartner_ID = bp.C_BPartner_ID) "
 			+ "LEFT JOIN M_AttributeSet AS pa ON (pa.M_AttributeSet_ID = p.M_AttributeSet_ID) "
 		;
 
 		String sqlWhere = " WHERE p.AD_Client_ID = ? ";
-		List<Object> filtersList = new ArrayList<>();
-		filtersList.add(
-			Env.getAD_Org_ID(context)
-		);
+		List<Object> filtersList = new ArrayList<>(vendorJoinParameters);
 		filtersList.add(
 			Env.getAD_Client_ID(context)
 		);
@@ -744,15 +776,9 @@ public class ProductInfoLogic {
 			);
 			filtersList.add(isStocked);
 		}
-		// Vendor
+		// Vendor: match against the current vendor shown in the row (joined as ppo)
 		if (request.getVendorId() > 0) {
-			sqlWhere += " AND EXISTS("
-					+ "SELECT 1 FROM M_Product_PO AS ppo "
-					+ "WHERE ppo.C_BPartner_ID = ? "
-					+ "AND ppo.M_Product_ID = p.M_Product_ID "
-					// + "AND ppo.IsActive = 'Y' "
-				+ ")"
-			;
+			sqlWhere += " AND ppo.C_BPartner_ID = ? ";
 			filtersList.add(
 				request.getVendorId()
 			);
