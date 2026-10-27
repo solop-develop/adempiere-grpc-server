@@ -3,7 +3,6 @@ package org.spin.pos.service.product;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,40 +44,70 @@ public class ProductServiceLogic {
 			)
 		).strip();
 		if(!Util.isEmpty(searchValue, true)) {
-			List<Object> parameters = new ArrayList<Object>();
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
+			List<Object> exactParameters = new ArrayList<Object>();
+			exactParameters.add(searchValue);
+			exactParameters.add(searchValue);
+			exactParameters.add(searchValue);
 
 			product = new Query(
 				Env.getCtx(),
 				I_M_Product.Table_Name,
 				"("
-				+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
-				+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%'"
-				+ "OR UPPER(UPC) LIKE '%' || UPPER(?) || '%'"
-				+ "OR UPPER(SKU) LIKE '%' || UPPER(?) || '%'"
+				+ "UPPER(TRIM(Value)) = UPPER(?) "
+				+ "OR UPPER(TRIM(UPC)) = UPPER(?) "
+				+ "OR UPPER(TRIM(SKU)) = UPPER(?)"
 				+ ")",
 				null
 			)
-				.setParameters(parameters)
+				.setParameters(exactParameters)
 				.setClient_ID()
 				.setOnlyActiveRecords(true)
+				.setOrderBy(I_M_Product.COLUMNNAME_Value)
 				.first();
+
+			if(product == null) {
+				List<Object> parameters = new ArrayList<Object>();
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+
+				product = new Query(
+					Env.getCtx(),
+					I_M_Product.Table_Name,
+					"("
+					+ "UPPER(Value) LIKE '%' || UPPER(?) || '%'"
+					+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%'"
+					+ "OR UPPER(UPC) LIKE '%' || UPPER(?) || '%'"
+					+ "OR UPPER(SKU) LIKE '%' || UPPER(?) || '%'"
+					+ ")",
+					null
+				)
+					.setParameters(parameters)
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.setOrderBy(I_M_Product.COLUMNNAME_Value)
+					.first();
+			}
 		} else if(!Util.isEmpty(request.getUpc(), true)) {
 			if(product == null) {
-				Optional<MProduct> optionalProduct = MProduct.getByUPC(Env.getCtx(), request.getUpc(), null).stream().findAny();
-				if(optionalProduct.isPresent()) {
-					product = optionalProduct.get();
-				}
+				product = new Query(
+					Env.getCtx(),
+					I_M_Product.Table_Name,
+					"UPPER(TRIM(UPC)) = UPPER(TRIM(?))",
+					null
+				)
+					.setParameters(request.getUpc())
+					.setClient_ID()
+					.setOnlyActiveRecords(true)
+					.first();
 			}
 		} else if(!Util.isEmpty(request.getSku(), true)) {
 			if(product == null) {
 				product = new Query(
 					Env.getCtx(),
 					I_M_Product.Table_Name,
-					"UPPER(SKU) = UPPER(?)",
+					"UPPER(TRIM(SKU)) = UPPER(TRIM(?))",
 					null
 				)
 					.setParameters(request.getSku())
@@ -91,7 +120,7 @@ public class ProductServiceLogic {
 				product = new Query(
 					Env.getCtx(),
 					I_M_Product.Table_Name,
-					"UPPER(Value) = UPPER(?)",
+					"UPPER(TRIM(Value)) = UPPER(TRIM(?))",
 					null
 				)
 					.setParameters(request.getValue())
@@ -176,35 +205,124 @@ public class ProductServiceLogic {
 			)
 		);
 
-		//	Dynamic where clause
-		StringBuffer whereClause = new StringBuffer();
-		whereClause.append("IsSold = 'Y' ");
-		//	Parameters
-		List<Object> parameters = new ArrayList<Object>();
-
 		// URL decode to change characteres and add search value to filter
 		final String searchValue = TextManager.getValidString(
 			TextManager.getDecodeUrl(
 				request.getSearchValue()
 			)
 		).strip();
+		final boolean isSearching = !Util.isEmpty(searchValue, true);
+		final int businessPartnerId = request.getBusinessPartnerId();
+
+		AtomicInteger warehouseId = new AtomicInteger(pos.getM_Warehouse_ID());
+		if(request.getWarehouseId() > 0) {
+			warehouseId.set(request.getWarehouseId());
+		}
+		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
+		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
+		//	Get Product list, exact code matches first and partial matches when there are none
+		Query query = getProductsQuery(
+			searchValue,
+			isSearching,
+			businessPartnerId,
+			priceList.getM_PriceList_ID(),
+			validFrom
+		);
+		if(isSearching && query.count() <= 0) {
+			query = getProductsQuery(
+				searchValue,
+				false,
+				businessPartnerId,
+				priceList.getM_PriceList_ID(),
+				validFrom
+			);
+		}
+
+		//	Set Pagination
+		int count = query.count();
+		String nexPageToken = null;
+		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
+		int limit = LimitUtil.getPageSize(request.getPageSize());
+		int offset = (pageNumber - 1) * limit;
+		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
+			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
+		}
+
+		ListProductPriceResponse.Builder builder = ListProductPriceResponse.newBuilder()
+			.setRecordCount(count)
+			.setNextPageToken(
+				TextManager.getValidString(nexPageToken)
+			)
+		;
+
+		query
+			.setLimit(limit, offset)
+			.<MProduct>list()
+			.forEach(product -> {
+				ProductPrice.Builder productPrice = ProductConvertUtil.convertProductPrice(
+					product,
+					businessPartnerId,
+					priceList,
+					warehouseId.get(),
+					validFrom,
+					displayCurrencyId,
+					conversionTypeId,
+					null
+				);
+				builder.addProductPrices(productPrice);
+			})
+		;
+
+		return builder;
+	}
+
+	/**
+	 * Build the products query, matching the search value exactly (Value, UPC or SKU) or partially
+	 * @param searchValue
+	 * @param exactMatch
+	 * @param businessPartnerId
+	 * @param priceListId
+	 * @param validFrom
+	 * @return
+	 */
+	private static Query getProductsQuery(String searchValue, boolean exactMatch, int businessPartnerId, int priceListId, Timestamp validFrom) {
+		//	Dynamic where clause
+		final String codeOperator = exactMatch ? "=" : "LIKE";
+		StringBuffer whereClause = new StringBuffer();
+		whereClause.append("IsSold = 'Y' ");
+		//	Parameters
+		List<Object> parameters = new ArrayList<Object>();
+
 		if(!Util.isEmpty(searchValue, true)) {
 			whereClause.append(
 				"AND ("
 			);
 
-			whereClause.append(
+			if(exactMatch) {
+				whereClause.append(
+					"("
+						+ "UPPER(TRIM(Value)) = UPPER(?) "
+						+ "OR UPPER(TRIM(UPC)) = UPPER(?) "
+						+ "OR UPPER(TRIM(SKU)) = UPPER(?) "
+					+ ") "
+				);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+			} else {
+				whereClause.append(
 					"("
 						+ "UPPER(Value) LIKE '%' || UPPER(?) || '%' "
 						+ "OR UPPER(Name) LIKE '%' || UPPER(?) || '%' "
-						+ "OR UPPER(UPC) = UPPER(?) "
-						+ "OR UPPER(SKU) = UPPER(?) "
+						+ "OR UPPER(TRIM(UPC)) = UPPER(?) "
+						+ "OR UPPER(TRIM(SKU)) = UPPER(?) "
 					+ ") "
-			);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
-			parameters.add(searchValue);
+				);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+				parameters.add(searchValue);
+			}
 
 			// Find on Product Purchase
 			whereClause.append(
@@ -213,7 +331,7 @@ public class ProductServiceLogic {
 						+ "WHERE po.IsActive = 'Y' "
 						+ "AND po.M_Product_ID = M_Product.M_Product_ID "
 						+ "AND ("
-							+ "UPPER(po.UPC) LIKE UPPER(?) "
+							+ "UPPER(TRIM(po.UPC)) " + codeOperator + " UPPER(?) "
 							// + "OR UPPER(po.VendorProductNo) LIKE UPPER(?) "
 						+ ") "
 					+ ")"
@@ -230,7 +348,7 @@ public class ProductServiceLogic {
 						+ "WHERE pi.IsActive = 'Y' "
 						+ "AND pi.M_Product_ID = M_Product.M_Product_ID "
 						+ "AND ("
-							+ "UPPER(pi.UPC) LIKE UPPER(?) "
+							+ "UPPER(TRIM(pi.UPC)) " + codeOperator + " UPPER(?) "
 							// + "OR UPPER(pi.VendorProductNo) LIKE UPPER(?) "
 						+ ") "
 					+ ")"
@@ -259,7 +377,6 @@ public class ProductServiceLogic {
 			+ ")"
 		);
 
-		final int businessPartnerId = request.getBusinessPartnerId();
 		if(businessPartnerId > 0) {
 			/*
 			whereClause.append(
@@ -298,16 +415,9 @@ public class ProductServiceLogic {
 		}
 
 		//	Add parameters
-		parameters.add(priceList.getM_PriceList_ID());
+		parameters.add(priceListId);
 		parameters.add(validFrom);
-		AtomicInteger warehouseId = new AtomicInteger(pos.getM_Warehouse_ID());
-		if(request.getWarehouseId() > 0) {
-			warehouseId.set(request.getWarehouseId());
-		}
-		int displayCurrencyId = pos.get_ValueAsInt("DisplayCurrency_ID");
-		int conversionTypeId = pos.get_ValueAsInt("C_ConversionType_ID");
-		//	Get Product list
-		Query query = new Query(
+		return new Query(
 			Env.getCtx(),
 			I_M_Product.Table_Name,
 			whereClause.toString(),
@@ -316,44 +426,8 @@ public class ProductServiceLogic {
 			.setParameters(parameters)
 			.setClient_ID()
 			.setOnlyActiveRecords(true)
+			.setOrderBy(I_M_Product.COLUMNNAME_Value)
 		;
-
-		//	Set Pagination
-		int count = query.count();
-		String nexPageToken = null;
-		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
-		int limit = LimitUtil.getPageSize(request.getPageSize());
-		int offset = (pageNumber - 1) * limit;
-		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
-			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
-		}
-
-		ListProductPriceResponse.Builder builder = ListProductPriceResponse.newBuilder()
-			.setRecordCount(count)
-			.setNextPageToken(
-				TextManager.getValidString(nexPageToken)
-			)
-		;
-
-		query
-			.setLimit(limit, offset)
-			.<MProduct>list()
-			.forEach(product -> {
-				ProductPrice.Builder productPrice = ProductConvertUtil.convertProductPrice(
-					product,
-					businessPartnerId,
-					priceList,
-					warehouseId.get(),
-					validFrom,
-					displayCurrencyId,
-					conversionTypeId,
-					null
-				);
-				builder.addProductPrices(productPrice);
-			})
-		;
-
-		return builder;
 	}
 
 }
