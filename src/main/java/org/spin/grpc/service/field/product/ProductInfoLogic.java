@@ -656,14 +656,23 @@ public class ProductInfoLogic {
 				request.getSearchValue()
 			)
 		).strip();
-		if (!Util.isEmpty(searchValue, true)) {
-			sqlWhere += " AND ("
-				+ "UPPER(p.Value) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(p.Name) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' "
-				+ "OR UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' "
-				+ ") "
-			;
+		// Search in two phases: an exact (trimmed) match on Value/UPC/SKU wins; the partial
+		// match is used only when there is no exact one. The placeholder is replaced after
+		// the SQL is built, once it is known which phase applies.
+		final boolean isSearching = !Util.isEmpty(searchValue, true);
+		final String searchPlaceholder = "/*SEARCH_VALUE*/";
+		final String exactSearchWhere = "UPPER(TRIM(p.Value)) = UPPER(?) "
+			+ "OR UPPER(TRIM(p.UPC)) = UPPER(?) "
+			+ "OR UPPER(TRIM(p.SKU)) = UPPER(?) "
+		;
+		final String partialSearchWhere = "UPPER(p.Value) LIKE '%' || UPPER(?) || '%' "
+			+ "OR UPPER(p.Name) LIKE '%' || UPPER(?) || '%' "
+			+ "OR UPPER(p.UPC) LIKE '%' || UPPER(?) || '%' "
+			+ "OR UPPER(p.SKU) LIKE '%' || UPPER(?) || '%' "
+		;
+		final int searchParametersIndex = filtersList.size();
+		if (isSearching) {
+			sqlWhere += " AND (" + searchPlaceholder + ") ";
 			filtersList.add(searchValue);
 			filtersList.add(searchValue);
 			filtersList.add(searchValue);
@@ -905,11 +914,31 @@ public class ProductInfoLogic {
 			sqlWithRoleAccess += " AND " + parsedValidationCode;
 		}
 
+		//	Resolve search phase
+		int exactCount = 0;
+		if (isSearching) {
+			List<Object> exactFiltersList = new ArrayList<>(filtersList);
+			for (int i = 0; i < 4; i++) {
+				exactFiltersList.remove(searchParametersIndex);
+			}
+			for (int i = 0; i < 3; i++) {
+				exactFiltersList.add(searchParametersIndex, searchValue);
+			}
+			final String sqlExact = sqlWithRoleAccess.replace(searchPlaceholder, exactSearchWhere);
+			exactCount = CountUtil.countRecords(sqlExact, Table_Name, "p", exactFiltersList);
+			if (exactCount > 0) {
+				sqlWithRoleAccess = sqlExact;
+				filtersList = exactFiltersList;
+			} else {
+				sqlWithRoleAccess = sqlWithRoleAccess.replace(searchPlaceholder, partialSearchWhere);
+			}
+		}
+
 		//	Count records
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = CountUtil.countRecords(sqlWithRoleAccess, Table_Name, "p", filtersList);
+		int count = exactCount > 0 ? exactCount : CountUtil.countRecords(sqlWithRoleAccess, Table_Name, "p", filtersList);
 		//	Set page token
 		String nexPageToken = null;
 		if(LimitUtil.isValidNextPageToken(count, offset, limit)) {
