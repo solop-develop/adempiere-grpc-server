@@ -590,6 +590,20 @@ public class BrowserLogic {
 		ContextManager.setContextWithAttributesFromString(windowNo, context, request.getContextAttributes());
 		ContextManager.setContextWithAttributes(windowNo, context, parameterMap, false);
 
+		// Run search process (same as the search), so the query is limited to the
+		// process instance records and does not read records of previous searches
+		String processInstanceWhere = "";
+		if (browser.get_ColumnIndex("SearchProcess_ID") >= 0 && browser.get_ValueAsInt("SearchProcess_ID") > 0) {
+			processInstanceWhere = getSearchProcessInstaceWhere(
+				context,
+				browser.getAD_Browse_ID(),
+				browser.get_ValueAsInt("SearchProcess_ID"),
+				request.getTableName(),
+				request.getRecordId(),
+				request.getFilters()
+			);
+		}
+
 		//	get query columns
 		String query = QueryUtil.getBrowserQueryWithReferences(browser);
 		String sql = Env.parseContext(context, windowNo, query, false);
@@ -621,6 +635,9 @@ public class BrowserLogic {
 				.append(" AND ")
 				.append(parsedWhereClause);
 		}
+
+		// Add Process Instance ID validation
+		whereClause.append(processInstanceWhere);
 
 		//	For dynamic condition
 		List<Object> filterValues = new ArrayList<Object>();
