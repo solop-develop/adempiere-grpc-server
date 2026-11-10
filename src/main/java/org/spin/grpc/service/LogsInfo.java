@@ -14,8 +14,6 @@
  ************************************************************************************/
 package org.spin.grpc.service;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +37,6 @@ import org.compiere.model.MWindow;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.compiere.wf.MWFProcess;
@@ -365,70 +362,36 @@ public class LogsInfo extends LogsImplBase {
 		parameters.add(table.getAD_Table_ID());
 		parameters.add(recordId);
 
-		// An entity log (timeline card) groups every AD_ChangeLog row (one per
-		// changed column) that shares the same AD_ChangeLog_ID, so pagination and
-		// count must be done over the distinct change groups, not over the rows.
-		List<Integer> changeLogIds = new ArrayList<>();
-		StringBuilder groupsSql = new StringBuilder()
-			.append("SELECT ").append(I_AD_ChangeLog.COLUMNNAME_AD_ChangeLog_ID)
-			.append(" FROM ").append(I_AD_ChangeLog.Table_Name)
-			.append(" WHERE ").append(whereClause)
-			.append(" GROUP BY ").append(I_AD_ChangeLog.COLUMNNAME_AD_ChangeLog_ID)
-			.append(" ORDER BY MAX(").append(I_AD_ChangeLog.COLUMNNAME_Updated).append(") DESC, ")
-			.append(I_AD_ChangeLog.COLUMNNAME_AD_ChangeLog_ID).append(" DESC")
+		Query query = new Query(
+			Env.getCtx(),
+			I_AD_ChangeLog.Table_Name,
+			whereClause.toString(),
+			null
+		)
+			.setParameters(parameters)
 		;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try {
-			pstmt = DB.prepareStatement(groupsSql.toString(), null);
-			DB.setParameters(pstmt, parameters);
-			rs = pstmt.executeQuery();
-			while (rs.next()) {
-				changeLogIds.add(rs.getInt(1));
-			}
-		} catch (Exception e) {
-			throw new AdempiereException(e);
-		} finally {
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 
 		//	Get page and count
 		String nexPageToken = null;
 		int pageNumber = LimitUtil.getPageNumber(SessionManager.getSessionUuid(), request.getPageToken());
 		int limit = LimitUtil.getPageSize(request.getPageSize());
 		int offset = (pageNumber - 1) * limit;
-		int count = changeLogIds.size();
+		int count = query.count();
 		ListEntityLogsResponse.Builder builder = ListEntityLogsResponse.newBuilder()
 			.setRecordCount(count)
 		;
-		if (count > offset + limit) {
+		if(count > offset && count > limit) {
 			nexPageToken = LimitUtil.getPagePrefix(SessionManager.getSessionUuid()) + (pageNumber + 1);
 		}
 		builder.setNextPageToken(
 			TextManager.getValidString(nexPageToken)
 		);
 
-		List<MChangeLog> recordLogList = new ArrayList<>();
-		if (offset < count) {
-			List<Integer> pageIds = changeLogIds.subList(offset, Math.min(offset + limit, count));
-			StringBuilder pageWhereClause = new StringBuilder(whereClause)
-				.append(" AND ").append(I_AD_ChangeLog.COLUMNNAME_AD_ChangeLog_ID).append(" IN (")
-				.append(pageIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")))
-				.append(")")
-			;
-			recordLogList = new Query(
-				Env.getCtx(),
-				I_AD_ChangeLog.Table_Name,
-				pageWhereClause.toString(),
-				null
-			)
-				.setParameters(parameters)
-				.setOrderBy(I_AD_ChangeLog.COLUMNNAME_Updated + " DESC")
-				.<MChangeLog>list()
-			;
-		}
+		List<MChangeLog> recordLogList = query
+			.setLimit(limit, offset)
+			.setOrderBy(I_AD_ChangeLog.COLUMNNAME_Updated + " DESC")
+			.<MChangeLog>list()
+		;
 
 		//	Convert Record Log
 		List<EntityLog.Builder> recordsLogsBuilderList = LogsConvertUtil.convertRecordLog(recordLogList);
