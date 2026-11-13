@@ -102,6 +102,7 @@ import org.spin.pos.service.cash.CashManagement;
 import org.spin.pos.service.cash.CashServiceLogic;
 import org.spin.pos.service.cash.CashUtil;
 import org.spin.pos.service.cash.CollectingManagement;
+import org.spin.pos.service.cash.OnlineCashClosingLogic;
 import org.spin.pos.service.customer.CustomerServiceLogic;
 import org.spin.pos.service.order.OrderManagement;
 import org.spin.pos.service.order.OrderServiceLogic;
@@ -2225,7 +2226,71 @@ public class PointOfSalesForm extends StoreImplBase {
 		}
 	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash/{id}/online/processors"
+	 */
+	@Override
+	public void listOnlineCashClosingProcessors(ListOnlineCashClosingProcessorsRequest request, StreamObserver<ListOnlineCashClosingProcessorsResponse> responseObserver) {
+		try {
+			log.fine("List Online Cash Closing Processors = " + request);
+			ListOnlineCashClosingProcessorsResponse.Builder builder = OnlineCashClosingLogic.listOnlineCashClosingProcessors(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
+	/**
+	 * get: "/point-of-sales/{pos_id}/online-cash-closings"
+	 */
+	@Override
+	public void listOnlineCashClosings(ListOnlineCashClosingsRequest request, StreamObserver<ListOnlineCashClosingsResponse> responseObserver) {
+		try {
+			log.fine("List Online Cash Closings = " + request);
+			ListOnlineCashClosingsResponse.Builder builder = OnlineCashClosingLogic.listOnlineCashClosings(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
+
+	/**
+	 * get: "/point-of-sales/{pos_id}/cash-closings"
+	 */
+	@Override
+	public void listCashClosings(ListCashClosingsRequest request, StreamObserver<ListCashClosingsResponse> responseObserver) {
+		try {
+			log.fine("List Cash Closings = " + request);
+			ListCashClosingsResponse.Builder builder = OnlineCashClosingLogic.listCashClosings(request);
+			responseObserver.onNext(builder.build());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.warning(e.getLocalizedMessage());
+			e.printStackTrace();
+			responseObserver.onError(
+				Status.INTERNAL
+					.withDescription(e.getLocalizedMessage())
+					.withCause(e)
+					.asRuntimeException()
+			);
+		}
+	}
 
 	@Override
 	public void listAvailableSellers(ListAvailableSellersRequest request, StreamObserver<ListAvailableSellersResponse> responseObserver) {
