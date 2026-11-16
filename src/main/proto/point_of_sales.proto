@@ -553,6 +553,15 @@ service Store {
 	rpc PrintPreviewCashClosing(PrintPreviewCashClosingRequest) returns (PrintPreviewCashClosingResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/cash/{id}/closing/preview"
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/cash-closings/{id}/preview"
+			}
+		};
+	}
+	// List cash closings (bank statements) of POS, to print a previous closing
+	rpc ListCashClosings(ListCashClosingsRequest) returns (ListCashClosingsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash-closings"
 		};
 	}
 
@@ -560,6 +569,18 @@ service Store {
 	rpc ExistsOnlineCashClosingPayments(ExistsOnlineCashClosingPaymentsRequest) returns (ExistsOnlineCashClosingPaymentsResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/cash/{id}/online/exists"
+		};
+	}
+	// Payment processors (processor + terminal) that must be closed before the cash closing
+	rpc ListOnlineCashClosingProcessors(ListOnlineCashClosingProcessorsRequest) returns (ListOnlineCashClosingProcessorsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/cash/{id}/online/processors"
+		};
+	}
+	// History of online closings (payment processor runs), to print a previous closing
+	rpc ListOnlineCashClosings(ListOnlineCashClosingsRequest) returns (ListOnlineCashClosingsResponse) {
+		option (google.api.http) = {
+			get: "/point-of-sales/{pos_id}/online-cash-closings"
 		};
 	}
 	rpc ProcessOnlineCashClosing(ProcessOnlineCashClosingRequest) returns (ProcessOnlineCashClosingResponse) {
@@ -582,6 +603,9 @@ service Store {
 	rpc PrintPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest) returns (PrintPreviewOnlineCashClosingResponse) {
 		option (google.api.http) = {
 			get: "/point-of-sales/{pos_id}/cash/{id}/online/{payment_processor_run_id}/preview"
+			additional_bindings: {
+				get: "/point-of-sales/{pos_id}/online-cash-closings/{payment_processor_run_id}/preview"
+			}
 		};
 	}
 
@@ -934,6 +958,24 @@ message PrintPreviewCashClosingRequest {
 	int32 pos_id = 1;
 	string report_type = 2;
 	int32 id = 3; // Bank Statement
+}
+message ListCashClosingsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	google.protobuf.Timestamp date_from = 9;
+	google.protobuf.Timestamp date_to = 10;
+	bool is_only_processed = 11;
+}
+message ListCashClosingsResponse {
+	int64 record_count = 1;
+	repeated CashMovements cash_closings = 2;
+	string next_page_token = 3;
 }
 message PrintPreviewCashClosingResponse {
 	string result = 1;
@@ -2386,6 +2428,8 @@ message ProcessOnlineCashClosingRequest {
 	int32 pos_id = 1;
 	int32 id = 2;
 	int32 payment_method_id = 3;
+	// optional, processor to close; if empty is taken from payment method (terminal)
+	int32 payment_processor_id = 4;
 }
 message ProcessOnlineCashClosingResponse {
 	bool is_error = 1;
@@ -2393,6 +2437,9 @@ message ProcessOnlineCashClosingResponse {
 	string status = 3;
 	int32 next_request_time = 4;
 	int32 payment_processor_run_id = 5;
+	int32 payment_processor_id = 6;
+	// true when all processors of the cash closing are closed
+	bool is_online_closing_approved = 7;
 }
 message InfoOnlineCashClosingRequest {
 	int32 pos_id = 1;
@@ -2405,6 +2452,68 @@ message InfoOnlineCashClosingResponse {
 	string status = 3;
 	int32 next_request_time = 4;
 	int32 payment_processor_run_id = 5;
+	int32 payment_processor_id = 6;
+	// true when all processors of the cash closing are closed
+	bool is_online_closing_approved = 7;
+}
+message ListOnlineCashClosingProcessorsRequest {
+	int32 pos_id = 1;
+	int32 id = 2; // Bank Statement (cash closing)
+}
+message OnlineCashClosingProcessor {
+	int32 payment_processor_id = 1;
+	string payment_processor_name = 2;
+	int32 payment_method_id = 3;
+	string payment_method_name = 4;
+	string terminal_code = 5;
+	int32 payments_count = 6;
+	// last online closing (payment processor run) of this processor and terminal
+	int32 payment_processor_run_id = 8;
+	string status = 9;
+	string message = 10;
+	bool is_error = 11;
+	int32 next_request_time = 12;
+	bool is_closed = 13;
+}
+message ListOnlineCashClosingProcessorsResponse {
+	int64 record_count = 1;
+	repeated OnlineCashClosingProcessor processors = 2;
+	bool is_all_closed = 3;
+}
+message OnlineCashClosing {
+	int32 id = 1; // Payment Processor Run
+	int32 bank_statement_id = 2;
+	string bank_statement_document_no = 3;
+	google.protobuf.Timestamp statement_date = 4;
+	google.protobuf.Timestamp created = 5;
+	int32 payment_processor_id = 6;
+	string payment_processor_name = 7;
+	int32 payment_method_id = 8;
+	string payment_method_name = 9;
+	string status = 10;
+	string message = 11;
+	bool is_error = 12;
+}
+message ListOnlineCashClosingsRequest {
+	string filters = 1;
+	string sort_by = 2;
+	repeated string group_columns = 3;
+	repeated string select_columns = 4;
+	int32 page_size = 5;
+	string page_token = 6;
+	string search_value = 7;
+	int32 pos_id = 8;
+	int32 payment_processor_id = 9;
+	int32 payment_method_id = 10;
+	int32 bank_statement_id = 11;
+	google.protobuf.Timestamp date_from = 12;
+	google.protobuf.Timestamp date_to = 13;
+	string status = 14;
+}
+message ListOnlineCashClosingsResponse {
+	int64 record_count = 1;
+	repeated OnlineCashClosing online_cash_closings = 2;
+	string next_page_token = 3;
 }
 message CancelOnlineCashClosingRequest {
 	int32 pos_id = 1;
