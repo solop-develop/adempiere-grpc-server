@@ -182,8 +182,13 @@ public class CashServiceLogic {
 			Trx.run(transactionName -> {
 				MBankStatement bankStatement = new MBankStatement(Env.getCtx(), bankStatementId, transactionName);
 				if (pos.isValidateOnlineClosing()) {
-					//	All processors (processor + terminal) must be closed
-					OnlineCashClosingLogic.validateOnlineClosing(bankStatement, transactionName);
+					boolean isOnlinePaymentApproved = CashManagement.isCashMovementWithOnlinePaymentApproved(bankStatementId);
+					if (isOnlinePaymentApproved) {
+						boolean isOnlineClosingApproved = bankStatement.isOnlineClosingApproved();
+						if (!isOnlineClosingApproved) {
+							throw new AdempiereException("@C_BankStatement_ID@ @Online@ (" + bankStatement.getDocumentNo() + ") @POS.PreviousCashClosingOpened@ (@Online@)");
+						}
+					}
 				}
 
 				if(!Util.isEmpty(request.getDescription(), true)) {
@@ -716,27 +721,21 @@ public class CashServiceLogic {
 	public static PrintPreviewOnlineCashClosingResponse.Builder printPreviewOnlineCashClosing(PrintPreviewOnlineCashClosingRequest request) throws FileNotFoundException, IOException {
 		final int bankStatementId = request.getId();
 		final int paymentProcessorRunId = request.getPaymentProcessorRunId();
+		if (bankStatementId <= 0) {
+			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
+		}
 		if (paymentProcessorRunId <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_PaymentProcessorRun_ID@");
 		}
-		MTable processorRunTable = OnlineCashClosingLogic.getRunTable();
+		MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 		PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, null);
 		if (paymentProcessorRun == null || paymentProcessorRun.get_ID() <= 0) {
 			throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
 		}
-		final int runBankStatementId = paymentProcessorRun.get_ValueAsInt("C_BankStatement_ID");
-		//	Bank statement is optional (print from online closings history)
-		if (bankStatementId > 0 && runBankStatementId != bankStatementId) {
+		if(paymentProcessorRun.get_ValueAsInt("C_BankStatement_ID") != bankStatementId) {
 			throw new AdempiereException("@C_BankStatement_ID@ @Invalid@");
 		}
 		MPOS pos = POS.validateAndGetPOS(request.getPosId(), true);
-		if (runBankStatementId > 0) {
-			MBankStatement bankStatement = new MBankStatement(Env.getCtx(), runBankStatementId, null);
-			int bankStatementPosId = bankStatement.get_ValueAsInt("C_POS_ID");
-			if (bankStatementPosId > 0 && bankStatementPosId != pos.getC_POS_ID()) {
-				throw new AdempiereException("@C_PaymentProcessorRun_ID@ @Invalid@ (@C_POS_ID@)");
-			}
-		}
 
 		final int processId = PrintVoucherAbstract.getProcessId();
 		String reportType = "pdf";
@@ -771,11 +770,6 @@ public class CashServiceLogic {
 	}
 
 
-	/**
-	 * Close a payment processor (processor + terminal) of cash closing
-	 * @param request
-	 * @return
-	 */
 	public static ProcessOnlineCashClosingResponse.Builder processOnlineCashClosing(ProcessOnlineCashClosingRequest request) {
 		if (request.getId() <= 0) {
 			throw new AdempiereException("@FillMandatory@ @C_BankStatement_ID@");
@@ -792,13 +786,18 @@ public class CashServiceLogic {
 				throw new AdempiereException("@C_BankStatement_ID@ (" + request.getId() + ") @NotFound@");
 			}
 
-			//	Processor: explicit, of terminal or of bank account
-			MPaymentProcessor paymentProcessor = OnlineCashClosingLogic.getPaymentProcessor(
-				request.getPaymentProcessorId(),
-				paymentMethodId,
-				bankStatement.getC_BankAccount_ID(),
+			String whereClause = "C_BankAccount_ID = ?";
+			MPaymentProcessor paymentProcessor = new Query(
+				Env.getCtx(),
+				"C_PaymentProcessor",
+				whereClause,
 				transactionName
-			);
+			)
+				.setParameters(bankStatement.getC_BankAccount_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first()
+			;
 			if (paymentProcessor == null) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
@@ -807,12 +806,17 @@ public class CashServiceLogic {
 				PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentMethodId);
 				if (PaymentProcessorClosing.class.isAssignableFrom(processor.getClass())) {
 					((PaymentProcessorClosing) processor).closeBatch(paymentMethodId, bankStatement.getStatementDate());
-					paymentProcessorRun = OnlineCashClosingLogic.getLastRun(
-						bankStatement.getC_BankStatement_ID(),
-						paymentMethodId,
-						paymentProcessor.getC_PaymentProcessor_ID(),
+					whereClause = "C_BankStatement_ID = ? AND C_PaymentMethod_ID = ?";
+					paymentProcessorRun = new Query(
+						Env.getCtx(),
+						"C_PaymentProcessorRun",
+						whereClause,
 						transactionName
-					);
+					)
+						.setParameters(request.getId(), paymentMethodId)
+						.setOrderBy("Created DESC")
+						.first()
+					;
 				} else {
 					throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
 				}
@@ -822,16 +826,9 @@ public class CashServiceLogic {
 			if (paymentProcessorRun == null) {
 				return;
 			}
-			//	Keep processor of run (processors without support of processor column)
-			if (paymentProcessorRun.get_ColumnIndex(OnlineCashClosingLogic.COLUMN_PAYMENT_PROCESSOR_ID) >= 0
-					&& paymentProcessorRun.get_ValueAsInt(OnlineCashClosingLogic.COLUMN_PAYMENT_PROCESSOR_ID) <= 0) {
-				OnlineCashClosingLogic.setPaymentProcessorId(paymentProcessorRun, paymentProcessor.getC_PaymentProcessor_ID());
-				paymentProcessorRun.saveEx(transactionName);
-			}
 			String message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
 			String status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
-			boolean isError = OnlineCashClosingLogic.isErrorStatus(status);
-			boolean isOnlineClosingApproved = OnlineCashClosingLogic.updateOnlineClosingApproved(bankStatement, transactionName);
+			boolean isError = "E".equals(status) || "R".equals(status);
 
 			builder
 				.setIsError(isError)
@@ -851,10 +848,6 @@ public class CashServiceLogic {
 				.setPaymentProcessorRunId(
 					paymentProcessorRun.get_ID()
 				)
-				.setPaymentProcessorId(
-					paymentProcessor.getC_PaymentProcessor_ID()
-				)
-				.setIsOnlineClosingApproved(isOnlineClosingApproved)
 			;
 			builderReference.set(builder);
 
@@ -877,42 +870,35 @@ public class CashServiceLogic {
 			if(bankStatement == null || bankStatement.getC_BankStatement_ID() <= 0) {
 				throw new AdempiereException("@C_BankStatement_ID@ (" + request.getId() + ") @NotFound@");
 			}
-			MTable processorRunTable = OnlineCashClosingLogic.getRunTable();
-			PO paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, transactionName);
-			if (paymentProcessorRun == null || paymentProcessorRun.get_ID() <= 0) {
-				throw new AdempiereException("@C_PaymentProcessorRun_ID@ @NotFound@");
-			}
-			if (paymentProcessorRun.get_ValueAsInt("C_BankStatement_ID") != bankStatement.getC_BankStatement_ID()) {
-				throw new AdempiereException("@C_BankStatement_ID@ @Invalid@");
-			}
 
-			//	Processor of the run (each run is for one processor and terminal)
-			MPaymentProcessor paymentProcessor = OnlineCashClosingLogic.getPaymentProcessorOfRun(
-				paymentProcessorRun,
-				bankStatement.getC_BankAccount_ID(),
-				transactionName
-			);
+			String whereClause = "C_BankAccount_ID = ?";
+			MPaymentProcessor paymentProcessor = (new Query(Env.getCtx(), "C_PaymentProcessor", whereClause, transactionName))
+				.setParameters(bankStatement.getC_BankAccount_ID())
+				.setClient_ID()
+				.setOnlyActiveRecords(true)
+				.first()
+			;
 			if (paymentProcessor == null || paymentProcessor.getC_PaymentProcessor_ID() <= 0) {
 				throw new AdempiereException("@C_PaymentProcessor_ID@ @NotFound@");
 			}
+			MTable processorRunTable = MTable.get(Env.getCtx(), "C_PaymentProcessorRun");
 
-			PaymentProcessor processor = PaymentProcessor.create(
-				paymentProcessor,
-				bankStatement,
-				paymentProcessorRun.get_ValueAsInt("C_PaymentMethod_ID")
-			);
+			PO paymentProcessorRun = null;
+			PaymentProcessor processor = PaymentProcessor.create(paymentProcessor, bankStatement, paymentProcessorRunId);
 			if (PaymentProcessorStatus.class.isAssignableFrom(processor.getClass())) {
-				((PaymentProcessorStatus) processor).transactionStatus(paymentProcessorRunId);
-				paymentProcessorRun = processorRunTable.getPO(paymentProcessorRunId, transactionName);
+				((PaymentProcessorStatus) processor).transactionStatus(request.getPaymentProcessorRunId());
+				paymentProcessorRun = processorRunTable.getPO(request.getPaymentProcessorRunId(), transactionName);
 			} else {
-				throw new AdempiereException(PaymentProcessorStatus.class.getName() + "Unsupported");
+				throw new AdempiereException(PaymentProcessorClosing.class.getName() + "Unsupported");
 			}
 
 			String	message = paymentProcessorRun.get_ValueAsString("ResponseMessage");
 			String	status = paymentProcessorRun.get_ValueAsString("ResponseStatus");
-			boolean isError = OnlineCashClosingLogic.isErrorStatus(status);
-			//	Cash closing is approved only when all processors are closed
-			boolean isOnlineClosingApproved = OnlineCashClosingLogic.updateOnlineClosingApproved(bankStatement, transactionName);
+			boolean isError = "E".equals(status) || "R".equals(status);
+			if ("A".equals(paymentProcessorRun.get_ValueAsString("ResponseStatus"))) {
+				bankStatement.setIsOnlineClosingApproved(true);
+				bankStatement.saveEx();
+			}
 			builder
 				.setIsError(isError)
 				.setMessage(
@@ -931,15 +917,11 @@ public class CashServiceLogic {
 				.setPaymentProcessorRunId(
 					paymentProcessorRun.get_ID()
 				)
-				.setPaymentProcessorId(
-					paymentProcessor.getC_PaymentProcessor_ID()
-				)
-				.setIsOnlineClosingApproved(isOnlineClosingApproved)
+			;
 			;
 			builderReference.set(builder);
 		});
 		return builderReference.get();
 	}
-
 
 }
