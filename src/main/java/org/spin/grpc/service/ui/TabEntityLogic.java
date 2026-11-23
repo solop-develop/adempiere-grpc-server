@@ -235,7 +235,8 @@ public class TabEntityLogic {
 			if (rs.next()) {
 				entityBuilder = org.spin.base.util.RecordUtil.convertResultSetToStruct(
 					table,
-					rs
+					rs,
+					org.spin.base.util.RecordUtil.getFieldDisplayTypes(tab)
 				);
 			}
 		} catch (Exception e) {
@@ -407,7 +408,7 @@ public class TabEntityLogic {
 		parsedSQL = LimitUtil.getQueryWithLimit(parsedSQL, limit, offset);
 		//	Add Order By
 		parsedSQL = parsedSQL + orderByClause;
-		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, params);
+		builder = org.spin.base.util.RecordUtil.convertListEntitiesResult(table, parsedSQL, params, tab);
 
 		//	Count records, Set page token
 		count = CountUtil.countRecords(parsedCountSQL, tableName, params);
