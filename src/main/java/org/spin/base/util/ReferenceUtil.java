@@ -129,6 +129,34 @@ public class ReferenceUtil {
 		return false;
 	}
 
+	/**
+	 * Is the display column of a table reference shown by its display type instead of its raw value:
+	 * the key (ID) or a lookup as identifiers, a date or a non integer number formatted, a list as its name.
+	 * Text, integer, yes-no and virtual display columns keep the join with the raw column.
+	 * @param context
+	 * @param tableName reference table
+	 * @param displayColumnName reference display column
+	 * @return true to use the embedded lookup of the reference
+	 */
+	private static boolean isDisplayColumnShownByType(Properties context, String tableName, String displayColumnName) {
+		MTable table = MTable.get(context, tableName);
+		if (table == null || table.getAD_Table_ID() <= 0) {
+			return false;
+		}
+		MColumn column = table.getColumn(displayColumnName);
+		if (column == null || column.getAD_Column_ID() <= 0 || !Util.isEmpty(column.getColumnSQL(), true)) {
+			return false;
+		}
+		final int displayType = column.getAD_Reference_ID();
+		return DisplayType.isDate(displayType)
+			|| (DisplayType.isNumeric(displayType) && displayType != DisplayType.Integer)
+			|| DisplayType.List == displayType
+			|| DisplayType.ID == displayType
+			|| DisplayType.Table == displayType
+			|| DisplayType.TableDir == displayType
+			|| DisplayType.Search == displayType;
+	}
+
 	public static int overwriteDisplayType(int displayTypeId, int referenceValueId) {
 		int newDisplayType = displayTypeId;
 		if (DisplayType.Button == displayTypeId) {
@@ -313,8 +341,12 @@ public class ReferenceUtil {
 			}
 
 			String displayColumn = lookupInfo.DisplayColumn;
-			if (Util.isEmpty(displayColumn, true)) {
-				// Parent recursive columns
+			// Parent recursive columns, or table reference whose display column is shown by
+			// its type (ID, lookup, date, number, list) as the embedded lookup does
+			if (Util.isEmpty(displayColumn, true)
+				|| (referenceValueId > 0
+					&& (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
+					&& isDisplayColumnShownByType(context, lookupInfo.TableName, displayColumn))) {
 				displayColumn = "(" + MLookupFactory.getLookup_TableEmbed(languageValue, columnName, tableName, referenceValueId) + ")";
 				referenceInfo.setDisplayColumnValue(displayColumn);
 				referenceInfo.setHasJoinValue(false);
