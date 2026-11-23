@@ -21,8 +21,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -35,7 +37,9 @@ import org.adempiere.core.domains.models.I_AD_Table;
 import org.compiere.model.MClient;
 import org.compiere.model.MColumn;
 import org.compiere.model.MConversionRate;
+import org.compiere.model.MField;
 import org.compiere.model.MQuery;
+import org.compiere.model.MTab;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CCache;
@@ -338,7 +342,48 @@ public class RecordUtil {
 	}
 
 
+	/**
+	 * Get the display type of each field that overwrites the reference of its column
+	 * (AD_Field.AD_Reference_ID), keyed by upper case column name
+	 * @param tab window tab, can be null
+	 * @return map, empty without tab or overwrites
+	 */
+	public static Map<String, Integer> getFieldDisplayTypes(MTab tab) {
+		Map<String, Integer> fieldDisplayTypes = new HashMap<>();
+		if (tab == null || tab.getAD_Tab_ID() <= 0) {
+			return fieldDisplayTypes;
+		}
+		for (MField field : tab.getFields(false, null)) {
+			if (field == null || field.getAD_Reference_ID() <= 0) {
+				continue;
+			}
+			MColumn column = MColumn.get(tab.getCtx(), field.getAD_Column_ID());
+			if (column == null || column.getAD_Column_ID() <= 0) {
+				continue;
+			}
+			fieldDisplayTypes.put(
+				column.getColumnName().toUpperCase(),
+				field.getAD_Reference_ID()
+			);
+		}
+		return fieldDisplayTypes;
+	}
+
+
 	public static Entity.Builder convertResultSetToStruct(MTable table, ResultSet resultSet) throws SQLException {
+		return convertResultSetToStruct(table, resultSet, null);
+	}
+
+	/**
+	 * Convert the current row to entity
+	 * @param table
+	 * @param resultSet
+	 * @param fieldDisplayTypes display type overwritten by the window fields
+	 * (see {@link #getFieldDisplayTypes(MTab)}), used for the display values; can be null
+	 * @return entity builder
+	 * @throws SQLException
+	 */
+	public static Entity.Builder convertResultSetToStruct(MTable table, ResultSet resultSet, Map<String, Integer> fieldDisplayTypes) throws SQLException {
 		Entity.Builder entityBuilder = Entity.newBuilder()
 			.setTableName(
 				table.getTableName()
@@ -375,6 +420,11 @@ public class RecordUtil {
 					continue;
 				}
 				final int displayTypeId = column.getAD_Reference_ID();
+				// display as the window field shows it, when it overwrites the column reference
+				int displayValueTypeId = displayTypeId;
+				if (fieldDisplayTypes != null && fieldDisplayTypes.containsKey(columnNameMetadata.toUpperCase())) {
+					displayValueTypeId = fieldDisplayTypes.get(columnNameMetadata.toUpperCase());
+				}
 				if (column.isKey()) {
 					final int identifier = resultSet.getInt(index);
 					entityBuilder.setId(identifier);
@@ -398,10 +448,10 @@ public class RecordUtil {
 				);
 
 				// Add custom display values
-				if (DisplayType.isDate(displayTypeId)) {
+				if (DisplayType.isDate(displayValueTypeId)) {
 					final String displayValue = TimeManager.getDisplayValue(
 						value,
-						displayTypeId
+						displayValueTypeId
 					);
 					Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 						displayValue
@@ -410,11 +460,11 @@ public class RecordUtil {
 						LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
 						displayValueBuilder.build()
 					);
-				} else if (DisplayType.isNumeric(displayTypeId)) {
-					if (ReferenceUtil.REFERENCES_CURRENCY.contains(displayTypeId)) {
+				} else if (DisplayType.isNumeric(displayValueTypeId)) {
+					if (ReferenceUtil.REFERENCES_CURRENCY.contains(displayValueTypeId)) {
 						// final String displayValue = NumberManager.getDisplayValueWithCurrencyFromObject(
 						// 	value,
-						// 	displayTypeId,
+						// 	displayValueTypeId,
 						// 	recordCurrencyId
 						// );
 						// Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
@@ -424,10 +474,10 @@ public class RecordUtil {
 						// 	LookupUtil.DISPLAY_COLUMN_KEY + "_" + columnName,
 						// 	displayValueBuilder.build()
 						// );
-					} else if (ReferenceUtil.REFERENCES_DECIMALS.contains(displayTypeId)) {
+					} else if (ReferenceUtil.REFERENCES_DECIMALS.contains(displayValueTypeId)) {
 						final String displayValue = NumberManager.getDisplayValue(
 							value,
-							displayTypeId
+							displayValueTypeId
 						);
 						Value.Builder displayValueBuilder = TextManager.getProtoValueFromString(
 							displayValue
@@ -437,7 +487,7 @@ public class RecordUtil {
 							displayValueBuilder.build()
 						);
 					}
-				} else if (DisplayType.YesNo == displayTypeId) {
+				} else if (DisplayType.YesNo == displayValueTypeId) {
 					final String displayValue = BooleanManager.getDisplayValue(
 						value
 					);
@@ -610,6 +660,19 @@ public class RecordUtil {
 	 * @return
 	 */
 	public static ListEntitiesResponse.Builder convertListEntitiesResult(MTable table, String sql, List<Object> params) {
+		return convertListEntitiesResult(table, sql, params, null);
+	}
+
+	/**
+	 * Convert Entities List with the display types of the window tab fields
+	 * @param table
+	 * @param sql
+	 * @param params
+	 * @param tab window tab whose fields can overwrite the column reference, can be null
+	 * @return
+	 */
+	public static ListEntitiesResponse.Builder convertListEntitiesResult(MTable table, String sql, List<Object> params, MTab tab) {
+		final Map<String, Integer> fieldDisplayTypes = getFieldDisplayTypes(tab);
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ListEntitiesResponse.Builder builder = ListEntitiesResponse.newBuilder();
@@ -632,7 +695,8 @@ public class RecordUtil {
 			while(rs.next()) {
 				Entity.Builder entityBuilder = org.spin.base.util.RecordUtil.convertResultSetToStruct(
 					table,
-					rs
+					rs,
+					fieldDisplayTypes
 				);
 				//	
 				builder.addRecords(entityBuilder.build());
