@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -500,10 +501,103 @@ public class RecordUtil {
 			table.getTableName(),
 			rowValues
 		);
-		//	
+		//
 		entityBuilder.setValues(rowValues);
 
+		// record identifier as root display value
+		final String recordDisplayValue = getRecordDisplayValue(
+			table,
+			columnsMap,
+			rowValues
+		);
+		entityBuilder.setDisplayValue(
+			TextManager.getValidString(recordDisplayValue)
+		);
+
 		return entityBuilder;
+	}
+
+
+
+	/**
+	 * Get the record display value from the values already loaded on the row,
+	 * without additional queries: first the display column of the key column
+	 * (identifier columns embedded by the lookup), otherwise the identifier
+	 * columns sorted by sequence and joined with ` - `
+	 * @param table
+	 * @param columnsMap
+	 * @param rowValues
+	 * @return display value, or null without identifier values
+	 */
+	private static String getRecordDisplayValue(MTable table, LinkedHashMap<String, MColumn> columnsMap, Struct.Builder rowValues) {
+		final String[] keyColumns = table.getKeyColumns();
+		if (keyColumns != null && keyColumns.length == 1) {
+			final String keyDisplayValue = getStringFromValue(
+				rowValues.getFieldsMap().get(
+					LookupUtil.getDisplayColumnName(keyColumns[0])
+				)
+			);
+			if (!Util.isEmpty(keyDisplayValue, true)) {
+				return keyDisplayValue;
+			}
+		}
+
+		final String identifier = columnsMap.values().stream()
+			.filter(column -> column.isIdentifier())
+			.sorted(Comparator.comparing(MColumn::getSeqNo))
+			.map(column -> {
+				final String columnName = column.getColumnName();
+				// formatted value (lookup, date, number, yes/no)
+				String displayValue = getStringFromValue(
+					rowValues.getFieldsMap().get(
+						LookupUtil.getDisplayColumnName(columnName)
+					)
+				);
+				if (Util.isEmpty(displayValue, true)) {
+					displayValue = getStringFromValue(
+						rowValues.getFieldsMap().get(columnName)
+					);
+				}
+				return displayValue;
+			})
+			.filter(displayValue -> !Util.isEmpty(displayValue, true))
+			.collect(Collectors.joining(" - "));
+		if (Util.isEmpty(identifier, true)) {
+			return null;
+		}
+		return identifier;
+	}
+
+	/**
+	 * Get plain string from a proto value: string, number, boolean or
+	 * the `value` field of a typed struct (date, decimal)
+	 * @param value
+	 * @return string or null
+	 */
+	private static String getStringFromValue(Value value) {
+		if (value == null) {
+			return null;
+		}
+		switch (value.getKindCase()) {
+			case STRING_VALUE:
+				return value.getStringValue();
+			case NUMBER_VALUE:
+				final double numberValue = value.getNumberValue();
+				if (numberValue == Math.rint(numberValue) && !Double.isInfinite(numberValue)) {
+					return String.valueOf((long) numberValue);
+				}
+				return String.valueOf(numberValue);
+			case BOOL_VALUE:
+				return BooleanManager.getDisplayValue(
+					value.getBoolValue()
+				);
+			case STRUCT_VALUE:
+				return getStringFromValue(
+					value.getStructValue().getFieldsMap().get("value")
+				);
+			default:
+				return null;
+		}
 	}
 
 
