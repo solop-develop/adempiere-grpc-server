@@ -38,6 +38,7 @@ import org.compiere.model.MLookupInfo;
 import org.compiere.model.MTable;
 import org.compiere.model.MValRule;
 import org.adempiere.core.domains.models.X_AD_Reference;
+import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -155,6 +156,20 @@ public class ReferenceUtil {
 			|| DisplayType.Table == displayType
 			|| DisplayType.TableDir == displayType
 			|| DisplayType.Search == displayType;
+	}
+
+	/**
+	 * Display SQL of a table reference (AD_Ref_Table.DisplaySQL), written over the reference table name; null when it
+	 * has none or it is displayed by identifiers (the Display SQL is ignored then)
+	 * @param referenceValueId table reference
+	 * @return SQL expression or null
+	 */
+	private static String getTableReferenceDisplaySQL(int referenceValueId) {
+		return DB.getSQLValueString(null,
+			"SELECT DisplaySQL FROM AD_Ref_Table WHERE AD_Reference_ID = ? AND IsActive = 'Y'"
+				+ " AND COALESCE(IsDisplayIdentifier, 'N') = 'N'",
+			referenceValueId
+		);
 	}
 
 	public static int overwriteDisplayType(int displayTypeId, int referenceValueId) {
@@ -341,6 +356,25 @@ public class ReferenceUtil {
 			}
 
 			String displayColumn = lookupInfo.DisplayColumn;
+			// Table reference with a Display SQL (an expression over the reference table, as the lookup of the
+			// field shows it): correlated sub query, a join with the raw display column would show other value
+			if (referenceValueId > 0
+				&& (DisplayType.Table == referenceId || DisplayType.Search == referenceId)
+				&& !Util.isEmpty(lookupInfo.TableName, true)
+				&& !lookupInfo.TableName.equalsIgnoreCase(tableName)) {
+				String displaySQL = getTableReferenceDisplaySQL(referenceValueId);
+				if (!Util.isEmpty(displaySQL, true)) {
+					String baseColumn = columnName.trim().startsWith("(") ? columnName : tableName + "." + columnName;
+					// Wrapped as MLookupFactory.getLookup_Table does: some Display SQL rely on it
+					// (e.g. "C_Order.DocumentNo,'-1') ||'_'|| NVL(...)")
+					displayColumn = "(SELECT NVL(" + displaySQL + ",'-1')"
+						+ " FROM " + lookupInfo.TableName
+						+ " WHERE " + lookupInfo.KeyColumn + " = " + baseColumn + ")";
+					referenceInfo.setDisplayColumnValue(displayColumn);
+					referenceInfo.setHasJoinValue(false);
+					return referenceInfo;
+				}
+			}
 			// Parent recursive columns, or table reference whose display column is shown by
 			// its type (ID, lookup, date, number, list) as the embedded lookup does
 			if (Util.isEmpty(displayColumn, true)
