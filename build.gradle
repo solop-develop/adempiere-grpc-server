@@ -16,7 +16,7 @@ java {
 
 def grpcVersion = '1.63.0'
 def protobufVersion = '3.25.3'
-def adempiereCoreVersion = '1.7.0'
+def adempiereCoreVersion = '1.8.0-SNAPSHOT'
 
 def descriptorFile = "adempiere-grpc-server.dsc"
 def javaMainClass = "org.spin.server.AllInOneServices"
@@ -80,7 +80,7 @@ dependencies {
 	//	warehouse-light, distribution-light, wms-light, additional-reports, intercompany-management,
 	//	delivery-management-service, adempiere-webhook, external-store, core-tools, luy, payroll-light
 	//	and adempiere-firebase-connector
-	implementation "com.solop.adempiere.tools:solop-core:4.2.0"
+	implementation "com.solop.adempiere.tools:solop-core:4.3.0-SNAPSHOT"
 	//	Password hashing: same BCryptPasswordEncoder used by Sabana (Spring Boot 3.5.x -> Spring Security 6.5.x)
 	implementation "org.springframework.security:spring-security-crypto:6.5.7"
 }
